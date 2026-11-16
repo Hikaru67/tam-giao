@@ -394,6 +394,9 @@ importers:
 
   packages/testing:
     dependencies:
+      '@tamgiao/kernel':
+        specifier: workspace:*
+        version: link:../kernel
       '@testcontainers/postgresql':
         specifier: 12.2.1
         version: 12.2.1(bare-buffer@3.7.2)(supports-color@7.2.0)

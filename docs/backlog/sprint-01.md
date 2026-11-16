@@ -203,7 +203,7 @@ và handler xử lý đúng 1 lần (kể cả khi chạy lại).
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| testing, repo | devops | P0 | 1.5d | BE-S1-04 | BE-S1-05 | TODO |
+| testing, repo | devops | P0 | 1.5d | BE-S1-04 | BE-S1-05 | IN_REVIEW |
 
 **Mục tiêu:** Mọi task có infrastructure đều chạy test với Postgres thật, CI tự động chặn PR lỗi.
 

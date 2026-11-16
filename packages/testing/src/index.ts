@@ -1,3 +1,4 @@
+import { err, type Tx, type UnitOfWork } from '@tamgiao/kernel';
 import type pg from 'pg';
 import { inject } from 'vitest';
 import './provided-context.js';
@@ -7,8 +8,10 @@ export function testDatabaseUrl(): string {
   return inject('databaseUrl');
 }
 
-/** Schema không bao giờ bị xoá dữ liệu (bảng theo dõi migration). */
-// `pgboss`: bảng nội bộ của pg-boss (version, queue) — test dùng tên queue riêng thay vì xoá.
+/**
+ * Schema không bao giờ bị xoá dữ liệu: lịch sử migration (`drizzle`) và bảng nội bộ của pg-boss
+ * (`pgboss` — test dùng tên queue riêng thay vì xoá).
+ */
 const PROTECTED_SCHEMAS = new Set(['drizzle', 'pgboss', 'pg_catalog', 'information_schema', 'public']);
 
 /**
@@ -35,4 +38,20 @@ export function runConcurrently<T>(
   fn: (index: number) => Promise<T>,
 ): Promise<PromiseSettledResult<T>[]> {
   return Promise.allSettled(Array.from({ length: n }, (_, i) => fn(i)));
+}
+
+const ROLLBACK = Symbol('withRollback');
+
+/**
+ * Chạy `fn` trong một transaction rồi **luôn rollback** (trả `Err` nội bộ cho UnitOfWork),
+ * trả về giá trị `fn` tính được. Dùng để test repository mà không để lại dữ liệu.
+ */
+export async function withRollback<T>(uow: UnitOfWork, fn: (tx: Tx) => Promise<T>): Promise<T> {
+  let value: { readonly v: T } | undefined;
+  await uow.run(async (tx) => {
+    value = { v: await fn(tx) };
+    return err(ROLLBACK);
+  });
+  if (value === undefined) throw new Error('withRollback: fn không trả về');
+  return value.v;
 }

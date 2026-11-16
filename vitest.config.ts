@@ -17,9 +17,11 @@ export default defineConfig({
           name: 'int',
           include: ['{apps,packages,tools}/**/*.int.test.ts'],
           exclude: ignored,
-          // 1 Postgres (Testcontainers) cho cả lượt chạy; file chạy tuần tự vì dùng chung DB + resetDatabase.
+          // 1 Postgres (Testcontainers) cho cả lượt chạy; file PHẢI chạy tuần tự vì dùng chung DB + resetDatabase.
+          // `fileParallelism` ở cấp project bị Vitest 3 bỏ qua → dùng 1 fork duy nhất để ép tuần tự.
           globalSetup: ['./packages/testing/src/postgres-global-setup.ts'],
-          fileParallelism: false,
+          pool: 'forks',
+          poolOptions: { forks: { singleFork: true } },
           testTimeout: 30_000,
           hookTimeout: 120_000,
         },
