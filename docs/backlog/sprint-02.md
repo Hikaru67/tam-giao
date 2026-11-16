@@ -13,7 +13,7 @@ Admin đăng nhập với mật khẩu + 2FA, có phân quyền và audit log.
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| identity | domain, application, infrastructure, presentation | P0 | 2d | Sprint 1 | BE-S2-03, BE-S2-07 | TODO |
+| identity | domain, application, infrastructure, presentation | P0 | 2d | Sprint 1 | BE-S2-03, BE-S2-07 | IN_REVIEW |
 
 **Mục tiêu:** Phục vụ màn "Đăng nhập & Đăng ký" và "Xác thực SĐT & OTP".
 
@@ -22,10 +22,10 @@ Admin đăng nhập với mật khẩu + 2FA, có phân quyền và audit log.
 - Ngoài: Phát token (BE-S2-02), đăng nhập VNeID/Apple/Google (chưa làm).
 
 **Tiêu chí nghiệm thu**
-- [ ] AC1: OTP đúng trong TTL → thành công, OTP bị vô hiệu sau khi dùng.
-- [ ] AC2: OTP hết hạn → `OTP_EXPIRED`; sai quá 5 lần → `OTP_LOCKED`.
-- [ ] AC3: Gọi request liên tục → `RATE_LIMITED` kèm thời gian chờ.
-- [ ] AC4: OTP và SĐT không xuất hiện trong log.
+- [x] AC1: OTP đúng trong TTL → thành công, OTP bị vô hiệu sau khi dùng.
+- [x] AC2: OTP hết hạn → `OTP_EXPIRED`; sai quá 5 lần → `OTP_LOCKED`.
+- [x] AC3: Gọi request liên tục → `RATE_LIMITED` kèm thời gian chờ.
+- [x] AC4: OTP và SĐT không xuất hiện trong log.
 
 **Test bắt buộc:** Domain (OtpChallenge), use case với FakeClock, integration rate limit.
 

@@ -1,5 +1,6 @@
 import { serve } from '@hono/node-server';
-import { createDatabase } from '@tamgiao/db';
+import { DrizzleUnitOfWork, createDatabase } from '@tamgiao/db';
+import { SystemClock } from '@tamgiao/kernel';
 import { createApp } from './app.js';
 import { loadApiConfig } from './config.js';
 import { createLogger } from '@tamgiao/config';
@@ -14,10 +15,11 @@ const database = createDatabase(config.database.url);
 
 const app = createApp({
   logger,
-  modules: buildModules(),
+  modules: buildModules({ config, uow: new DrizzleUnitOfWork(database.pool), clock: new SystemClock() }),
   readinessChecks: [{ name: 'database', check: async () => void (await database.pool.query('select 1')) }],
   corsOrigins: config.http.corsOrigins,
   bodyLimitBytes: config.http.bodyLimitBytes,
+  trustProxy: config.http.trustProxy,
 });
 
 const server = serve({ fetch: app.fetch, port: config.port }, (info) => {

@@ -13,7 +13,9 @@
     "@tamgiao/config": "workspace:*",
     "@tamgiao/contracts": "workspace:*",
     "@tamgiao/db": "workspace:*",
+    "@tamgiao/http": "workspace:*",
     "@tamgiao/kernel": "workspace:*",
+    "@tamgiao/module-identity": "workspace:*",
     "hono": "4.13.18",
     "zod": "4.6.7"
   },

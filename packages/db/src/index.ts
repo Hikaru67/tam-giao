@@ -1,4 +1,5 @@
 export { createDatabase, type Database, type DatabaseOptions, type Db } from './client.js';
+export { bytea, timestamptz } from './columns.js';
 export { asDbTx, asPgClient, toTx, type DbTx, type DbTxHandle } from './tx.js';
 export { DrizzleUnitOfWork } from './unit-of-work.js';
 export { OutboxWriter } from './outbox/outbox-writer.js';
