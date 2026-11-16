@@ -4,3 +4,10 @@ export { DrizzleUnitOfWork } from './unit-of-work.js';
 export { OutboxWriter } from './outbox/outbox-writer.js';
 export { MIGRATIONS_FOLDER, runMigrations } from './migrate.js';
 export { outbox, platform, processedEvents } from './schema/platform.js';
+export {
+  HmacBlindIndexer,
+  LocalKeyEncryptor,
+  normalizeForIndex,
+  parseMasterKeyRing,
+  type MasterKeyRing,
+} from './crypto/local-key-encryptor.js';

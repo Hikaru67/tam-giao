@@ -6,3 +6,4 @@ export { Money, type MoneyError } from './money.js';
 export type { DomainEvent } from './domain-event.js';
 export { AggregateRoot, Entity } from './entity.js';
 export type { Tx, UnitOfWork } from './unit-of-work.js';
+export type { BlindIndexer, Encryptor } from './crypto.js';

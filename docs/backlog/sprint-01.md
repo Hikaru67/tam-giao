@@ -230,7 +230,7 @@ và handler xử lý đúng 1 lần (kể cả khi chạy lại).
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| kernel, db | infrastructure | P0 | 1.5d | BE-S1-03 | BE-S1-04, BE-S1-06 | TODO |
+| kernel, db | infrastructure | P0 | 1.5d | BE-S1-03 | BE-S1-04, BE-S1-06 | IN_REVIEW |
 
 **Mục tiêu:** Chuẩn bị mã hoá trường nhạy cảm (CCCD, thu nhập, tài sản) trước khi các module dùng.
 
