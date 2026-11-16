@@ -17,6 +17,11 @@ export default defineConfig({
           name: 'int',
           include: ['{apps,packages,tools}/**/*.int.test.ts'],
           exclude: ignored,
+          // 1 Postgres (Testcontainers) cho cả lượt chạy; file chạy tuần tự vì dùng chung DB + resetDatabase.
+          globalSetup: ['./packages/testing/src/postgres-global-setup.ts'],
+          fileParallelism: false,
+          testTimeout: 30_000,
+          hookTimeout: 120_000,
         },
       },
     ],

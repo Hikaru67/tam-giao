@@ -96,7 +96,7 @@ và handler xử lý đúng 1 lần (kể cả khi chạy lại).
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| db | infrastructure | P0 | 2d | BE-S1-02, BE-S1-03 | BE-S1-06, BE-S1-09 | TODO |
+| db | infrastructure | P0 | 2d | BE-S1-02, BE-S1-03 | BE-S1-06, BE-S1-09 | IN_REVIEW |
 
 **Mục tiêu:** Chuẩn hoá cách truy cập DB, transaction và ghi domain event an toàn.
 
