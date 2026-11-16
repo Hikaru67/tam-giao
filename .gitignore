@@ -1,0 +1,26 @@
+# deps & build
+node_modules/
+dist/
+.turbo/
+coverage/
+*.tsbuildinfo
+
+# env & secrets
+.env
+.env.*
+!.env.example
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/*
+!.vscode/extensions.json
+
+# logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# design exports (bản gốc lưu ngoài git)
+design/*.zip
+design/_original/

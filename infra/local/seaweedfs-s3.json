@@ -1,0 +1,9 @@
+{
+  "identities": [
+    {
+      "name": "tamgiao-local",
+      "credentials": [{ "accessKey": "tamgiao", "secretKey": "tamgiao-local-secret" }],
+      "actions": ["Admin", "Read", "Write", "List", "Tagging"]
+    }
+  ]
+}

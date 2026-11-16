@@ -1,0 +1,267 @@
+<!DOCTYPE html><html lang="vi"><head><meta charset="utf-8"><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"><meta content="mobile_stack" name="shell-type"><link href="https://fonts.googleapis.com" rel="preconnect"><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"><link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&amp;family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@100..900&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"><style>@layer base{html,body{width:100vw;margin:0;padding:0;}body{overscroll-behavior:none;}.pb-safe{padding-bottom:env(safe-area-inset-bottom,0px);}.pt-safe{padding-top:env(safe-area-inset-top,0px);}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = { darkMode: "class", theme: { extend: { "colors": { "primary-container": "#e11d48", "on-primary-container": "#fffaf9", "secondary-container": "#dae2fd", "secondary": "#565e74", "surface-container-high": "#dce9ff", "outline": "#906f70", "surface-container-low": "#eff4ff", "on-tertiary-container": "#fffaf9", "surface-dim": "#cbdbf5", "on-secondary-container": "#5c647a", "surface-variant": "#d3e4fe", "primary": "#b80035", "surface": "#f8f9ff", "background": "#f8f9ff", "error-container": "#ffdad6", "secondary-fixed": "#dae2fd", "on-tertiary-fixed": "#2a1700", "tertiary-fixed": "#ffddb8", "outline-variant": "#e5bdbe", "surface-container-lowest": "#ffffff", "on-secondary": "#ffffff", "inverse-primary": "#ffb3b6", "on-error": "#ffffff", "tertiary": "#815100", "on-primary": "#ffffff", "error": "#ba1a1a", "on-primary-fixed-variant": "#920028", "tertiary-fixed-dim": "#ffb95f", "on-secondary-fixed-variant": "#3f465c", "surface-container-highest": "#d3e4fe", "on-tertiary": "#ffffff", "surface-container": "#e5eeff", "surface-bright": "#f8f9ff", "on-surface-variant": "#5c3f40", "inverse-surface": "#213145", "on-error-container": "#93000a", "on-secondary-fixed": "#131b2e", "surface-tint": "#be0037", "inverse-on-surface": "#eaf1ff", "on-primary-fixed": "#40000c", "primary-fixed": "#ffdada", "on-background": "#0b1c30", "tertiary-container": "#a36700", "on-surface": "#0b1c30", "on-tertiary-fixed-variant": "#653e00", "secondary-fixed-dim": "#bec6e0", "primary-fixed-dim": "#ffb3b6" }, "borderRadius": { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" }, "spacing": { "gutter-desktop": "1.5rem", "gutter": "1rem", "margin-desktop": "3rem", "space-lg": "1.5rem", "space-xs": "0.25rem", "space-md": "1rem", "margin-tablet": "2rem", "space-sm": "0.5rem", "space-xl": "2.5rem", "margin": "1rem" }, "fontFamily": { "body-md": ["Be Vietnam Pro", "sans-serif"], "headline-md": ["Be Vietnam Pro", "sans-serif"], "headline-lg-mobile": ["Be Vietnam Pro", "sans-serif"], "display": ["Be Vietnam Pro", "sans-serif"], "title-md": ["Be Vietnam Pro", "sans-serif"], "headline-sm": ["Be Vietnam Pro", "sans-serif"], "body-sm": ["Be Vietnam Pro", "sans-serif"], "label-sm": ["Be Vietnam Pro", "sans-serif"], "headline-lg": ["Be Vietnam Pro", "sans-serif"], "body-lg": ["Be Vietnam Pro", "sans-serif"], "label-md": ["Be Vietnam Pro", "sans-serif"] }, "fontSize": { "body-md": ["14px", { "lineHeight": "22px", "fontWeight": "400" }], "headline-md": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600" }], "headline-lg-mobile": ["26px", { "lineHeight": "34px", "letterSpacing": "-0.01em", "fontWeight": "700" }], "display": ["40px", { "lineHeight": "52px", "letterSpacing": "-0.02em", "fontWeight": "700" }], "title-md": ["16px", { "lineHeight": "24px", "fontWeight": "600" }], "headline-sm": ["20px", { "lineHeight": "28px", "fontWeight": "600" }], "body-sm": ["12px", { "lineHeight": "18px", "fontWeight": "400" }], "label-sm": ["11px", { "lineHeight": "16px", "letterSpacing": "0.04em", "fontWeight": "600" }], "headline-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.015em", "fontWeight": "700" }], "body-lg": ["16px", { "lineHeight": "26px", "fontWeight": "400" }], "label-md": ["14px", { "lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "500" }] } } } };</script><style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+<style id="wca-font-fallback">body,button,input,select,textarea{font-family:"Be Vietnam Pro",sans-serif}</style></head><body class="bg-surface text-on-surface font-body-md text-body-md flex flex-col min-h-screen selection:bg-primary-fixed selection:text-on-primary-fixed"><header class="fixed top-0 w-full z-50 bg-surface/85 backdrop-blur-xl pt-safe shadow-[0_1px_8px_rgba(11,28,48,0.04)]"><div class="h-16 px-gutter flex items-center justify-between"><div class="flex items-center gap-space-sm"><button aria-label="Quay lại" class="w-11 h-11 -ml-1.5 flex items-center justify-center rounded-full text-on-surface hover:bg-surface-container active:scale-95 transition-all" onclick="history.back()"><span class="material-symbols-outlined text-[22px]">arrow_back_ios_new</span></button><span aria-label="Tâm Giao" class="w-8 h-8 rounded-lg bg-primary-container text-white flex items-center justify-center shrink-0 shadow-sm"><span class="material-symbols-outlined text-[18px]" style="font-variation-settings: 'FILL' 1;">favorite</span></span><h1 class="font-title-md text-title-md text-on-surface font-semibold tracking-tight truncate">Khởi Tạo Hồ Sơ Cơ Bản</h1></div><div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-primary text-[20px]">verified_user</span><div class="p-0.5 rounded-full ring-2 ring-primary/20"><img alt="Quốc Huy" class="w-8 h-8 rounded-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAUvqIudv6cy7WHI7Aj_nBd1WmWz72jOkS2Brj_mA12Z83fJG58ZKMvk_aOAIVVKbt093jxwg1HJ1W2lwVai9c6tRatOR7bXWvHtZnNOt0HjOYny9GdNXbMHDtW3PHXqEWPf6FpAH7Z4ljNs8JBbDrLE_KzEnrjy6aAJesMZv43h1aBmgh5xo5HHzXW1G4ffxMjL52c77ldkBLLu0JFgtOH2RwytCBnJA1zDnDXLGFK1_JwAr-gQznH"></div></div></div></header><main class="flex-1 flex flex-col relative w-full pt-16 pb-safe bg-surface"><div class="flex flex-col w-full">
+<div class="px-margin pt-space-md pb-space-lg flex flex-col gap-space-lg">
+<div class="flex items-center justify-between">
+<div class="flex flex-col gap-0.5">
+<span class="font-label-sm text-label-sm text-primary tracking-wider uppercase font-semibold">BƯỚC 1/3: KHỞI TẠO HỒ SƠ</span>
+<h2 class="font-headline-sm text-headline-sm text-on-surface">Hồ sơ cơ bản (Miễn phí)</h2>
+</div>
+<button class="px-3.5 py-1.5 rounded-full bg-surface-container-high text-on-surface font-label-md text-label-md flex items-center gap-1 active:scale-95 transition-transform" id="saveDraftBtn" type="button">
+<span class="material-symbols-outlined text-[18px]">bookmark_border</span>
+<span class="">Lưu tạm</span>
+</button>
+</div>
+<div class="flex flex-col gap-2 w-full"><div class="grid grid-cols-3 gap-2"><div class="h-1.5 rounded-full bg-primary transition-all duration-500"></div><div class="h-1.5 rounded-full bg-surface-container-high"></div><div class="h-1.5 rounded-full bg-surface-container-high"></div></div><div class="grid grid-cols-3 text-center"><div class="flex flex-col items-start text-left"><span class="font-label-sm text-[11px] font-semibold text-primary">1. Hồ sơ cơ bản</span><span class="text-[11px] text-secondary/60">Đang thực hiện</span></div><div class="flex flex-col items-center"><span class="font-label-sm text-[11px] font-medium text-secondary">2. Tiêu chuẩn bạn đời</span><span class="text-[11px] text-secondary/60">Bước tiếp theo</span></div><div class="flex flex-col items-end text-right"><span class="font-label-sm text-[11px] font-medium text-secondary">3. Xác thực eKYC</span><span class="text-[11px] text-secondary/60">Thẩm định độc thân</span></div></div></div>
+<div class="bg-surface-container-lowest rounded-xl p-space-md shadow-sm flex items-start gap-space-md relative overflow-hidden">
+<div class="absolute left-0 top-0 bottom-0 w-1 bg-primary"></div>
+<div class="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center shrink-0 text-primary">
+<span class="material-symbols-outlined text-[22px]">favorite</span>
+</div>
+<div class="flex flex-col gap-1">
+<span class="font-title-md text-title-md text-on-surface">Khởi đầu tình duyên chân thành</span>
+<p class="font-body-md text-body-md text-secondary">
+          Trải nghiệm miễn phí: Tạo hồ sơ chuẩn mực và khám phá hệ thống trước khi quyết định xác thực danh tính.
+        </p>
+</div>
+</div>
+<section class="flex flex-col gap-space-md">
+<div class="flex items-center justify-between">
+<h3 class="font-title-md text-title-md text-on-surface flex items-center gap-1.5">
+<span class="material-symbols-outlined text-primary text-[20px]">add_a_photo</span>
+          Hình ảnh chân dung
+        </h3>
+<span class="font-label-sm text-label-sm text-secondary">Tối đa 5 ảnh</span>
+</div>
+<div class="bg-surface-container-lowest rounded-xl p-space-md shadow-sm flex flex-col gap-space-md">
+<div class="flex flex-col sm:flex-row items-center gap-space-md">
+<div class="relative w-28 h-28 rounded-2xl overflow-hidden bg-surface-container flex flex-col items-center justify-center shrink-0 group cursor-pointer shadow-sm">
+<img class="w-full h-full object-cover" data-alt="Chân dung nam giới Việt Nam 31 tuổi lịch sự, sơ mi xanh" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAUvqIudv6cy7WHI7Aj_nBd1WmWz72jOkS2Brj_mA12Z83fJG58ZKMvk_aOAIVVKbt093jxwg1HJ1W2lwVai9c6tRatOR7bXWvHtZnNOt0HjOYny9GdNXbMHDtW3PHXqEWPf6FpAH7Z4ljNs8JBbDrLE_KzEnrjy6aAJesMZv43h1aBmgh5xo5HHzXW1G4ffxMjL52c77ldkBLLu0JFgtOH2RwytCBnJA1zDnDXLGFK1_JwAr-gQznH">
+<div class="absolute inset-0 bg-on-surface/30 flex flex-col items-center justify-center text-on-primary opacity-90 transition-opacity">
+<span class="material-symbols-outlined text-[24px]">photo_camera</span>
+<span class="font-label-sm text-label-sm mt-0.5">Đổi ảnh</span>
+</div>
+<div class="absolute bottom-1 right-1 bg-primary text-on-primary rounded-full p-1 shadow-sm">
+<span class="material-symbols-outlined text-[14px] block">check</span>
+</div>
+</div>
+<div class="flex flex-col gap-1">
+<span class="font-label-md text-label-md font-semibold text-on-surface">Ảnh đại diện chính *</span>
+<p class="font-body-sm text-body-sm text-secondary">
+              Vui lòng chọn ảnh chụp thẳng, rõ khuôn mặt, nụ cười lịch sự và không dùng bộ lọc che giấu đường nét thực tế.
+            </p>
+<div class="flex items-center gap-1.5 mt-1 text-primary font-label-sm text-label-sm">
+<span class="material-symbols-outlined text-[16px]">verified</span>
+<span class="">Giúp hồ sơ tăng 80% độ tin cậy ban đầu</span>
+</div>
+</div>
+</div>
+<div class="pt-space-xs">
+<span class="font-label-md text-label-md text-on-surface mb-space-sm block">Ảnh phong cách sống &amp; sở thích (3 - 4 ảnh)</span>
+<div class="grid grid-cols-4 gap-space-sm">
+<div class="aspect-square rounded-lg overflow-hidden bg-surface-container relative shadow-sm">
+<img class="w-full h-full object-cover" data-alt="Góc bàn cà phê sách bên cửa kính phố Sài Gòn" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA0RiGiY6EP4HoWqQpGcvwr0j7qbonDgd7j88qPBuLoXxWHI06_qr3JykvNnFIG__G1JvubuZKCmW0u9UtPWyQtu594smv0iZWxkVCYJUeEG3y7djh-cZnq-oL8tIj0Fww3-tlxxsy0ta4FYogKN0V2jdf6H5DGeT73llBWHsCCzRKzB69bEkBjjN1XiquXs2BEuTyUJfn_IfARdKvc7Jr6YixkmKHoMOEhYBgFeUDSDTnvS5CyRnDo">
+<button aria-label="Xoá ảnh" class="absolute top-1 right-1 w-5 h-5 rounded-full bg-surface-container-lowest/80 text-on-surface flex items-center justify-center shadow-sm" type="button">
+<span class="material-symbols-outlined text-[14px]">close</span>
+</button>
+</div>
+<div class="aspect-square rounded-lg overflow-hidden bg-surface-container relative shadow-sm">
+<img class="w-full h-full object-cover" data-alt="Bữa cơm gia đình ấm cúng cuối tuần với món canh chua cá lóc truyền thống Việt Nam thơm ngon được bày biện chỉn chu trên bàn gỗ phong cách ấm cúng" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAyfz_M4-dURFJMJakRS12oXnt0aFFuGHUpY-jD84J6JxNg5eVpX86DrstHWKLHGd4dAv3PZLsUnvHedYsRPbW4h93K_hlnyNcukEuCQfxtPAW8ETdBNBWImzrQteU4WPNK8WBnRriBOpz_0aYNSfPAfbtH2HghOVurHDjYTUhNer2gdhY7YUTjMcSp8uW9Z-94xB9UgK4rVMeWj9JGp67m8GfTs4BOQ7oQx6nUZnliyBom2vV_pdoR">
+<button aria-label="Xoá ảnh" class="absolute top-1 right-1 w-5 h-5 rounded-full bg-surface-container-lowest/80 text-on-surface flex items-center justify-center shadow-sm" type="button">
+<span class="material-symbols-outlined text-[14px]">close</span>
+</button>
+</div>
+<button class="aspect-square rounded-lg bg-surface-container-low flex flex-col items-center justify-center text-secondary hover:text-primary active:scale-95 transition-all" type="button">
+<span class="material-symbols-outlined text-[24px]">add_circle_outline</span>
+<span class="font-label-sm text-label-sm mt-1">Thêm</span>
+</button>
+<button class="aspect-square rounded-lg bg-surface-container-low flex flex-col items-center justify-center text-secondary/60" type="button">
+<span class="material-symbols-outlined text-[24px]">image</span>
+<span class="font-label-sm text-label-sm mt-1">Trống</span>
+</button>
+</div>
+</div>
+</div>
+</section>
+<section class="flex flex-col gap-space-md">
+<h3 class="font-title-md text-title-md text-on-surface flex items-center gap-1.5">
+<span class="material-symbols-outlined text-primary text-[20px]">badge</span>
+        Thông tin cá nhân cơ bản
+      </h3>
+<div class="bg-surface-container-lowest rounded-xl p-space-md shadow-sm flex flex-col gap-space-md">
+<div class="flex flex-col gap-1.5">
+<label class="font-label-md text-label-md text-on-surface font-semibold" for="full_name">Họ và tên *</label>
+<div class="bg-surface-container-lowest rounded-xl px-space-md py-3 shadow-sm flex items-center gap-2">
+<span class="material-symbols-outlined text-secondary text-[20px]">person</span>
+<input class="w-full bg-transparent font-body-md text-body-md text-on-surface outline-none placeholder:text-secondary/50" id="full_name" placeholder="Họ và tên theo CCCD" type="text" value="Trần Quốc Huy">
+</div>
+</div>
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-space-md"><div class="flex flex-col gap-1.5"><div class="flex items-center justify-between"><label class="font-label-md text-label-md text-on-surface font-semibold">Ngày sinh (Ngày / Tháng / Năm) *</label><span class="font-label-sm text-label-sm text-primary font-medium bg-primary-fixed/60 px-2 py-0.5 rounded-full">31 tuổi</span></div><div class="grid grid-cols-3 gap-2"><div class="bg-surface-container-lowest rounded-xl px-2.5 py-3 shadow-sm flex items-center justify-between"><select class="w-full bg-transparent font-body-md text-body-md text-on-surface outline-none"><option>01</option><option>05</option><option selected="">10</option><option>15</option><option>20</option><option>25</option><option>30</option></select><span class="text-body-sm text-secondary shrink-0 font-medium">Ng</span></div><div class="bg-surface-container-lowest rounded-xl px-2.5 py-3 shadow-sm flex items-center justify-between"><select class="w-full bg-transparent font-body-md text-body-md text-on-surface outline-none"><option>01</option><option selected="">03</option><option>06</option><option>08</option><option>10</option><option>12</option></select><span class="text-body-sm text-secondary shrink-0 font-medium">Th</span></div><div class="bg-surface-container-lowest rounded-xl px-2.5 py-3 shadow-sm flex items-center justify-between"><select class="w-full bg-transparent font-body-md text-body-md text-on-surface outline-none"><option>1994</option><option selected="">1995</option><option>1996</option><option>1997</option><option>1998</option><option>1999</option><option>2000</option></select><span class="text-body-sm text-secondary shrink-0 font-medium">Năm</span></div></div></div><div class="flex flex-col gap-1.5"><label class="font-label-md text-label-md text-on-surface font-semibold">Giới tính *</label><div class="grid grid-cols-2 gap-1.5 h-[48px]"><button class="gender-btn rounded-xl font-label-md text-label-md flex items-center justify-center transition-all bg-surface-container-low text-secondary" type="button">Nữ</button><button class="gender-btn rounded-xl font-label-md text-label-md flex items-center justify-center transition-all bg-surface-container-high text-on-surface font-semibold" type="button">Nam</button></div></div></div>
+<div class="flex flex-col gap-1.5">
+<label class="font-label-md text-label-md text-on-surface font-semibold" for="hometown">Quê quán</label>
+<div class="bg-surface-container-lowest rounded-xl px-space-md py-3 shadow-sm flex items-center gap-2">
+<span class="material-symbols-outlined text-secondary text-[20px]">explore</span>
+<input class="w-full bg-transparent font-body-md text-body-md text-on-surface outline-none placeholder:text-secondary/50" id="hometown" placeholder="Tỉnh / Thành phố" type="text" value="Hải Phòng">
+</div>
+</div>
+<div class="flex flex-col gap-1.5">
+<label class="font-label-md text-label-md text-on-surface font-semibold" for="location">Nơi sống hiện tại (Tỉnh / Quận / Phường) *</label>
+<div class="bg-surface-container-lowest rounded-xl px-space-md py-3 shadow-sm flex items-center gap-2">
+<span class="material-symbols-outlined text-secondary text-[20px]">location_on</span>
+<div class="w-full flex flex-col sm:flex-row gap-2"><input class="w-full bg-transparent font-body-md text-body-md text-on-surface outline-none" id="location" placeholder="TP. Hồ Chí Minh - Quận 1, Phường Bến Nghé" type="text" value="TP. Hồ Chí Minh - Quận 3, Phường Võ Thị Sáu"></div>
+</div>
+</div>
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-space-md">
+<div class="flex flex-col gap-1.5">
+<label class="font-label-md text-label-md text-on-surface font-semibold" for="education">Trình độ học vấn *</label>
+<div class="bg-surface-container-lowest rounded-xl px-space-md py-3 shadow-sm flex items-center gap-2">
+<span class="material-symbols-outlined text-secondary text-[20px]">school</span>
+<select class="w-full bg-transparent font-body-md text-body-md text-on-surface outline-none" id="education"><option value="cu-nhan">Cử nhân đại học</option><option selected="" value="thac-si">Thạc sĩ</option><option value="tien-si">Tiến sĩ</option><option value="cao-dang">Cao đẳng / Nghề chuyên sâu</option><option value="thpt">Trung học phổ thông / Cấp 3</option></select>
+</div>
+</div>
+<div class="flex flex-col gap-1.5">
+<label class="font-label-md text-label-md text-on-surface font-semibold" for="career">Nghề nghiệp / Chức vụ *</label>
+<div class="bg-surface-container-lowest rounded-xl px-space-md py-3 shadow-sm flex items-center gap-2">
+<span class="material-symbols-outlined text-secondary text-[20px]">work</span>
+<input class="w-full bg-transparent font-body-md text-body-md text-on-surface outline-none" id="career" placeholder="Quản lý Marketing" type="text" value="Trưởng nhóm Sản phẩm (Công nghệ)">
+</div>
+</div>
+</div>
+<div class="flex flex-col gap-1.5">
+<div class="flex items-center justify-between">
+<label class="font-label-md text-label-md text-on-surface font-semibold" for="income">Thu nhập cá nhân (Bảo mật)</label>
+<span class="font-label-sm text-label-sm text-secondary">Chỉ đối tượng phù hợp mới thấy</span>
+</div>
+<div class="bg-surface-container-lowest rounded-xl px-space-md py-3 shadow-sm flex items-center gap-2">
+<span class="material-symbols-outlined text-secondary text-[20px]">lock_outline</span>
+<select class="w-full bg-transparent font-body-md text-body-md text-on-surface outline-none" id="income">
+<option value="25-40">25 - 40 triệu VNĐ / tháng</option>
+<option value="15-25">15 - 25 triệu VNĐ / tháng</option>
+<option selected="" value="40-70">40 - 70 triệu VNĐ / tháng</option>
+<option value="above-70">Trên 70 triệu VNĐ / tháng</option>
+<option value="private">Giữ riêng tư giai đoạn đầu</option>
+</select>
+</div>
+</div>
+</div>
+</section>
+<section class="flex flex-col gap-space-md">
+<h3 class="font-title-md text-title-md text-on-surface flex items-center gap-1.5">
+<span class="material-symbols-outlined text-primary text-[20px]">format_quote</span>
+        Giới thiệu &amp; Quan niệm cuộc sống
+      </h3>
+<div class="bg-surface-container-lowest rounded-xl p-space-md shadow-sm flex flex-col gap-space-md">
+<div class="flex flex-col gap-1.5">
+<div class="flex items-center justify-between">
+<label class="font-label-md text-label-md text-on-surface font-semibold" for="bio">Đoạn tự bạch chân thành</label>
+<span class="font-label-sm text-label-sm text-secondary" id="charCount">142 / 800 ký tự</span>
+</div>
+<div class="bg-surface-container-lowest rounded-xl p-space-md shadow-sm">
+<textarea class="w-full bg-transparent font-body-md text-body-md text-on-surface outline-none resize-none placeholder:text-secondary/50" id="bio" placeholder="Viết vài dòng nhẹ nhàng gửi tới người thương tương lai về giá trị gia đình, sở thích hay điều bạn trân trọng nhất..." rows="5" maxlength="800">Mình là người trân trọng những bữa cơm gia đình và những cuộc trò chuyện sâu lắng vào cuối tuần. Mong tìm được người bạn đời có chung suy nghĩ tích cực, chân thành và tôn trọng lẫn nhau.</textarea>
+</div>
+<p class="font-body-sm text-body-sm text-secondary">
+            Gợi ý: Hãy chia sẻ về cách bạn vượt qua ngày bận rộn hoặc mẫu người cùng bạn xây dựng tổ ấm.
+          </p>
+</div>
+<div class="flex flex-col gap-space-sm pt-space-xs">
+<label class="font-label-md text-label-md text-on-surface font-semibold">Sở thích &amp; Phong cách sống (Chọn các thẻ phù hợp)</label>
+<div class="flex flex-wrap gap-2" id="tagContainer"><button class="tag-chip px-3.5 py-1.5 rounded-full font-label-md text-label-md transition-all bg-primary-fixed text-on-primary-fixed font-medium active:scale-95" type="button">☕ Cà phê sách</button><button class="tag-chip px-3.5 py-1.5 rounded-full font-label-md text-label-md transition-all bg-primary-fixed text-on-primary-fixed font-medium active:scale-95" type="button">🏃 Chạy bộ sáng</button><button class="tag-chip px-3.5 py-1.5 rounded-full font-label-md text-label-md transition-all bg-primary-fixed text-on-primary-fixed font-medium active:scale-95" type="button">🍳 Nấu ăn gia đình</button><button class="tag-chip px-3.5 py-1.5 rounded-full font-label-md text-label-md transition-all bg-primary-fixed text-on-primary-fixed font-medium active:scale-95" type="button">🌿 Du lịch khám phá</button><button class="tag-chip px-3.5 py-1.5 rounded-full font-label-md text-label-md transition-all bg-surface-container-high text-on-surface active:scale-95" type="button">🪴 Trồng cây &amp; Sen đá</button><button class="tag-chip px-3.5 py-1.5 rounded-full font-label-md text-label-md transition-all bg-surface-container-high text-on-surface active:scale-95" type="button">🧘 Yoga &amp; Thiền</button><button class="tag-chip px-3.5 py-1.5 rounded-full font-label-md text-label-md transition-all bg-surface-container-high text-on-surface active:scale-95" type="button">🎨 Xem triển lãm</button><button class="tag-chip px-3.5 py-1.5 rounded-full font-label-md text-label-md transition-all bg-surface-container-high text-on-surface active:scale-95" type="button">🚴 Đạp xe cuối tuần</button><button class="tag-chip px-3.5 py-1.5 rounded-full font-label-md text-label-md transition-all bg-surface-container-high text-on-surface active:scale-95" type="button">🎧 Nghe nhạc Indie</button><button class="tag-chip px-3.5 py-1.5 rounded-full font-label-md text-label-md transition-all bg-surface-container-high text-on-surface active:scale-95" type="button">🐾 Thú cưng</button><div class="flex items-center gap-1.5 w-full mt-1"><div class="bg-surface-container-lowest rounded-full px-3 py-1.5 shadow-sm flex items-center gap-2 flex-1 border border-outline-variant/40"><span class="material-symbols-outlined text-secondary text-[18px]">edit_note</span><input class="w-full bg-transparent font-body-sm text-body-sm text-on-surface outline-none placeholder:text-secondary/50" id="customTagInput" placeholder="Nhập sở thích khác của bạn..." type="text"></div><button class="px-3.5 py-1.5 rounded-full bg-surface-container-high text-on-surface font-label-sm text-label-sm flex items-center gap-1 active:scale-95 hover:text-primary transition-all shrink-0" id="addCustomTagBtn" type="button"><span class="material-symbols-outlined text-[16px]">add</span><span class="">Thêm</span></button></div></div>
+</div>
+</div>
+</section>
+<section class="flex flex-col gap-space-md"><div class="flex items-center justify-between"><h3 class="font-title-md text-title-md text-on-surface flex items-center gap-1.5"><span class="material-symbols-outlined text-primary text-[20px]">real_estate_agent</span><span class="">Thông tin Tài sản &amp; Cư trú</span></h3><span class="font-label-sm text-label-sm text-secondary bg-surface-container-high px-2 py-0.5 rounded-full">Tùy chọn - Tăng tin cậy</span></div><div class="bg-surface-container-lowest rounded-xl p-space-md shadow-sm flex flex-col gap-space-md"><div class="flex flex-col gap-1.5"><label class="font-label-md text-label-md text-on-surface font-semibold">Loại hình nhà ở / Cư trú hiện tại</label><div class="bg-surface-container-lowest rounded-xl px-space-md py-3 shadow-sm flex items-center gap-2"><span class="material-symbols-outlined text-secondary text-[20px]">home</span><select class="w-full bg-transparent font-body-md text-body-md text-on-surface outline-none"><option selected="">Căn hộ chung cư</option><option>Nhà riêng thuộc sở hữu cá nhân</option><option>Ở cùng gia đình</option><option>Thuê nhà</option></select></div></div><div class="grid grid-cols-1 sm:grid-cols-2 gap-space-md"><div class="flex flex-col gap-1.5"><label class="font-label-md text-label-md text-on-surface font-semibold">Bất động sản sở hữu</label><div class="bg-surface-container-lowest rounded-xl px-space-md py-3 shadow-sm flex items-center gap-2"><span class="material-symbols-outlined text-secondary text-[20px]">apartment</span><select class="w-full bg-transparent font-body-md text-body-md text-on-surface outline-none"><option selected="">Đã có nhà riêng / căn hộ</option><option>Có đất tích lũy</option><option>Chưa sở hữu</option></select></div></div><div class="flex flex-col gap-1.5"><label class="font-label-md text-label-md text-on-surface font-semibold">Tài sản tích trữ &amp; Đầu tư</label><div class="bg-surface-container-lowest rounded-xl px-space-md py-3 shadow-sm flex items-center gap-2"><span class="material-symbols-outlined text-secondary text-[20px]">savings</span><select class="w-full bg-transparent font-body-md text-body-md text-on-surface outline-none"><option selected="">Có quỹ tiết kiệm &amp; Đầu tư định kỳ</option><option>Vàng / Chứng khoán</option><option>Quỹ tiết kiệm dự phòng</option><option>Đang tích lũy ban đầu</option></select></div></div></div><div class="flex items-center gap-2 pt-1 text-secondary"><span class="material-symbols-outlined text-[16px] text-primary shrink-0">shield_person</span><p class="font-body-sm text-body-sm text-secondary">Thông tin này chỉ hiển thị cho đối tượng tương hợp được chuyên viên xác thực.</p></div></div></section><div class="bg-surface-container-low rounded-xl p-space-md flex flex-col gap-space-sm relative overflow-hidden">
+<div class="flex items-center gap-2 text-primary font-title-md text-title-md">
+<span class="material-symbols-outlined text-[22px]">workspace_premium</span>
+<span class="">Đặc quyền Giai đoạn Trải nghiệm</span>
+</div>
+<div class="flex flex-col gap-2 mt-1">
+<div class="flex items-start gap-2">
+<span class="material-symbols-outlined text-primary text-[18px] shrink-0 mt-0.5">check_circle</span>
+<span class="font-body-md text-body-md text-on-surface">Hoàn thiện 100% hồ sơ chuyên sâu hoàn toàn miễn phí.</span>
+</div>
+<div class="flex items-start gap-2">
+<span class="material-symbols-outlined text-primary text-[18px] shrink-0 mt-0.5">check_circle</span>
+<span class="font-body-md text-body-md text-on-surface">Nhận báo cáo đánh giá tương hợp ban đầu từ thuật toán Tâm Giao.</span>
+</div>
+<div class="flex items-start gap-2">
+<span class="material-symbols-outlined text-secondary text-[18px] shrink-0 mt-0.5">info</span>
+<span class="font-body-sm text-body-sm text-secondary">
+            Để bảo vệ an toàn cho cả hai phía, tính năng Kết nối 1-1 và gửi thư ngỏ chỉ mở sau khi bạn hoàn tất Xác thực eKYC &amp; Giấy xác nhận độc thân ở Bước 3.
+          </span>
+</div>
+</div>
+</div>
+<div class="flex flex-col gap-3 pt-space-xs pb-space-md">
+<button class="w-full py-3.5 px-space-md rounded-xl bg-primary-container text-on-primary-container font-title-md text-title-md font-semibold flex items-center justify-center gap-2 shadow-lg active:scale-[0.98] transition-all" type="button">
+<span class="">Lưu &amp; Tiếp tục: Tiêu chuẩn bạn đời</span>
+<span class="material-symbols-outlined text-[20px]">arrow_forward</span>
+</button>
+<div class="flex items-center justify-center gap-1.5 text-center text-secondary">
+<span class="material-symbols-outlined text-[16px] text-primary shrink-0">shield</span>
+<p class="font-body-sm text-body-sm">
+          Thông tin được cam kết bảo mật theo Nghị định 13/2023/NĐ-CP.
+        </p>
+</div>
+</div>
+</div>
+</div>
+<script>
+  (function() {
+    const tagButtons = document.querySelectorAll('.tag-chip');
+    tagButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const isSelected = btn.classList.contains('bg-primary-fixed');
+        if (isSelected) {
+          btn.classList.remove('bg-primary-fixed', 'text-on-primary-fixed', 'font-medium');
+          btn.classList.add('bg-surface-container-high', 'text-on-surface');
+        } else {
+          btn.classList.remove('bg-surface-container-high', 'text-on-surface');
+          btn.classList.add('bg-primary-fixed', 'text-on-primary-fixed', 'font-medium');
+        }
+      });
+    });
+
+    const genderButtons = document.querySelectorAll('.gender-btn');
+    genderButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        genderButtons.forEach(b => {
+          b.classList.remove('bg-surface-container-high', 'text-on-surface', 'font-semibold');
+          b.classList.add('bg-surface-container-low', 'text-secondary');
+        });
+        btn.classList.remove('bg-surface-container-low', 'text-secondary');
+        btn.classList.add('bg-surface-container-high', 'text-on-surface', 'font-semibold');
+      });
+    });
+
+    const bio = document.getElementById('bio');
+    const charCount = document.getElementById('charCount');
+    if (bio && charCount) {
+      bio.addEventListener('input', (e) => {
+        const len = e.target.value.length;
+        charCount.textContent = `${len} / 800 ký tự`;
+      });
+    }
+
+    const saveDraftBtn = document.getElementById('saveDraftBtn');
+    if (saveDraftBtn) {
+      saveDraftBtn.addEventListener('click', () => {
+        saveDraftBtn.innerHTML = '<span class="material-symbols-outlined text-[18px]">done</span><span>Đã lưu</span>';
+        setTimeout(() => {
+          saveDraftBtn.innerHTML = '<span class="material-symbols-outlined text-[18px]">bookmark_border</span><span>Lưu tạm</span>';
+        }, 1500);
+      });
+    }
+  })();
+</script></main>
+
+
+
+
+
+</body></html>

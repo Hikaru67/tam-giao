@@ -96,7 +96,7 @@ và handler xử lý đúng 1 lần (kể cả khi chạy lại).
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| db | infrastructure | P0 | 2d | BE-S1-02, BE-S1-03 | BE-S1-06, BE-S1-09 | TODO |
+| db | infrastructure | P0 | 2d | BE-S1-02, BE-S1-03 | BE-S1-06, BE-S1-09 | IN_REVIEW |
 
 **Mục tiêu:** Chuẩn hoá cách truy cập DB, transaction và ghi domain event an toàn.
 
@@ -123,7 +123,7 @@ và handler xử lý đúng 1 lần (kể cả khi chạy lại).
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| db, worker | infrastructure | P0 | 2d | BE-S1-04 | BE-S1-08 | TODO |
+| db, worker | infrastructure | P0 | 2d | BE-S1-04 | BE-S1-08 | IN_REVIEW |
 
 **Mục tiêu:** Có cơ chế phát event tin cậy và hẹn giờ job (nền cho đếm ngược 24h/14 ngày).
 
@@ -150,7 +150,7 @@ và handler xử lý đúng 1 lần (kể cả khi chạy lại).
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| api | presentation | P0 | 1.5d | BE-S1-02, BE-S1-03 | BE-S1-04, BE-S1-09 | TODO |
+| api | presentation | P0 | 1.5d | BE-S1-02, BE-S1-03 | BE-S1-04, BE-S1-09 | IN_REVIEW |
 
 **Mục tiêu:** Khung HTTP thống nhất để mọi module đăng ký route giống nhau.
 
@@ -203,7 +203,7 @@ và handler xử lý đúng 1 lần (kể cả khi chạy lại).
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| testing, repo | devops | P0 | 1.5d | BE-S1-04 | BE-S1-05 | TODO |
+| testing, repo | devops | P0 | 1.5d | BE-S1-04 | BE-S1-05 | IN_REVIEW |
 
 **Mục tiêu:** Mọi task có infrastructure đều chạy test với Postgres thật, CI tự động chặn PR lỗi.
 
@@ -230,7 +230,7 @@ và handler xử lý đúng 1 lần (kể cả khi chạy lại).
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| kernel, db | infrastructure | P0 | 1.5d | BE-S1-03 | BE-S1-04, BE-S1-06 | TODO |
+| kernel, db | infrastructure | P0 | 1.5d | BE-S1-03 | BE-S1-04, BE-S1-06 | IN_REVIEW |
 
 **Mục tiêu:** Chuẩn bị mã hoá trường nhạy cảm (CCCD, thu nhập, tài sản) trước khi các module dùng.
 
