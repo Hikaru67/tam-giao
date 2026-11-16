@@ -83,3 +83,5 @@ export const envNodeEnv = z.enum(['development', 'test', 'production']);
 export const envLogLevel = z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace']);
 export const envPostgresUrl = z.url({ protocol: /^postgres(ql)?$/ });
 export const envHttpUrl = z.url({ protocol: /^https?$/ });
+
+export { REDACTED_KEYS, createLogger, type Logger, type LoggerOptions } from './logger.js';

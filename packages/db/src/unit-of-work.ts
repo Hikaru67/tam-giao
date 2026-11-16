@@ -1,34 +1,59 @@
 import type { Result, Tx, UnitOfWork } from '@tamgiao/kernel';
-import type { Db } from './client.js';
+import { drizzle } from 'drizzle-orm/node-postgres';
+import type pg from 'pg';
 import { toTx } from './tx.js';
 
-/** Tín hiệu nội bộ để Drizzle rollback khi `work` trả `Err` (không phải lỗi thật). */
-class RollbackOnErr extends Error {
-  constructor() {
-    super('rollback: work returned Err');
-  }
-}
-
 /**
- * Hiện thực `UnitOfWork` bằng transaction Drizzle, theo đúng hợp đồng port trong kernel:
- * `Ok` → commit, `Err` → rollback rồi trả lại `Err`, throw → rollback rồi ném lại.
+ * Hiện thực `UnitOfWork` trên một connection riêng của pool, theo đúng hợp đồng port trong kernel:
+ * `Ok` → COMMIT, `Err` → ROLLBACK rồi trả lại `Err`, throw → ROLLBACK rồi ném lại.
+ * Tự quản lý BEGIN/COMMIT để vừa có Drizzle vừa có connection `pg` thô của cùng transaction (`asPgClient`).
  */
 export class DrizzleUnitOfWork implements UnitOfWork {
-  constructor(private readonly db: Db) {}
+  constructor(private readonly pool: pg.Pool) {}
 
   async run<T, E>(work: (tx: Tx) => Promise<Result<T, E>>): Promise<Result<T, E>> {
-    let outcome: Result<T, E> | undefined;
+    const client = await this.pool.connect();
+    // false khi BEGIN/COMMIT/ROLLBACK lỗi → connection ở trạng thái không chắc chắn, huỷ thay vì trả lại pool.
+    let healthy = true;
     try {
-      await this.db.transaction(async (dbTx) => {
-        outcome = await work(toTx(dbTx));
-        if (outcome.isErr()) throw new RollbackOnErr();
-      });
+      await this.control(client, 'BEGIN', () => (healthy = false));
+      let outcome: Result<T, E>;
+      try {
+        outcome = await work(toTx({ db: drizzle(client), client }));
+      } catch (error) {
+        healthy = await this.tryRollback(client);
+        throw error;
+      }
+      if (outcome.isErr()) {
+        healthy = await this.tryRollback(client);
+        return outcome;
+      }
+      await this.control(client, 'COMMIT', () => (healthy = false));
+      return outcome;
+    } finally {
+      client.release(!healthy);
+    }
+  }
+
+  private async control(
+    client: pg.PoolClient,
+    statement: 'BEGIN' | 'COMMIT',
+    onFail: () => void,
+  ): Promise<void> {
+    try {
+      await client.query(statement);
     } catch (error) {
-      if (!(error instanceof RollbackOnErr)) throw error;
+      onFail();
+      throw error;
     }
-    if (outcome === undefined) {
-      throw new Error('DrizzleUnitOfWork: transaction kết thúc mà không có kết quả');
+  }
+
+  private async tryRollback(client: pg.PoolClient): Promise<boolean> {
+    try {
+      await client.query('ROLLBACK');
+      return true;
+    } catch {
+      return false;
     }
-    return outcome;
   }
 }

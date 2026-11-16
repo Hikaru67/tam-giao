@@ -1,6 +1,6 @@
 import { newId } from '@tamgiao/kernel';
 import { createMiddleware } from 'hono/factory';
-import type { Logger } from '../logger.js';
+import type { Logger } from '@tamgiao/config';
 
 /** Biến gắn vào context của mỗi request. */
 export interface AppEnv {

@@ -5,7 +5,7 @@ import { describe, expect, it } from 'vitest';
 import { createApp, type ReadinessCheck } from '../app.js';
 import type { AppEnv } from '../http/context.js';
 import { sendResult } from '../http/problem.js';
-import { createLogger } from '../logger.js';
+import { createLogger } from '@tamgiao/config';
 
 registerErrors('api-test', {
   TEST_USER_BUSY: { status: 409, title: 'Người dùng đang bận (test)' },
@@ -16,6 +16,7 @@ function setup(
 ) {
   const lines: string[] = [];
   const logger = createLogger({
+    service: 'api',
     level: 'debug',
     destination: { write: (msg: string) => void lines.push(msg) },
   });

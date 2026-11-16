@@ -8,7 +8,8 @@ export function testDatabaseUrl(): string {
 }
 
 /** Schema không bao giờ bị xoá dữ liệu (bảng theo dõi migration). */
-const PROTECTED_SCHEMAS = new Set(['drizzle', 'pg_catalog', 'information_schema', 'public']);
+// `pgboss`: bảng nội bộ của pg-boss (version, queue) — test dùng tên queue riêng thay vì xoá.
+const PROTECTED_SCHEMAS = new Set(['drizzle', 'pgboss', 'pg_catalog', 'information_schema', 'public']);
 
 /**
  * Xoá sạch dữ liệu mọi bảng trong các schema ứng dụng (giữ cấu trúc + lịch sử migration).

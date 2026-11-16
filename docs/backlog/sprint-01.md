@@ -123,7 +123,7 @@ và handler xử lý đúng 1 lần (kể cả khi chạy lại).
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| db, worker | infrastructure | P0 | 2d | BE-S1-04 | BE-S1-08 | TODO |
+| db, worker | infrastructure | P0 | 2d | BE-S1-04 | BE-S1-08 | IN_REVIEW |
 
 **Mục tiêu:** Có cơ chế phát event tin cậy và hẹn giờ job (nền cho đếm ngược 24h/14 ngày).
 

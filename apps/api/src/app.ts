@@ -5,7 +5,7 @@ import { domainError } from '@tamgiao/kernel';
 import { requestContext, type AppEnv } from './http/context.js';
 import { handleError, handleNotFound } from './http/errors.js';
 import { problemResponse } from './http/problem.js';
-import type { Logger } from './logger.js';
+import type { Logger } from '@tamgiao/config';
 import type { ApiModule } from './modules.js';
 
 export interface ReadinessCheck {

@@ -12,7 +12,9 @@
   "dependencies": {
     "@tamgiao/kernel": "workspace:*",
     "drizzle-orm": "0.45.4",
-    "pg": "8.23.1"
+    "pg": "8.23.1",
+    "pg-boss": "12.38.2",
+    "uuid": "11.1.1"
   },
   "devDependencies": {
     "@tamgiao/testing": "workspace:*",

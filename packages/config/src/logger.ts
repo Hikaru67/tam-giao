@@ -32,16 +32,18 @@ const redactPaths = [
 ];
 
 export interface LoggerOptions {
+  /** Tên tiến trình ghi vào mỗi dòng log (`api`, `worker`). */
+  readonly service: string;
   readonly level: string;
   /** Cho test: ghi vào stream riêng thay vì stdout. */
   readonly destination?: DestinationStream;
 }
 
-export function createLogger({ level, destination }: LoggerOptions): Logger {
+export function createLogger({ service, level, destination }: LoggerOptions): Logger {
   return pino(
     {
       level,
-      base: { service: 'api' },
+      base: { service },
       redact: { paths: redactPaths, censor: '[REDACTED]' },
       timestamp: pino.stdTimeFunctions.isoTime,
     },

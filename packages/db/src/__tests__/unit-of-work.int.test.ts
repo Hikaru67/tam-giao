@@ -41,7 +41,7 @@ function event(aggregateId: string, version: number): DomainEvent {
 
 beforeAll(async () => {
   database = createDatabase(testDatabaseUrl(), { maxConnections: 5 });
-  uow = new DrizzleUnitOfWork(database.db);
+  uow = new DrizzleUnitOfWork(database.pool);
   await database.pool.query(
     'create schema if not exists scratch; create table if not exists scratch.items (id text primary key)',
   );

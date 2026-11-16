@@ -15,7 +15,6 @@
     "@tamgiao/db": "workspace:*",
     "@tamgiao/kernel": "workspace:*",
     "hono": "4.13.18",
-    "pino": "10.4.0",
     "zod": "4.6.7"
   },
   "devDependencies": {

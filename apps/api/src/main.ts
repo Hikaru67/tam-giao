@@ -2,14 +2,14 @@ import { serve } from '@hono/node-server';
 import { createDatabase } from '@tamgiao/db';
 import { createApp } from './app.js';
 import { loadApiConfig } from './config.js';
-import { createLogger } from './logger.js';
+import { createLogger } from '@tamgiao/config';
 import { buildModules } from './modules.js';
 
 /** Composition root: nối config → hạ tầng → module → HTTP server. Không chứa logic nghiệp vụ. */
 const SHUTDOWN_TIMEOUT_MS = 10_000;
 
 const config = loadApiConfig();
-const logger = createLogger({ level: config.logLevel });
+const logger = createLogger({ service: 'api', level: config.logLevel });
 const database = createDatabase(config.database.url);
 
 const app = createApp({
