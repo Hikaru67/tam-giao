@@ -1,10 +1,11 @@
 # Hạ tầng local
 
 Chỉ dùng cho máy dev. Thông tin đăng nhập ở đây là **giá trị giả cho local**, không dùng ở staging/production.
+Mọi cổng chỉ mở trên `127.0.0.1` (không lộ ra mạng LAN).
 
 | Dịch vụ | Image | Cổng host | Ghi chú |
 |---|---|---|---|
-| PostgreSQL | `postgres:16-alpine` | 5433 | db `tamgiao`, user/pass `tamgiao` |
+| PostgreSQL | `postgres:16-alpine` | 5433 | db/user `tamgiao`, **không mật khẩu** (`trust`) |
 | SeaweedFS (S3) | `chrislusf/seaweedfs:4.53` | 8333 (S3), 9333 (master) | key `tamgiao` / `tamgiao-local-secret` (file `seaweedfs-s3.json`) |
 | storage-init | `amazon/aws-cli:2.40.3` | — | Tạo bucket `public-profile`, `private-kyc` rồi thoát |
 

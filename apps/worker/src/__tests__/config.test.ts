@@ -6,13 +6,13 @@ describe('worker config', () => {
   it('env hợp lệ → map đúng cấu trúc', () => {
     expect(
       parseWorkerConfig({
-        DATABASE_URL: 'postgres://tamgiao:tamgiao@localhost:5433/tamgiao',
+        DATABASE_URL: 'postgres://tamgiao@localhost:5433/tamgiao',
         NODE_ENV: 'test',
       }),
     ).toEqual({
       nodeEnv: 'test',
       logLevel: 'info',
-      database: { url: 'postgres://tamgiao:tamgiao@localhost:5433/tamgiao' },
+      database: { url: 'postgres://tamgiao@localhost:5433/tamgiao' },
     });
   });
 
