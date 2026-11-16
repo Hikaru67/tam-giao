@@ -10,6 +10,8 @@ export const problemSchema = z.object({
   traceId: z.string(),
   /** Chi tiết từng trường khi `code = VALIDATION_FAILED`. */
   errors: z.array(z.object({ path: z.string(), message: z.string() })).optional(),
+  /** `DomainError.details` (không nhạy cảm), vd `{ retryAfterSeconds: 60 }`. */
+  meta: z.record(z.string(), z.unknown()).optional(),
 });
 export type Problem = z.infer<typeof problemSchema>;
 

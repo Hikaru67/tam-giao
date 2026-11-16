@@ -42,7 +42,7 @@ Cập nhật cột Trạng thái tại đây và trong file sprint khi task đ�
 
 | Sprint | TODO | IN_PROGRESS | IN_REVIEW | DONE | BLOCKED |
 |---|---|---|---|---|---|
-| S1 | 3 | 0 | 6 | 0 | 0 |
+| S1 | 2 | 0 | 7 | 0 | 0 |
 | S2 | 8 | 0 | 0 | 0 | 0 |
 | S3 | 7 | 0 | 0 | 0 | 0 |
 | S4 | 7 | 0 | 0 | 0 | 0 |

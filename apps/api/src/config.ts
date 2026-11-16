@@ -16,6 +16,9 @@ const apiEnvSchema = z
     NODE_ENV: envNodeEnv.default('development'),
     LOG_LEVEL: envLogLevel.default('info'),
     API_PORT: envPort.default(3000),
+    /** Danh sách origin cách nhau bởi dấu phẩy; bỏ trống = không bật CORS. */
+    CORS_ORIGINS: z.string().optional(),
+    API_BODY_LIMIT_BYTES: z.coerce.number().int().min(1_024).max(10_485_760).default(1_048_576),
     DATABASE_URL: envPostgresUrl,
     S3_ENDPOINT: envHttpUrl,
     S3_REGION: z.string().default('us-east-1'),
@@ -29,6 +32,13 @@ const apiEnvSchema = z
     nodeEnv: e.NODE_ENV,
     logLevel: e.LOG_LEVEL,
     port: e.API_PORT,
+    http: {
+      corsOrigins: (e.CORS_ORIGINS ?? '')
+        .split(',')
+        .map((o) => o.trim())
+        .filter(Boolean),
+      bodyLimitBytes: e.API_BODY_LIMIT_BYTES,
+    },
     database: { url: e.DATABASE_URL },
     storage: {
       endpoint: e.S3_ENDPOINT,

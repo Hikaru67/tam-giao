@@ -72,6 +72,7 @@ export const COMMON_ERROR_CODES = registerErrors('common', {
   FORBIDDEN: { status: 403, title: 'Không có quyền thực hiện' },
   NOT_FOUND: { status: 404, title: 'Không tìm thấy tài nguyên' },
   RATE_LIMITED: { status: 429, title: 'Thao tác quá nhanh, vui lòng thử lại sau' },
+  PAYLOAD_TOO_LARGE: { status: 413, title: 'Dữ liệu gửi lên quá lớn' },
   INTERNAL_ERROR: { status: 500, title: 'Lỗi hệ thống' },
   INVALID_ID: { status: 400, title: 'Định danh không hợp lệ' },
   MONEY_INVALID: { status: 422, title: 'Số tiền không hợp lệ' },

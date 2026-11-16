@@ -4,14 +4,23 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "dev": "node --env-file-if-exists=../../.env --import tsx --watch src/main.ts",
+    "start": "node --env-file-if-exists=../../.env --import tsx src/main.ts",
     "typecheck": "tsc -p tsconfig.json"
   },
   "dependencies": {
+    "@hono/node-server": "2.1.8",
     "@tamgiao/config": "workspace:*",
+    "@tamgiao/contracts": "workspace:*",
+    "@tamgiao/db": "workspace:*",
+    "@tamgiao/kernel": "workspace:*",
+    "hono": "4.13.18",
+    "pino": "10.4.0",
     "zod": "4.6.7"
   },
   "devDependencies": {
     "@types/node": "22.20.5",
+    "tsx": "4.23.15",
     "typescript": "5.9.3",
     "vitest": "3.2.7"
   }

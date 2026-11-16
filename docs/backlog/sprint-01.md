@@ -150,7 +150,7 @@ và handler xử lý đúng 1 lần (kể cả khi chạy lại).
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| api | presentation | P0 | 1.5d | BE-S1-02, BE-S1-03 | BE-S1-04, BE-S1-09 | TODO |
+| api | presentation | P0 | 1.5d | BE-S1-02, BE-S1-03 | BE-S1-04, BE-S1-09 | IN_REVIEW |
 
 **Mục tiêu:** Khung HTTP thống nhất để mọi module đăng ký route giống nhau.
 

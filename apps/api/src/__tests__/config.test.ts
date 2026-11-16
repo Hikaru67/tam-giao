@@ -25,6 +25,7 @@ describe('api config', () => {
       nodeEnv: 'development',
       logLevel: 'info',
       port: 3000,
+      http: { corsOrigins: [], bodyLimitBytes: 1_048_576 },
       database: { url: 'postgres://tamgiao:tamgiao@localhost:5433/tamgiao' },
       storage: {
         endpoint: 'http://localhost:8333',
