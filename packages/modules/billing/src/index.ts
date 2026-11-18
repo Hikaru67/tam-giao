@@ -59,6 +59,11 @@ import {
 } from './infrastructure/drizzle-refund-repositories.js';
 import { registerBillingKycConsumers } from './infrastructure/refund-kyc-consumers.js';
 import { createRefundAdminRoutes } from './presentation/refund-admin-routes.js';
+// BE-S4-07 — đối soát ledger hằng ngày.
+import { ListReconciliationReports } from './application/reconciliation/list-reconciliation-reports.js';
+import { ReconcileLedger } from './application/reconciliation/reconcile-ledger.js';
+import { DrizzleReconciliationRepository } from './infrastructure/drizzle-reconciliation-repository.js';
+import { createReconciliationAdminRoutes } from './presentation/reconciliation-admin-routes.js';
 
 /**
  * Module billing (Sprint 4): thanh toán xác thực, ledger chỉ ghi thêm, voucher hẹn hò, quán đối tác.
@@ -216,6 +221,18 @@ export function createBillingModule(deps: BillingModuleDeps): BillingModule {
     }),
   );
 
+  // ── Báo cáo đối soát ledger (BE-S4-07): job ở worker, admin chỉ đọc ──────────────────────────────
+  routes.route(
+    '/',
+    createReconciliationAdminRoutes({
+      listReports: new ListReconciliationReports({
+        uow,
+        reconciliation: new DrizzleReconciliationRepository(),
+      }),
+      requireAdmin: deps.requireAdmin,
+    }),
+  );
+
   return { name: 'billing', routes, facade };
 }
 
@@ -291,4 +308,25 @@ export function createBillingWorker(deps: BillingWorkerDeps): BillingWorker {
     listPendingRefunds: new ListPendingRefunds({ uow, payments }),
     findOverdueRefunds: new FindOverdueRefunds({ uow, clock, payments }),
   };
+}
+
+// ── Đối soát ledger hằng ngày (BE-S4-07) ───────────────────────────────────────────────────────────
+export type { ReconcileLedgerOutcome } from './application/reconciliation/reconcile-ledger.js';
+export type {
+  ReconciliationMismatch,
+  ReconciliationReportView,
+} from './application/reconciliation/reconciliation-views.js';
+
+export interface LedgerReconciliationJobDeps {
+  readonly uow: UnitOfWork;
+  readonly clock: Clock;
+}
+
+/** Use case job đối soát ledger (BE-S4-07) cho worker — không cần nối route/gateway/identity. */
+export function createLedgerReconciliationJob(deps: LedgerReconciliationJobDeps): ReconcileLedger {
+  return new ReconcileLedger({
+    uow: deps.uow,
+    clock: deps.clock,
+    reconciliation: new DrizzleReconciliationRepository(),
+  });
 }

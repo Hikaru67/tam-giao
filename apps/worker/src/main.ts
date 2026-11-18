@@ -13,13 +13,19 @@ import {
 } from '@tamgiao/db';
 import { PRESIGNED_URL_TTL_SECONDS } from '@tamgiao/contracts';
 import { SystemClock } from '@tamgiao/kernel';
-import { createBillingWorker, createVoucherExpiryJob, FakePaymentGateway } from '@tamgiao/module-billing';
+import {
+  createBillingWorker,
+  createLedgerReconciliationJob,
+  createVoucherExpiryJob,
+  FakePaymentGateway,
+} from '@tamgiao/module-billing';
 import { ConsoleSmsSender, createIdentityModule } from '@tamgiao/module-identity';
 import { createKycMediaRetention } from '@tamgiao/module-verification';
 import { PgBoss } from 'pg-boss';
 import { loadWorkerConfig } from './config.js';
 import { registerBillingRefundJobs } from './jobs/billing-refund.js';
 import { registerKycMediaRetentionJob } from './jobs/kyc-media-retention.js';
+import { registerLedgerReconciliationJob } from './jobs/ledger-reconciliation.js';
 import { registerVoucherExpiryJob } from './jobs/voucher-expiry.js';
 import { registerWorkers } from './registry.js';
 
@@ -82,6 +88,14 @@ await registerVoucherExpiryJob({
   logger,
   expirer: createVoucherExpiryJob({ uow, clock }),
   ...config.jobs.voucherExpiry,
+});
+
+// Đối soát ledger hằng ngày (BE-S4-07): lệch → log error + báo cáo MISMATCH.
+await registerLedgerReconciliationJob({
+  boss,
+  logger,
+  reconciler: createLedgerReconciliationJob({ uow, clock }),
+  ...config.jobs.ledgerReconciliation,
 });
 
 // Hoàn tiền (BE-S4-04): job từng khoản (retry backoff) + điều phối REFUND_PENDING + cảnh báo SLA.
