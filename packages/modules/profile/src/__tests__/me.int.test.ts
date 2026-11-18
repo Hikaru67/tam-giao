@@ -8,8 +8,8 @@ import {
   createDatabase,
   type Database,
 } from '@tamgiao/db';
-import { handleError, handleNotFound, requestContext, type AppEnv } from '@tamgiao/http';
-import { FakeClock, newId, type ObjectStorage } from '@tamgiao/kernel';
+import { createRequireAdmin, handleError, handleNotFound, requestContext, type AppEnv } from '@tamgiao/http';
+import { FakeClock, fail, newId, type ObjectStorage } from '@tamgiao/kernel';
 import { FakeEkycProvider, createVerificationModule } from '@tamgiao/module-verification';
 import { resetDatabase, testDatabaseUrl } from '@tamgiao/testing';
 import { Hono } from 'hono';
@@ -58,6 +58,7 @@ beforeAll(() => {
     ekyc: new FakeEkycProvider(),
     applicants: { getApplicantIdentity: async () => null },
     requireUser,
+    requireAdmin: createRequireAdmin(async () => fail('UNAUTHENTICATED')),
   });
   const module = createProfileModule({
     uow,

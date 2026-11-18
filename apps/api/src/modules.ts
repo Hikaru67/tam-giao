@@ -84,6 +84,7 @@ export function buildModules({ config, uow, clock }: ModuleDeps): readonly ApiMo
     ekyc,
     applicants,
     requireUser: userGuard,
+    requireAdmin: identity.requireAdmin,
   });
   const profile = createProfileModule({
     uow,

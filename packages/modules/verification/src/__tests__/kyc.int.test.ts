@@ -9,8 +9,8 @@ import {
   createDatabase,
   type Database,
 } from '@tamgiao/db';
-import { handleError, handleNotFound, requestContext, type AppEnv } from '@tamgiao/http';
-import { FakeClock, newId, ok, type ObjectStorage } from '@tamgiao/kernel';
+import { createRequireAdmin, handleError, handleNotFound, requestContext, type AppEnv } from '@tamgiao/http';
+import { FakeClock, fail, newId, ok, type ObjectStorage } from '@tamgiao/kernel';
 import { resetDatabase, runConcurrently, testDatabaseUrl, withRollback } from '@tamgiao/testing';
 import { Hono } from 'hono';
 import { createMiddleware } from 'hono/factory';
@@ -74,6 +74,7 @@ beforeAll(() => {
     ekyc: new FakeEkycProvider(),
     applicants,
     requireUser,
+    requireAdmin: createRequireAdmin(async () => fail('UNAUTHENTICATED')),
   });
   const logger = createLogger({
     service: 'api',

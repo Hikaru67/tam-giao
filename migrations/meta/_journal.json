@@ -64,6 +64,13 @@
       "when": 1794976510011,
       "tag": "0008_verification_kyc_submissions",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1794977465327,
+      "tag": "0009_verification_interview_slots",
+      "breakpoints": true
     }
   ]
 }

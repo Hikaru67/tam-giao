@@ -30,3 +30,7 @@ export const SAFETY_RESPONSE_SLA_MINUTES = 30;
 export const MIN_AGE = 20;
 /** Chờ xác nhận (D6). */
 export const KYC_MEDIA_RETENTION_DAYS = 30;
+/** Thời lượng một slot phỏng vấn sơ bộ (BE-S3-05). */
+export const INTERVIEW_DURATION_MINUTES = 15;
+/** Huỷ/đổi lịch phỏng vấn chỉ khi còn ít nhất ngần này giờ trước giờ bắt đầu (BE-S3-05). */
+export const INTERVIEW_CHANGE_CUTOFF_HOURS = 2;

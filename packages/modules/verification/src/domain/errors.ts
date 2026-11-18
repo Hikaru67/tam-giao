@@ -15,3 +15,19 @@ export const VERIFICATION_DOMAIN_ERRORS = [
 ] as const;
 
 export type VerificationDomainErrorCode = (typeof VERIFICATION_DOMAIN_ERRORS)[number];
+
+/** Mã lỗi phỏng vấn sơ bộ (BE-S3-05) — đăng ký ở `@tamgiao/contracts` (`verification/interview-errors.ts`). */
+export const INTERVIEW_ERRORS = [
+  'SLOT_TAKEN',
+  'CANCEL_TOO_LATE',
+  'INTERVIEW_SLOT_IN_PAST',
+  'INTERVIEW_SLOT_NOT_FOUND',
+  'INTERVIEW_SLOT_OVERLAP',
+  'INTERVIEW_NOT_BOOKED',
+  'INTERVIEW_NOT_STARTED',
+  'INTERVIEW_ALREADY_BOOKED',
+  'INTERVIEW_ALREADY_PASSED',
+  'INTERVIEW_REQUIRES_SUBMISSION',
+] as const;
+
+export type InterviewErrorCode = (typeof INTERVIEW_ERRORS)[number];

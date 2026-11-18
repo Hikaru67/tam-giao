@@ -1,14 +1,26 @@
 import { OutboxWriter } from '@tamgiao/db';
-import type { AppEnv } from '@tamgiao/http';
+import type { AppEnv, RequireAdmin } from '@tamgiao/http';
 import type { BlindIndexer, Clock, Encryptor, UnitOfWork, UploadRegistry } from '@tamgiao/kernel';
 import type { Hono, MiddlewareHandler } from 'hono';
 import type { VerificationFacade } from './application/facade.js';
 import { GetMyKyc } from './application/get-my-kyc.js';
+import { BookInterview } from './application/interview/book-interview.js';
+import { CancelInterview } from './application/interview/cancel-interview.js';
+import {
+  GetMyInterview,
+  ListAvailableInterviewSlots,
+  ListInterviewSlots,
+} from './application/interview/interview-queries.js';
+import { OpenInterviewSlot } from './application/interview/open-interview-slot.js';
+import { RecordInterviewResult } from './application/interview/record-interview-result.js';
+import { RescheduleInterview } from './application/interview/reschedule-interview.js';
 import type { ApplicantProfileReader } from './application/ports/applicant-profile-reader.js';
 import type { EkycProvider } from './application/ports/ekyc-provider.js';
 import { GetVerificationSummary } from './application/get-verification-summary.js';
 import { SubmitKyc } from './application/submit-kyc.js';
+import { DrizzleInterviewSlotRepository } from './infrastructure/drizzle-interview-slot-repository.js';
 import { DrizzleKycSubmissionRepository } from './infrastructure/drizzle-kyc-submission-repository.js';
+import { createInterviewRoutes } from './presentation/interview-routes.js';
 import { createKycRoutes } from './presentation/kyc-routes.js';
 
 export type {
@@ -42,6 +54,8 @@ export interface VerificationModuleDeps {
   readonly applicants: ApplicantProfileReader;
   /** Guard người dùng app — `requireUser(identity.facade.authenticateUser)`. */
   readonly requireUser: MiddlewareHandler<AppEnv>;
+  /** Guard route admin — `identity.requireAdmin` (phỏng vấn sơ bộ dùng permission `kyc:review`). */
+  readonly requireAdmin: RequireAdmin;
 }
 
 export interface VerificationModule {
@@ -72,6 +86,22 @@ export function createVerificationModule(deps: VerificationModuleDeps): Verifica
     getMyKyc: new GetMyKyc({ uow, submissions }),
     requireUser: deps.requireUser,
   });
+  const slots = new DrizzleInterviewSlotRepository();
+  routes.route(
+    '/',
+    createInterviewRoutes({
+      openSlot: new OpenInterviewSlot({ uow, clock, slots }),
+      listSlots: new ListInterviewSlots({ uow, slots }),
+      listAvailable: new ListAvailableInterviewSlots({ uow, clock, slots }),
+      getMine: new GetMyInterview({ uow, clock, slots }),
+      book: new BookInterview({ uow, clock, slots, submissions }),
+      reschedule: new RescheduleInterview({ uow, clock, slots, submissions }),
+      cancel: new CancelInterview({ uow, clock, slots }),
+      recordResult: new RecordInterviewResult({ uow, clock, slots, submissions }),
+      requireUser: deps.requireUser,
+      requireAdmin: deps.requireAdmin,
+    }),
+  );
   const facade: VerificationFacade = new GetVerificationSummary({ uow, submissions });
   return { name: 'verification', routes, facade };
 }

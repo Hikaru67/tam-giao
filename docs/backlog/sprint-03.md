@@ -121,7 +121,7 @@ chuyên viên duyệt / từ chối / yêu cầu bổ sung trên admin; hệ th�
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| verification | domain, application, infrastructure, presentation | P1 | 1.5d | BE-S3-03 | BE-S3-04 | TODO |
+| verification | domain, application, infrastructure, presentation | P1 | 1.5d | BE-S3-03 | BE-S3-04 | DONE |
 
 **Mục tiêu:** Phục vụ nút "Đặt lịch phỏng vấn làm quen 15 phút" (màn 6) và "Nhật ký phỏng vấn" (admin).
 
