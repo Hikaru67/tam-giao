@@ -199,7 +199,7 @@ Admin đăng nhập với mật khẩu + 2FA, có phân quyền và audit log.
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| profile | application, presentation | P1 | 0.5d | BE-S2-05, BE-S2-06 | — | TODO |
+| profile | application, presentation | P1 | 0.5d | BE-S2-05, BE-S2-06 | — | DONE |
 
 **Mục tiêu:** App mobile biết điều hướng người dùng tới màn nào.
 
@@ -208,7 +208,7 @@ Admin đăng nhập với mật khẩu + 2FA, có phân quyền và audit log.
 - Ngoài: —
 
 **Tiêu chí nghiệm thu**
-- [ ] AC1: User mới tạo hồ sơ chưa xong → `PROFILE`; xong hồ sơ + tiêu chí → `VERIFICATION`.
+- [x] AC1: User mới tạo hồ sơ chưa xong → `PROFILE`; xong hồ sơ + tiêu chí → `VERIFICATION`.
 
 **Test bắt buộc:** HTTP test các bước.
 

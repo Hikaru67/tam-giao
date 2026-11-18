@@ -67,3 +67,28 @@ export const profileResponseSchema = z.object({
   updatedAt: z.iso.datetime(),
 });
 export type ProfileResponse = z.infer<typeof profileResponseSchema>;
+
+/**
+ * Bước onboarding để app điều hướng: `PROFILE` → `CRITERIA` → `VERIFICATION` → `UNDER_REVIEW` → `ACTIVE`.
+ * Hai bước cuối lấy từ module verification/billing (BE-S3-07, BE-S4-03).
+ */
+export const ONBOARDING_STEPS = ['PROFILE', 'CRITERIA', 'VERIFICATION', 'UNDER_REVIEW', 'ACTIVE'] as const;
+
+export const meResponseSchema = z.object({
+  userId: z.uuid(),
+  onboardingStep: z.enum(ONBOARDING_STEPS),
+  profile: z
+    .object({
+      fullName: z.string().nullable(),
+      gender: z.enum(GENDERS).nullable(),
+      /** Tuổi tròn theo ngày lịch Việt Nam; `null` nếu chưa nhập ngày sinh. */
+      age: z.number().int().nullable(),
+      currentCity: z.string().nullable(),
+      /** Presigned GET của ảnh đại diện (ảnh đầu tiên). */
+      avatarUrl: z.url().nullable(),
+    })
+    .nullable(),
+  /** Huy hiệu hiển thị (vd `VERIFIED`) — có từ khi module verification hoàn thành (BE-S3-07). */
+  badges: z.array(z.string()),
+});
+export type MeResponse = z.infer<typeof meResponseSchema>;
