@@ -147,7 +147,7 @@ chuyên viên duyệt / từ chối / yêu cầu bổ sung trên admin; hệ th�
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| verification | application, infrastructure | P1 | 1d | BE-S3-04 | — | IN_REVIEW |
+| verification | application, infrastructure | P1 | 1d | BE-S3-04 | — | DONE |
 
 **Mục tiêu:** Giảm thiểu dữ liệu nhạy cảm lưu giữ theo nguyên tắc tối thiểu hoá dữ liệu.
 
