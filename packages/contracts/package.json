@@ -10,7 +10,8 @@
     "./http": "./src/http.ts",
     "./identity": "./src/identity/index.ts",
     "./uploads": "./src/uploads/index.ts",
-    "./profile": "./src/profile/index.ts"
+    "./profile": "./src/profile/index.ts",
+    "./verification": "./src/verification/index.ts"
   },
   "scripts": {
     "typecheck": "tsc -p tsconfig.json"
