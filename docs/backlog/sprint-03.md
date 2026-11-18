@@ -173,7 +173,7 @@ chuyên viên duyệt / từ chối / yêu cầu bổ sung trên admin; hệ th�
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| verification | application | P0 | 0.5d | BE-S3-03 | BE-S3-03 | TODO |
+| verification | application | P0 | 0.5d | BE-S3-03 | BE-S3-03 | IN_REVIEW |
 
 **Mục tiêu:** Cho matching/profile hỏi trạng thái xác thực mà không đọc bảng verification (A3).
 

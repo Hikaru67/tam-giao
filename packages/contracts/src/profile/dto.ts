@@ -69,10 +69,18 @@ export const profileResponseSchema = z.object({
 export type ProfileResponse = z.infer<typeof profileResponseSchema>;
 
 /**
- * Bước onboarding để app điều hướng: `PROFILE` → `CRITERIA` → `VERIFICATION` → `UNDER_REVIEW` → `ACTIVE`.
- * Hai bước cuối lấy từ module verification/billing (BE-S3-07, BE-S4-03).
+ * Bước onboarding để app điều hướng: `PROFILE` → `CRITERIA` → `VERIFICATION` → `UNDER_REVIEW` → `ACTIVE`,
+ * hoặc `REJECTED` khi hồ sơ xác thực bị từ chối (chi tiết lý do ở `GET /me/kyc`).
+ * Ba bước cuối lấy từ facade verification (BE-S3-07); điều kiện đã thanh toán nối ở BE-S4-03.
  */
-export const ONBOARDING_STEPS = ['PROFILE', 'CRITERIA', 'VERIFICATION', 'UNDER_REVIEW', 'ACTIVE'] as const;
+export const ONBOARDING_STEPS = [
+  'PROFILE',
+  'CRITERIA',
+  'VERIFICATION',
+  'UNDER_REVIEW',
+  'ACTIVE',
+  'REJECTED',
+] as const;
 
 export const meResponseSchema = z.object({
   userId: z.uuid(),
@@ -88,7 +96,10 @@ export const meResponseSchema = z.object({
       avatarUrl: z.url().nullable(),
     })
     .nullable(),
-  /** Huy hiệu hiển thị (vd `VERIFIED`) — có từ khi module verification hoàn thành (BE-S3-07). */
+  /**
+   * Huy hiệu hiển thị. Hiện chỉ có huy hiệu xác thực (`VERIFICATION_BADGES` của `@tamgiao/contracts/verification`:
+   * `CCCD_VERIFIED`, `SINGLE_VERIFIED`, `INTERVIEWED`); để `string` để module khác có thể bổ sung huy hiệu.
+   */
   badges: z.array(z.string()),
 });
 export type MeResponse = z.infer<typeof meResponseSchema>;

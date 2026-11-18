@@ -1,6 +1,7 @@
 import { OutboxWriter } from '@tamgiao/db';
 import type { AppEnv } from '@tamgiao/http';
 import type { Clock, Encryptor, ObjectStorage, UnitOfWork, UploadRegistry } from '@tamgiao/kernel';
+import type { VerificationFacade } from '@tamgiao/module-verification/facade';
 import type { Hono, MiddlewareHandler } from 'hono';
 import type { ProfileFacade } from './application/facade.js';
 import { GetApplicantIdentity } from './application/get-applicant-identity.js';
@@ -23,6 +24,8 @@ export interface ProfileModuleDeps {
   /** Xác nhận key ảnh thuộc người dùng (BE-S2-07). */
   readonly uploads: UploadRegistry;
   readonly storage: ObjectStorage;
+  /** Facade verification — trạng thái xác thực + huy hiệu cho `GET /me` (BE-S3-07). */
+  readonly verification: VerificationFacade;
   /** Guard người dùng app — `requireUser(identity.facade.authenticateUser)`. */
   readonly requireUser: MiddlewareHandler<AppEnv>;
 }
@@ -55,7 +58,14 @@ export function createProfileModule(deps: ProfileModuleDeps): ProfileModule {
   routes.route(
     '/',
     createMeRoutes({
-      getMe: new GetMe({ uow, clock, profiles, preferences, storage: deps.storage }),
+      getMe: new GetMe({
+        uow,
+        clock,
+        profiles,
+        preferences,
+        storage: deps.storage,
+        verification: deps.verification,
+      }),
       requireUser: deps.requireUser,
     }),
   );
