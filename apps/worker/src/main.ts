@@ -2,13 +2,22 @@ import { createLogger } from '@tamgiao/config';
 import {
   DrizzleUnitOfWork,
   EventBus,
+  HmacBlindIndexer,
+  LocalKeyEncryptor,
   OutboxRelay,
+  S3ObjectStorage,
   createDatabase,
+  parseMasterKeyRing,
   registerConsumers,
   registerJob,
 } from '@tamgiao/db';
+import { PRESIGNED_URL_TTL_SECONDS } from '@tamgiao/contracts';
+import { SystemClock } from '@tamgiao/kernel';
+import { ConsoleSmsSender, createIdentityModule } from '@tamgiao/module-identity';
+import { createKycMediaRetention } from '@tamgiao/module-verification';
 import { PgBoss } from 'pg-boss';
 import { loadWorkerConfig } from './config.js';
+import { registerKycMediaRetentionJob } from './jobs/kyc-media-retention.js';
 import { registerWorkers } from './registry.js';
 
 /** Composition root của worker: relay outbox → hàng đợi consumer, và chạy job hẹn giờ. */
@@ -30,6 +39,27 @@ await registerConsumers({ boss, uow, bus, logger });
 for (const job of jobs) {
   await registerJob({ boss, uow, logger, ...job });
 }
+
+// Job xoá ảnh eKYC hết thời hạn lưu (BE-S3-06): storage S3 + audit log của identity.
+const clock = new SystemClock();
+const identity = createIdentityModule({
+  uow,
+  clock,
+  encryptor: new LocalKeyEncryptor(
+    parseMasterKeyRing(config.crypto.masterKeys, config.crypto.masterKeyVersion),
+  ),
+  blindIndexer: new HmacBlindIndexer(config.crypto.blindIndexKey),
+  // Worker không gửi OTP; identity chỉ dùng để lấy `auditLogger`.
+  smsSender: new ConsoleSmsSender(),
+  authSecret: config.auth.secret,
+});
+const storage = new S3ObjectStorage({ ...config.storage, presignGetTtlSeconds: PRESIGNED_URL_TTL_SECONDS });
+await registerKycMediaRetentionJob({
+  boss,
+  logger,
+  purge: createKycMediaRetention({ uow, clock, storage, auditLogger: identity.auditLogger }),
+  ...config.jobs.kycMediaRetention,
+});
 
 const relay = new OutboxRelay({ uow, boss, bus, logger });
 relay.start(RELAY_INTERVAL_MS);

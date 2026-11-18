@@ -147,7 +147,7 @@ chuyên viên duyệt / từ chối / yêu cầu bổ sung trên admin; hệ th�
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| verification | application, infrastructure | P1 | 1d | BE-S3-04 | — | TODO |
+| verification | application, infrastructure | P1 | 1d | BE-S3-04 | — | IN_REVIEW |
 
 **Mục tiêu:** Giảm thiểu dữ liệu nhạy cảm lưu giữ theo nguyên tắc tối thiểu hoá dữ liệu.
 
@@ -156,8 +156,8 @@ chuyên viên duyệt / từ chối / yêu cầu bổ sung trên admin; hệ th�
 - Ngoài: Xoá tài khoản theo yêu cầu (BE-S7-06).
 
 **Tiêu chí nghiệm thu**
-- [ ] AC1: Submission quyết định cách đây > N ngày → object bị xoá, cột key set null, có audit.
-- [ ] AC2: Chạy job 2 lần không lỗi (idempotent).
+- [x] AC1: Submission quyết định cách đây > N ngày → object bị xoá, cột key set null, có audit.
+- [x] AC2: Chạy job 2 lần không lỗi (idempotent).
 
 **Test bắt buộc:** Integration với MinIO + FakeClock.
 
