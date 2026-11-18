@@ -13,7 +13,7 @@ Admin đăng nhập với mật khẩu + 2FA, có phân quyền và audit log.
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| identity | domain, application, infrastructure, presentation | P0 | 2d | Sprint 1 | BE-S2-03, BE-S2-07 | IN_REVIEW |
+| identity | domain, application, infrastructure, presentation | P0 | 2d | Sprint 1 | BE-S2-03, BE-S2-07 | DONE |
 
 **Mục tiêu:** Phục vụ màn "Đăng nhập & Đăng ký" và "Xác thực SĐT & OTP".
 
@@ -41,7 +41,7 @@ Admin đăng nhập với mật khẩu + 2FA, có phân quyền và audit log.
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| identity | application, infrastructure, presentation | P0 | 1.5d | BE-S2-01 | BE-S2-04 | IN_REVIEW |
+| identity | application, infrastructure, presentation | P0 | 1.5d | BE-S2-01 | BE-S2-04 | DONE |
 
 **Mục tiêu:** Xác thực mọi request của app người dùng.
 
@@ -67,7 +67,7 @@ Admin đăng nhập với mật khẩu + 2FA, có phân quyền và audit log.
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| identity | domain, application, infrastructure, presentation | P0 | 2d | Sprint 1 | BE-S2-01 | TODO |
+| identity | domain, application, infrastructure, presentation | P0 | 2d | Sprint 1 | BE-S2-01 | DONE |
 
 **Mục tiêu:** Phục vụ màn "Đăng nhập Quản trị" và phân quyền cho cổng vận hành.
 
@@ -76,9 +76,9 @@ Admin đăng nhập với mật khẩu + 2FA, có phân quyền và audit log.
 - Ngoài: SSO/USB token.
 
 **Tiêu chí nghiệm thu**
-- [ ] AC1: Đúng mật khẩu nhưng thiếu/sai TOTP → không đăng nhập được.
-- [ ] AC2: `MATCHMAKER` gọi endpoint duyệt eKYC (permission `kyc:review`) → 403.
-- [ ] AC3: Sai 5 lần → khoá 15 phút.
+- [x] AC1: Đúng mật khẩu nhưng thiếu/sai TOTP → không đăng nhập được.
+- [x] AC2: `MATCHMAKER` gọi endpoint duyệt eKYC (permission `kyc:review`) → 403.
+- [x] AC3: Sai 5 lần → khoá 15 phút.
 
 **Test bắt buộc:** Domain + HTTP test phân quyền theo bảng permission.
 

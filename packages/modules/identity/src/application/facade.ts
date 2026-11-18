@@ -9,7 +9,17 @@ export interface AuthenticatedUser {
   readonly sessionId: string;
 }
 
+/** Cán bộ quản trị đã xác thực; `permissions` lấy theo bảng role → permission tại thời điểm request. */
+export interface AuthenticatedAdmin {
+  readonly adminId: string;
+  readonly sessionId: string;
+  readonly role: string;
+  readonly permissions: readonly string[];
+}
+
 export interface IdentityFacade {
   /** Kiểm tra access token của người dùng app (chữ ký, hạn, phiên còn hiệu lực). */
   authenticateUser(accessToken: string): Promise<Result<AuthenticatedUser, DomainError>>;
+  /** Kiểm tra token phiên admin (còn hạn, chưa thu hồi) và trả role + permission hiện hành. */
+  authenticateAdmin(token: string): Promise<Result<AuthenticatedAdmin, DomainError>>;
 }

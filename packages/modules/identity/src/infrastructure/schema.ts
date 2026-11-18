@@ -1,5 +1,6 @@
 import { bytea, timestamptz } from '@tamgiao/db';
-import { bigserial, index, integer, pgSchema, text, uuid } from 'drizzle-orm/pg-core';
+import { sql } from 'drizzle-orm';
+import { bigint, bigserial, boolean, check, index, integer, pgSchema, text, uuid } from 'drizzle-orm/pg-core';
 
 /** Schema Postgres của module identity (AGENTS.md mục 4). */
 export const identity = pgSchema('identity');
@@ -67,4 +68,41 @@ export const refreshTokens = identity.table(
     usedAt: timestamptz('used_at'),
   },
   (t) => [index('refresh_tokens_session_id_idx').on(t.sessionId)],
+);
+
+/** Tài khoản cán bộ quản trị (BE-S2-03). */
+export const adminUsers = identity.table(
+  'admin_users',
+  {
+    id: uuid('id').primaryKey(),
+    /** Email công vụ đã chuẩn hoá chữ thường — unique. */
+    email: text('email').notNull().unique('admin_users_email_uq'),
+    /** Chuỗi PHC argon2id. */
+    passwordHash: text('password_hash').notNull(),
+    /** Secret TOTP, mã hoá qua `Encryptor` (context `identity.admin_users.totp_secret:<id>`). */
+    totpSecretEnc: bytea('totp_secret_enc').notNull(),
+    role: text('role').notNull(),
+    failedLogins: integer('failed_logins').notNull(),
+    lockedUntil: timestamptz('locked_until'),
+    lastTotpStep: bigint('last_totp_step', { mode: 'number' }),
+    createdAt: timestamptz('created_at').notNull(),
+  },
+  (t) => [check('admin_users_role_ck', sql`${t.role} in ('REVIEWER', 'MATCHMAKER', 'SUPERVISOR', 'ADMIN')`)],
+);
+
+/** Phiên đăng nhập admin — chỉ lưu SHA-256 của token. */
+export const adminSessions = identity.table(
+  'admin_sessions',
+  {
+    id: uuid('id').primaryKey(),
+    adminId: uuid('admin_id')
+      .notNull()
+      .references(() => adminUsers.id),
+    tokenHash: text('token_hash').notNull().unique('admin_sessions_token_hash_uq'),
+    rememberDevice: boolean('remember_device').notNull(),
+    createdAt: timestamptz('created_at').notNull(),
+    expiresAt: timestamptz('expires_at').notNull(),
+    revokedAt: timestamptz('revoked_at'),
+  },
+  (t) => [index('admin_sessions_admin_id_idx').on(t.adminId)],
 );

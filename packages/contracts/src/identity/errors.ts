@@ -11,4 +11,9 @@ export const IDENTITY_ERROR_CODES = registerErrors('identity', {
     status: 401,
     title: 'Refresh token đã được dùng, phiên bị thu hồi — vui lòng đăng nhập lại',
   },
+  INVALID_CREDENTIALS: { status: 401, title: 'Email, mật khẩu hoặc mã xác thực không đúng' },
+  MFA_REQUIRED: { status: 401, title: 'Cần nhập mã xác thực 2 lớp (TOTP)' },
+  ADMIN_LOCKED: { status: 429, title: 'Tài khoản tạm khoá do đăng nhập sai nhiều lần' },
+  PASSWORD_TOO_WEAK: { status: 422, title: 'Mật khẩu quá ngắn' },
+  ADMIN_EMAIL_TAKEN: { status: 409, title: 'Email admin đã tồn tại' },
 });
