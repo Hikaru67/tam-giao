@@ -41,7 +41,7 @@ chuyên viên duyệt / từ chối / yêu cầu bổ sung trên admin; hệ th�
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| verification | application, infrastructure | P0 | 2d | Sprint 2 | BE-S3-01 | TODO |
+| verification | application, infrastructure | P0 | 2d | Sprint 2 | BE-S3-01 | IN_REVIEW |
 
 **Mục tiêu:** Tách nhà cung cấp eKYC khỏi nghiệp vụ để không bị chặn bởi D2.
 
