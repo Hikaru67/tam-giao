@@ -94,7 +94,7 @@ Admin đăng nhập với mật khẩu + 2FA, có phân quyền và audit log.
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| identity | application, infrastructure | P0 | 1d | BE-S2-03 | BE-S2-02 | TODO |
+| identity | application, infrastructure | P0 | 1d | BE-S2-03 | BE-S2-02 | DONE |
 
 **Mục tiêu:** Ghi vết mọi thao tác nhạy cảm của admin (yêu cầu Nghị định 13 + màn admin "Audit Trail").
 
@@ -103,8 +103,8 @@ Admin đăng nhập với mật khẩu + 2FA, có phân quyền và audit log.
 - Ngoài: Ghi log ở từng use case (mỗi module tự gọi).
 
 **Tiêu chí nghiệm thu**
-- [ ] AC1: Role DB của app không thể UPDATE/DELETE `audit_logs` (test integration).
-- [ ] AC2: `meta` không được chứa PII thô (validate key cấm).
+- [x] AC1: Role DB của app không thể UPDATE/DELETE `audit_logs` (test integration).
+- [x] AC2: `meta` không được chứa PII thô (validate key cấm).
 
 **Test bắt buộc:** Integration quyền DB; unit validate meta.
 

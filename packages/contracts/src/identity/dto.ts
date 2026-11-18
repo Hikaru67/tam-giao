@@ -90,3 +90,44 @@ export const adminMeResponseSchema = z.object({
   permissions: z.array(z.enum(ADMIN_PERMISSIONS)),
 });
 export type AdminMeResponse = z.infer<typeof adminMeResponseSchema>;
+
+/** `GET /admin/audit-logs` (permission `audit:read`) — lọc theo actor / target / thời gian. */
+export const auditLogQuerySchema = z
+  .object({
+    actorType: z.enum(['admin', 'user', 'system']).optional(),
+    actorId: z.uuid().optional(),
+    action: z.string().min(1).max(100).optional(),
+    targetType: z.string().min(1).max(50).optional(),
+    targetId: z.string().min(1).max(100).optional(),
+    /** Bao gồm mốc này (ISO 8601). */
+    from: z.iso.datetime({ offset: true }).optional(),
+    /** Không bao gồm mốc này (ISO 8601). */
+    to: z.iso.datetime({ offset: true }).optional(),
+    /** `nextCursor` của trang trước. */
+    cursor: z.string().min(1).max(200).optional(),
+    limit: z.coerce.number().int().min(1).max(100).optional(),
+  })
+  .refine((q) => q.from === undefined || q.to === undefined || Date.parse(q.from) < Date.parse(q.to), {
+    message: '`from` phải trước `to`',
+    path: ['to'],
+  });
+export type AuditLogQuery = z.infer<typeof auditLogQuerySchema>;
+
+export const auditLogEntrySchema = z.object({
+  id: z.uuid(),
+  occurredAt: z.iso.datetime(),
+  actor: z.object({ type: z.enum(['admin', 'user', 'system']), id: z.uuid().nullable() }),
+  action: z.string(),
+  targetType: z.string(),
+  targetId: z.string(),
+  ip: z.string().nullable(),
+  meta: z.record(z.string(), z.unknown()),
+});
+export type AuditLogEntry = z.infer<typeof auditLogEntrySchema>;
+
+export const auditLogListResponseSchema = z.object({
+  items: z.array(auditLogEntrySchema),
+  /** `null` khi hết dữ liệu. */
+  nextCursor: z.string().nullable(),
+});
+export type AuditLogListResponse = z.infer<typeof auditLogListResponseSchema>;

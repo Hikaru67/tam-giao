@@ -16,4 +16,6 @@ export const IDENTITY_ERROR_CODES = registerErrors('identity', {
   ADMIN_LOCKED: { status: 429, title: 'Tài khoản tạm khoá do đăng nhập sai nhiều lần' },
   PASSWORD_TOO_WEAK: { status: 422, title: 'Mật khẩu quá ngắn' },
   ADMIN_EMAIL_TAKEN: { status: 409, title: 'Email admin đã tồn tại' },
+  /** Lỗi lập trình của nơi gọi `AuditLogger` (sai định dạng, meta chứa khoá PII bị cấm) — không do client gây ra. */
+  AUDIT_ENTRY_INVALID: { status: 500, title: 'Bản ghi audit không hợp lệ' },
 });

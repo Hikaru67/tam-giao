@@ -8,6 +8,11 @@ import {
   type UnitOfWork,
 } from '@tamgiao/kernel';
 import type { AdminSessionRepository, AdminUserRepository } from '../application/ports/admin-repositories.js';
+import type {
+  AuditLogCursor,
+  AuditLogFilter,
+  AuditLogRepository,
+} from '../application/ports/audit-log-repository.js';
 import type { PasswordHasher } from '../application/ports/password-hasher.js';
 import type { TotpService } from '../application/ports/totp.js';
 import type { OtpChallengeRepository } from '../application/ports/otp-challenge-repository.js';
@@ -23,6 +28,7 @@ import type {
 } from '../application/ports/token-services.js';
 import type { UserRepository } from '../application/ports/user-repository.js';
 import { AdminSession, type AdminSessionState } from '../domain/admin-session.js';
+import { AuditEntry, type AuditEntryState } from '../domain/audit-entry.js';
 import { AdminUser, type AdminEmail, type AdminUserId, type AdminUserState } from '../domain/admin-user.js';
 import { OtpChallenge, type OtpChallengeState } from '../domain/otp-challenge.js';
 import type { RateLimitRule } from '../domain/otp-policy.js';
@@ -293,5 +299,39 @@ export class FakeTotp implements TotpService {
   }
   otpauthUri(secret: string, account: string): string {
     return `otpauth://totp/TamGiao:${account}?secret=${secret}`;
+  }
+}
+
+export class InMemoryAuditLogRepository implements AuditLogRepository {
+  readonly table = new MemoryTable<AuditEntryState>();
+
+  async append(_tx: Tx, entry: AuditEntry): Promise<void> {
+    const state = entry.toState();
+    if (this.table.rows.has(state.id)) throw new Error('audit_logs: trùng id');
+    this.table.rows.set(state.id, state);
+  }
+
+  async search(
+    _tx: Tx,
+    f: AuditLogFilter,
+    cursor: AuditLogCursor | null,
+    limit: number,
+  ): Promise<AuditEntry[]> {
+    const key = (s: { occurredAt: Date; id: string }) => `${s.occurredAt.toISOString()}|${s.id}`;
+    return [...this.table.rows.values()]
+      .filter(
+        (s) =>
+          (f.actorType === undefined || s.actor.type === f.actorType) &&
+          (f.actorId === undefined || s.actor.id === f.actorId) &&
+          (f.action === undefined || s.action === f.action) &&
+          (f.targetType === undefined || s.targetType === f.targetType) &&
+          (f.targetId === undefined || s.targetId === f.targetId) &&
+          (f.from === undefined || s.occurredAt >= f.from) &&
+          (f.to === undefined || s.occurredAt < f.to) &&
+          (cursor === null || key(s) < key(cursor)),
+      )
+      .sort((a, b) => (key(a) < key(b) ? 1 : -1))
+      .slice(0, limit)
+      .map((s) => AuditEntry.restore(s));
   }
 }

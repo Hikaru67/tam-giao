@@ -2,20 +2,23 @@ import { OutboxWriter } from '@tamgiao/db';
 import { createRequireAdmin, requireUser, type AppEnv, type RequireAdmin } from '@tamgiao/http';
 import type { BlindIndexer, Clock, Encryptor, UnitOfWork } from '@tamgiao/kernel';
 import type { Hono } from 'hono';
-import type { IdentityFacade } from './application/facade.js';
+import type { AuditLogger, IdentityFacade } from './application/facade.js';
 import type { SmsSender } from './application/ports/sms-sender.js';
 import { AuthenticateAdmin } from './application/queries/authenticate-admin.js';
 import { AuthenticateUser } from './application/queries/authenticate-user.js';
+import { SearchAuditLogs } from './application/queries/search-audit-logs.js';
 import { AdminLogin } from './application/use-cases/admin-login.js';
 import { AdminLogout } from './application/use-cases/admin-logout.js';
 import { CreateAdminUser } from './application/use-cases/create-admin-user.js';
 import { SessionIssuer } from './application/session-issuer.js';
 import { ListSessions, RevokeSession } from './application/use-cases/manage-sessions.js';
+import { RecordAuditEntry } from './application/use-cases/record-audit-entry.js';
 import { RefreshSession } from './application/use-cases/refresh-session.js';
 import { RequestOtp } from './application/use-cases/request-otp.js';
 import { VerifyOtp } from './application/use-cases/verify-otp.js';
 import { Argon2PasswordHasher } from './infrastructure/argon2-password-hasher.js';
 import { deriveKey } from './infrastructure/derive-key.js';
+import { DrizzleAuditLogRepository } from './infrastructure/drizzle-audit-log-repository.js';
 import {
   DrizzleAdminSessionRepository,
   DrizzleAdminUserRepository,
@@ -29,9 +32,16 @@ import { PostgresRateLimiter } from './infrastructure/postgres-rate-limiter.js';
 import { RandomRefreshTokenSecrets } from './infrastructure/random-refresh-token-secrets.js';
 import { Rfc6238Totp } from './infrastructure/rfc6238-totp.js';
 import { createAdminAuthRoutes } from './presentation/admin-auth-routes.js';
+import { createAuditRoutes } from './presentation/audit-routes.js';
 import { createAuthRoutes } from './presentation/auth-routes.js';
 
-export type { AuthenticatedAdmin, AuthenticatedUser, IdentityFacade } from './application/facade.js';
+export type {
+  AuditLogger,
+  AuditLogInput,
+  AuthenticatedAdmin,
+  AuthenticatedUser,
+  IdentityFacade,
+} from './application/facade.js';
 export type {
   CreateAdminUserCommand,
   CreateAdminUserError,
@@ -56,6 +66,8 @@ export interface IdentityModule {
   readonly facade: IdentityFacade;
   /** Guard cho route admin của mọi module: `requireAdmin('kyc:review')`. */
   readonly requireAdmin: RequireAdmin;
+  /** Ghi audit log cho mọi module (BE-S2-04) — composition root truyền vào module cần ghi vết. */
+  readonly auditLogger: AuditLogger;
   /** Thao tác chỉ dành cho CLI vận hành (không mở qua HTTP). */
   readonly commands: { readonly createAdminUser: CreateAdminUser };
 }
@@ -124,6 +136,13 @@ export function createIdentityModule(deps: IdentityModuleDeps): IdentityModule {
     }),
   );
 
+  const auditLogs = new DrizzleAuditLogRepository();
+  const auditLogger = new RecordAuditEntry({ uow, clock, auditLogs });
+  routes.route(
+    '/',
+    createAuditRoutes({ searchAuditLogs: new SearchAuditLogs({ uow, auditLogs }), requireAdmin }),
+  );
+
   const createAdminUser = new CreateAdminUser({ uow, clock, admins, passwords, totp });
-  return { name: 'identity', routes, facade, requireAdmin, commands: { createAdminUser } };
+  return { name: 'identity', routes, facade, requireAdmin, auditLogger, commands: { createAdminUser } };
 }
