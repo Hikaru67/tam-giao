@@ -41,7 +41,7 @@ Admin đăng nhập với mật khẩu + 2FA, có phân quyền và audit log.
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| identity | application, infrastructure, presentation | P0 | 1.5d | BE-S2-01 | BE-S2-04 | TODO |
+| identity | application, infrastructure, presentation | P0 | 1.5d | BE-S2-01 | BE-S2-04 | IN_REVIEW |
 
 **Mục tiêu:** Xác thực mọi request của app người dùng.
 
@@ -50,8 +50,8 @@ Admin đăng nhập với mật khẩu + 2FA, có phân quyền và audit log.
 - Ngoài: Auth admin (BE-S2-03).
 
 **Tiêu chí nghiệm thu**
-- [ ] AC1: Refresh token cũ dùng lại sau khi đã xoay → toàn bộ phiên của thiết bị bị thu hồi.
-- [ ] AC2: Route có `requireUser()` trả 401 khi thiếu/hết hạn token.
+- [x] AC1: Refresh token cũ dùng lại sau khi đã xoay → toàn bộ phiên của thiết bị bị thu hồi.
+- [x] AC2: Route có `requireUser()` trả 401 khi thiếu/hết hạn token.
 
 **Test bắt buộc:** Use case xoay token; HTTP test middleware.
 

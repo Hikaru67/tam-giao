@@ -104,6 +104,7 @@ Mọi trạng thái chưa đóng ──ReportFiled──► LOCKED
 - **Encryptor:** envelope encryption AES-256-GCM; master key từ KMS (local: env). Blind index HMAC-SHA256 cho tìm kiếm CCCD.
 - **Storage:** presigned PUT/GET; bucket `public-profile` (ảnh hồ sơ, vẫn cần auth để lấy URL) và `private-kyc` (CCCD, selfie, bằng chứng).
 - **Composition root:** mỗi module export `createXModule(deps)` trả về `{ routes, handlers, facade }`; `apps/api/src/main.ts` và `apps/worker/src/main.ts` nối thủ công (không dùng DI container).
+- **Xác thực người dùng app:** access token JWT HS256 15 phút (claims `sub`=userId, `sid`=sessionId) + refresh token ngẫu nhiên 256-bit chỉ lưu SHA-256 (`identity.refresh_tokens`), xoay vòng mỗi lần dùng; token đã dùng bị dùng lại → thu hồi cả phiên (`identity.sessions`, một phiên = một thiết bị). Middleware `requireUser(authenticate)` nằm ở `@tamgiao/http`, nhận hàm `identity.facade.authenticateUser` (kiểm tra chữ ký, hạn **và** phiên chưa thu hồi) và gắn `c.get('auth') = { userId, sessionId }`; module khác dùng lại middleware này, không tự đọc token.
 - **Lỗi HTTP:** Problem JSON (RFC 7807) `{ type, title, status, code, detail, traceId }`; map `code` → status tại presentation.
 
 ## 7. Kiểm thử

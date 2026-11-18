@@ -115,7 +115,8 @@ describe('POST /auth/otp/verify', () => {
     });
     const a = verifyOtpResponseSchema.parse(await first.json());
     const b = verifyOtpResponseSchema.parse(await second.json());
-    expect(b).toEqual({ userId: a.userId, isNewUser: false });
+    expect(b).toMatchObject({ userId: a.userId, isNewUser: false });
+    expect(b.tokens.sessionId).not.toBe(a.tokens.sessionId);
     const { rows } = await h.database.pool.query('select 1 from platform.outbox');
     expect(rows).toHaveLength(1);
   });

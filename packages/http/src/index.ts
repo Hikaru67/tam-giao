@@ -1,3 +1,4 @@
+export { bearerToken, requireUser, type UserAuthenticator } from './auth.js';
 export {
   requestContext,
   type AdminAuth,
