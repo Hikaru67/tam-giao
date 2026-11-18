@@ -1,4 +1,5 @@
 import { ok, type Clock, type ObjectStorage, type Result, type UnitOfWork } from '@tamgiao/kernel';
+import type { BillingFacade } from '@tamgiao/module-billing/facade';
 import type { VerificationFacade } from '@tamgiao/module-verification/facade';
 import { onboardingStep, type OnboardingStep } from '../domain/onboarding.js';
 import { ageAt, type Gender } from '../domain/profile.js';
@@ -16,6 +17,8 @@ export interface MeView {
     readonly avatarUrl: string | null;
   } | null;
   readonly badges: readonly string[];
+  /** Đã thanh toán xác thực (BE-S4-03) — app chọn CTA thanh toán hay thẻ "Đã ghi nhận". */
+  readonly verificationPaid: boolean;
 }
 
 export interface GetMeDeps {
@@ -26,14 +29,19 @@ export interface GetMeDeps {
   readonly storage: ObjectStorage;
   /** Trạng thái xác thực + huy hiệu (facade verification, BE-S3-07). */
   readonly verification: Pick<VerificationFacade, 'getSummary'>;
+  /** Trạng thái thanh toán xác thực (facade billing, BE-S4-03). */
+  readonly billing: Pick<BillingFacade, 'hasPaidVerification'>;
 }
 
-/** `GET /me`: thông tin cơ bản + bước onboarding + huy hiệu để app điều hướng (BE-S2-08, BE-S3-07). */
+/**
+ * `GET /me`: thông tin cơ bản + bước onboarding + huy hiệu + đã thanh toán xác thực chưa để app điều hướng
+ * (BE-S2-08, BE-S3-07, BE-S4-03).
+ */
 export class GetMe {
   constructor(private readonly deps: GetMeDeps) {}
 
   async execute(userId: string): Promise<Result<MeView, never>> {
-    const { uow, clock, profiles, preferences, storage, verification } = this.deps;
+    const { uow, clock, profiles, preferences, storage, verification, billing } = this.deps;
     const loaded = await uow.run(async (tx) =>
       ok({
         profile: await profiles.findById(tx, userId),
@@ -42,7 +50,10 @@ export class GetMe {
     );
     const { profile, hasPreferences } = loaded.unwrapOr({ profile: null, hasPreferences: false });
     const state = profile?.toState() ?? null;
-    const verificationSummary = await verification.getSummary(userId);
+    const [verificationSummary, verificationPaid] = await Promise.all([
+      verification.getSummary(userId),
+      billing.hasPaidVerification(userId),
+    ]);
 
     let view: MeView['profile'] = null;
     if (state) {
@@ -66,9 +77,11 @@ export class GetMe {
         profileStatus: state?.status ?? null,
         hasPreferences,
         verification: verificationSummary.status,
+        verificationPaid,
       }),
       profile: view,
       badges: verificationSummary.badges,
+      verificationPaid,
     });
   }
 }

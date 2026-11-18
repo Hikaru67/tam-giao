@@ -21,12 +21,15 @@ export type VerificationProgress = 'NOT_SUBMITTED' | 'IN_PROGRESS' | 'APPROVED' 
  * - Chưa nộp eKYC → `VERIFICATION`; đã nộp, chưa quyết định (kể cả đang được yêu cầu bổ sung) → `UNDER_REVIEW`;
  *   được duyệt → `ACTIVE`; bị từ chối → `REJECTED`.
  * - Hồ sơ/tiêu chí luôn được xét trước: chưa xong thì vẫn trả `PROFILE`/`CRITERIA` dù trạng thái xác thực ra sao.
- * TODO(BE-S4-03): `UNDER_REVIEW` chỉ khi đã nộp eKYC **và** đã thanh toán (facade billing).
+ * - BE-S4-03: `UNDER_REVIEW` chỉ khi đã nộp eKYC **và** đã thanh toán xác thực (facade billing); đã nộp nhưng chưa
+ *   thanh toán (dữ liệu trước khi có cổng chặn `PAYMENT_REQUIRED`) → vẫn `VERIFICATION`.
  */
 export function onboardingStep(input: {
   readonly profileStatus: ProfileStatus | null;
   readonly hasPreferences: boolean;
   readonly verification: VerificationProgress;
+  /** Đã thanh toán xác thực (`BillingFacade.hasPaidVerification`). */
+  readonly verificationPaid: boolean;
 }): OnboardingStep {
   if (input.profileStatus !== 'COMPLETED') return 'PROFILE';
   if (!input.hasPreferences) return 'CRITERIA';
@@ -34,7 +37,7 @@ export function onboardingStep(input: {
     case 'NOT_SUBMITTED':
       return 'VERIFICATION';
     case 'IN_PROGRESS':
-      return 'UNDER_REVIEW';
+      return input.verificationPaid ? 'UNDER_REVIEW' : 'VERIFICATION';
     case 'APPROVED':
       return 'ACTIVE';
     case 'REJECTED':

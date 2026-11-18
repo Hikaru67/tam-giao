@@ -1,6 +1,7 @@
 import { OutboxWriter } from '@tamgiao/db';
 import type { AppEnv } from '@tamgiao/http';
 import type { Clock, Encryptor, ObjectStorage, UnitOfWork, UploadRegistry } from '@tamgiao/kernel';
+import type { BillingFacade } from '@tamgiao/module-billing/facade';
 import type { VerificationFacade } from '@tamgiao/module-verification/facade';
 import type { Hono, MiddlewareHandler } from 'hono';
 import type { ProfileFacade } from './application/facade.js';
@@ -27,6 +28,8 @@ export interface ProfileModuleDeps {
   readonly storage: ObjectStorage;
   /** Facade verification — trạng thái xác thực + huy hiệu cho `GET /me` (BE-S3-07). */
   readonly verification: VerificationFacade;
+  /** Facade billing — đã thanh toán xác thực chưa cho `GET /me` (BE-S4-03). */
+  readonly billing: BillingFacade;
   /** Guard người dùng app — `requireUser(identity.facade.authenticateUser)`. */
   readonly requireUser: MiddlewareHandler<AppEnv>;
 }
@@ -66,6 +69,7 @@ export function createProfileModule(deps: ProfileModuleDeps): ProfileModule {
         preferences,
         storage: deps.storage,
         verification: deps.verification,
+        billing: deps.billing,
       }),
       requireUser: deps.requireUser,
     }),

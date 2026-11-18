@@ -1,6 +1,18 @@
 import { timestamptz } from '@tamgiao/db';
 import { sql } from 'drizzle-orm';
-import { boolean, check, index, integer, pgSchema, text, uuid } from 'drizzle-orm/pg-core';
+import {
+  bigint,
+  boolean,
+  check,
+  index,
+  integer,
+  pgSchema,
+  text,
+  unique,
+  uniqueIndex,
+  uuid,
+  type AnyPgColumn,
+} from 'drizzle-orm/pg-core';
 
 /** Schema Postgres của module billing (AGENTS.md mục 4). Bảng được thêm theo task BE-S4-xx. */
 export const billing = pgSchema('billing');
@@ -57,5 +69,129 @@ export const partnerStaff = billing.table(
     check('partner_staff_failed_logins_ck', sql`${t.failedLogins} >= 0`),
     check('partner_staff_token_version_ck', sql`${t.tokenVersion} >= 1`),
     index('partner_staff_partner_id_idx').on(t.partnerId, t.createdAt),
+  ],
+);
+
+/** Tên constraint — repository map vi phạm unique (23505) sang kết quả nghiệp vụ (BE-S4-03). */
+export const PAYMENT_ORDER_ID_UNIQUE = 'payments_order_id_uq';
+export const PAYMENT_GATEWAY_TXN_UNIQUE = 'payments_gateway_txn_id_uq';
+export const PAYMENT_IDEMPOTENCY_UNIQUE = 'payments_user_id_idempotency_key_uq';
+export const PAYMENT_ACTIVE_PER_USER_UNIQUE = 'payments_active_per_user_uq';
+
+/**
+ * Khoản thanh toán xác thực (BE-S4-03). Luật "mỗi người dùng tối đa 1 khoản `PENDING | SUCCEEDED`" được DB bảo đảm
+ * bằng partial unique index `payments_active_per_user_uq` (A10). `gateway_txn_id` unique — khoá idempotency webhook.
+ * `checkout_url`/`qr_data` lưu phiên thanh toán của cổng để trả lại khi client gọi lại (idempotent).
+ */
+export const payments = billing.table(
+  'payments',
+  {
+    id: uuid('id').primaryKey(),
+    orderId: text('order_id').notNull(),
+    userId: uuid('user_id').notNull(),
+    amount: bigint('amount', { mode: 'bigint' }).notNull(),
+    status: text('status').notNull(),
+    gatewayTxnId: text('gateway_txn_id'),
+    idempotencyKey: text('idempotency_key').notNull(),
+    failureReason: text('failure_reason'),
+    checkoutUrl: text('checkout_url'),
+    qrData: text('qr_data'),
+    createdAt: timestamptz('created_at').notNull(),
+    succeededAt: timestamptz('succeeded_at'),
+    failedAt: timestamptz('failed_at'),
+    refundRequestedAt: timestamptz('refund_requested_at'),
+    refundedAt: timestamptz('refunded_at'),
+    updatedAt: timestamptz('updated_at').notNull(),
+    version: integer('version').notNull(),
+  },
+  (t) => [
+    unique(PAYMENT_ORDER_ID_UNIQUE).on(t.orderId),
+    unique(PAYMENT_GATEWAY_TXN_UNIQUE).on(t.gatewayTxnId),
+    unique(PAYMENT_IDEMPOTENCY_UNIQUE).on(t.userId, t.idempotencyKey),
+    uniqueIndex(PAYMENT_ACTIVE_PER_USER_UNIQUE)
+      .on(t.userId)
+      .where(sql`${t.status} in ('PENDING', 'SUCCEEDED')`),
+    check(
+      'payments_status_ck',
+      sql`${t.status} in ('PENDING', 'SUCCEEDED', 'FAILED', 'REFUND_PENDING', 'REFUNDED')`,
+    ),
+    check('payments_amount_ck', sql`${t.amount} > 0`),
+    check(
+      'payments_gateway_txn_ck',
+      sql`(${t.status} in ('PENDING', 'FAILED')) = (${t.gatewayTxnId} is null)`,
+    ),
+    index('payments_user_id_created_at_idx').on(t.userId, t.createdAt),
+  ],
+);
+
+/**
+ * Sổ cái (BE-S4-03) — **chỉ ghi thêm**: trigger chặn UPDATE/DELETE (viết tay trong migration, giống
+ * `identity.audit_logs`). Mỗi khoản thanh toán chỉ một `CHARGE`/`REFUND`, mỗi voucher chỉ một bút toán mỗi loại
+ * (partial unique index) — chặn ghi trùng ở tầng DB kể cả khi webhook lặp lại.
+ */
+export const ledgerEntries = billing.table(
+  'ledger_entries',
+  {
+    id: uuid('id').primaryKey(),
+    type: text('type').notNull(),
+    amount: bigint('amount', { mode: 'bigint' }).notNull(),
+    userId: uuid('user_id').notNull(),
+    paymentId: uuid('payment_id').references(() => payments.id),
+    voucherId: uuid('voucher_id').references((): AnyPgColumn => vouchers.id),
+    occurredAt: timestamptz('occurred_at').notNull(),
+  },
+  (t) => [
+    check(
+      'ledger_entries_type_ck',
+      sql`${t.type} in ('CHARGE', 'REFUND', 'VOUCHER_ISSUE', 'VOUCHER_REDEEM', 'VOUCHER_VOID')`,
+    ),
+    check('ledger_entries_amount_ck', sql`${t.amount} > 0`),
+    check(
+      'ledger_entries_reference_ck',
+      sql`(${t.type} in ('CHARGE', 'REFUND') and ${t.paymentId} is not null) or (${t.type} not in ('CHARGE', 'REFUND') and ${t.voucherId} is not null)`,
+    ),
+    uniqueIndex('ledger_entries_payment_type_uq')
+      .on(t.paymentId, t.type)
+      .where(sql`${t.type} in ('CHARGE', 'REFUND')`),
+    uniqueIndex('ledger_entries_voucher_type_uq')
+      .on(t.voucherId, t.type)
+      .where(sql`${t.voucherId} is not null`),
+    index('ledger_entries_user_id_idx').on(t.userId, t.occurredAt),
+    index('ledger_entries_occurred_at_idx').on(t.occurredAt),
+  ],
+);
+
+/**
+ * Voucher hẹn hò (BE-S4-03): một khoản thanh toán sinh tối đa một voucher (`payment_id` unique). `expires_at` NULL tới
+ * khi hồ sơ được duyệt; `partner_id` NULL khi chưa gắn quán.
+ */
+export const vouchers = billing.table(
+  'vouchers',
+  {
+    id: uuid('id').primaryKey(),
+    userId: uuid('user_id').notNull(),
+    paymentId: uuid('payment_id')
+      .notNull()
+      .references(() => payments.id),
+    value: bigint('value', { mode: 'bigint' }).notNull(),
+    status: text('status').notNull(),
+    partnerId: uuid('partner_id').references(() => partners.id),
+    expiresAt: timestamptz('expires_at'),
+    issuedAt: timestamptz('issued_at').notNull(),
+    activatedAt: timestamptz('activated_at'),
+    redeemedAt: timestamptz('redeemed_at'),
+    redeemedByPartnerId: uuid('redeemed_by_partner_id').references(() => partners.id),
+    voidedAt: timestamptz('voided_at'),
+    voidReason: text('void_reason'),
+    expiredAt: timestamptz('expired_at'),
+    updatedAt: timestamptz('updated_at').notNull(),
+    version: integer('version').notNull(),
+  },
+  (t) => [
+    unique('vouchers_payment_id_uq').on(t.paymentId),
+    check('vouchers_status_ck', sql`${t.status} in ('RESERVED', 'ACTIVE', 'REDEEMED', 'VOID', 'EXPIRED')`),
+    check('vouchers_value_ck', sql`${t.value} > 0`),
+    index('vouchers_user_id_idx').on(t.userId, t.issuedAt),
+    index('vouchers_status_expires_at_idx').on(t.status, t.expiresAt),
   ],
 );

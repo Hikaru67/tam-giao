@@ -78,6 +78,13 @@
       "when": 1794989025226,
       "tag": "0010_billing_partners",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1795011073923,
+      "tag": "0011_billing_payments_ledger_vouchers",
+      "breakpoints": true
     }
   ]
 }

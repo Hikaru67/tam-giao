@@ -11,7 +11,14 @@ describe('onboardingStep', () => {
     ['COMPLETED', false, 'CRITERIA'],
     ['COMPLETED', true, 'VERIFICATION'],
   ] as const)('profile=%s, preferences=%s → %s', (profileStatus, hasPreferences, step) => {
-    expect(onboardingStep({ profileStatus, hasPreferences, verification: 'NOT_SUBMITTED' })).toBe(step);
+    expect(
+      onboardingStep({
+        profileStatus,
+        hasPreferences,
+        verification: 'NOT_SUBMITTED',
+        verificationPaid: false,
+      }),
+    ).toBe(step);
   });
 
   it.each([
@@ -20,15 +27,43 @@ describe('onboardingStep', () => {
     ['APPROVED', 'ACTIVE'],
     ['REJECTED', 'REJECTED'],
   ] as const)('completed profile + criteria, verification=%s → %s', (verification, step) => {
-    expect(onboardingStep({ profileStatus: 'COMPLETED', hasPreferences: true, verification })).toBe(step);
+    expect(
+      onboardingStep({
+        profileStatus: 'COMPLETED',
+        hasPreferences: true,
+        verification,
+        verificationPaid: true,
+      }),
+    ).toBe(step);
+  });
+
+  it('submitted but not paid → still VERIFICATION (BE-S4-03)', () => {
+    expect(
+      onboardingStep({
+        profileStatus: 'COMPLETED',
+        hasPreferences: true,
+        verification: 'IN_PROGRESS',
+        verificationPaid: false,
+      }),
+    ).toBe('VERIFICATION');
   });
 
   it('profile and criteria come before verification status', () => {
-    expect(onboardingStep({ profileStatus: 'DRAFT', hasPreferences: true, verification: 'APPROVED' })).toBe(
-      'PROFILE',
-    );
     expect(
-      onboardingStep({ profileStatus: 'COMPLETED', hasPreferences: false, verification: 'APPROVED' }),
+      onboardingStep({
+        profileStatus: 'DRAFT',
+        hasPreferences: true,
+        verification: 'APPROVED',
+        verificationPaid: true,
+      }),
+    ).toBe('PROFILE');
+    expect(
+      onboardingStep({
+        profileStatus: 'COMPLETED',
+        hasPreferences: false,
+        verification: 'APPROVED',
+        verificationPaid: true,
+      }),
     ).toBe('CRITERIA');
   });
 

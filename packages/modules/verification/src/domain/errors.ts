@@ -14,6 +14,8 @@ export const VERIFICATION_DOMAIN_ERRORS = [
   'CCCD_ALREADY_REGISTERED',
   'KYC_SUBMISSION_NOT_FOUND',
   'KYC_CCCD_NUMBER_MISSING',
+  /** Chưa thanh toán xác thực (BE-S4-03) — mã đăng ký ở contracts `billing/errors.ts`. */
+  'PAYMENT_REQUIRED',
 ] as const;
 
 export type VerificationDomainErrorCode = (typeof VERIFICATION_DOMAIN_ERRORS)[number];

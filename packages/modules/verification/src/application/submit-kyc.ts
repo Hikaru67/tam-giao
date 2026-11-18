@@ -29,6 +29,7 @@ import {
   type IdCardOcrResult,
 } from './ports/ekyc-provider.js';
 import type { KycSubmissionRepository } from './ports/kyc-submission-repository.js';
+import type { PaymentStatusReader } from './ports/payment-status-reader.js';
 
 /** Key upload client gửi lên (từ `POST /uploads`); bỏ trống → `KYC_DOCS_MISSING`. */
 export interface SubmitKycDocumentsInput {
@@ -55,6 +56,8 @@ export interface SubmitKycDeps {
   readonly uploads: UploadRegistry;
   readonly ekyc: EkycProvider;
   readonly applicants: ApplicantProfileReader;
+  /** Trạng thái thanh toán xác thực (facade billing, BE-S4-03) — chưa thanh toán → `PAYMENT_REQUIRED`. */
+  readonly payments: PaymentStatusReader;
 }
 
 /** Thứ tự kiểm tra + mục đích upload hợp lệ của từng tài liệu. */
@@ -74,7 +77,8 @@ interface CheckOutcome<T> {
 }
 
 /**
- * Người dùng nộp (hoặc nộp bổ sung) bộ tài liệu eKYC (BE-S3-03):
+ * Người dùng nộp (hoặc nộp bổ sung) bộ tài liệu eKYC (BE-S3-03). Chưa thanh toán xác thực → `PAYMENT_REQUIRED`
+ * (BE-S4-03).
  * 1. Kiểm tra đủ 4 key, hồ sơ còn được nộp, key thuộc người dùng (transaction ngắn).
  * 2. Gọi eKYC **ngoài transaction** (không giữ connection/khoá trong lúc chờ nhà cung cấp). Kết quả chỉ là gợi ý:
  *    bị từ chối (ảnh mờ, không khớp…) hay lỗi hạ tầng (timeout…) đều vẫn nộp, chuyên viên duyệt tay.
@@ -85,6 +89,9 @@ export class SubmitKyc {
   constructor(private readonly deps: SubmitKycDeps) {}
 
   async execute(cmd: SubmitKycCommand): Promise<Result<SubmitKycResult, DomainError>> {
+    // BE-S4-03: phải thanh toán xác thực trước khi nộp (kiểm tra trước mọi bước khác).
+    if (!(await this.deps.payments.hasPaidVerification(cmd.userId))) return fail('PAYMENT_REQUIRED');
+
     const documents = collectDocuments(cmd.documents);
     if (documents.isErr()) return err(documents.error);
     const docs = documents.value;

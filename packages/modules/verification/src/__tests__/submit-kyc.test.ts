@@ -10,6 +10,7 @@ import { FAKE_EKYC_ID_CARD, FakeEkycProvider } from '../infrastructure/ekyc/fake
 import { ResilientEkycProvider } from '../infrastructure/ekyc/resilient-ekyc-provider.js';
 import {
   FakeApplicantProfileReader,
+  FakePaymentStatusReader,
   FakeUnitOfWork,
   FakeUploadRegistry,
   InMemoryKycSubmissionRepository,
@@ -24,6 +25,7 @@ let uow: FakeUnitOfWork;
 let uploads: FakeUploadRegistry;
 let applicants: FakeApplicantProfileReader;
 let provider: FakeEkycProvider;
+let paymentStatus: FakePaymentStatusReader;
 
 const userA = newId<'User'>();
 const userB = newId<'User'>();
@@ -43,7 +45,7 @@ function docsFor(userId: string, suffix = '1'): Required<{ [K in keyof SubmitKyc
 }
 
 function useCase(ekyc: EkycProvider = provider): SubmitKyc {
-  return new SubmitKyc({ uow, clock, submissions: repo, uploads, ekyc, applicants });
+  return new SubmitKyc({ uow, clock, submissions: repo, uploads, ekyc, applicants, payments: paymentStatus });
 }
 
 async function stored(userId: string) {
@@ -59,7 +61,25 @@ beforeEach(() => {
   uploads = new FakeUploadRegistry();
   applicants = new FakeApplicantProfileReader();
   provider = new FakeEkycProvider();
+  paymentStatus = new FakePaymentStatusReader();
   applicants.identities.set(userA, { fullName: 'Nguyễn  Văn A', birthDate: FAKE_EKYC_ID_CARD.dateOfBirth });
+});
+
+describe('SubmitKyc — payment gate (BE-S4-03)', () => {
+  it('rejects with PAYMENT_REQUIRED before any other check when the user has not paid', async () => {
+    paymentStatus.unpaid.add(userA);
+    const result = await useCase().execute({ userId: userA, documents: {} });
+
+    expect(result.isErr() && result.error.code).toBe('PAYMENT_REQUIRED');
+    expect(uow.runs).toBe(0);
+    expect(provider.calls).toHaveLength(0);
+    expect(await repo.findByUserId(tx, userA)).toBeNull();
+  });
+
+  it('lets a paid user submit', async () => {
+    const result = await useCase().execute({ userId: userA, documents: docsFor(userA) });
+    expect(result.isOk() && result.value.status).toBe('SUBMITTED');
+  });
 });
 
 describe('SubmitKyc — success', () => {

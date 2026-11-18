@@ -17,3 +17,16 @@ export const BILLING_DOMAIN_ERRORS = [
 ] as const;
 
 export type BillingDomainErrorCode = (typeof BILLING_DOMAIN_ERRORS)[number];
+
+/**
+ * Mã lỗi thanh toán xác thực + webhook (BE-S4-03, tầng application) — đăng ký ở contracts `billing/errors.ts`.
+ * `PAYMENT_REQUIRED` do verification trả khi chưa thanh toán (facade billing).
+ */
+export const BILLING_PAYMENT_ERRORS = [
+  'PAYMENT_REQUIRED',
+  'PAYMENT_ALREADY_EXISTS',
+  'WEBHOOK_INVALID',
+  'PAYMENT_GATEWAY_UNAVAILABLE',
+] as const;
+
+export type BillingPaymentErrorCode = (typeof BILLING_PAYMENT_ERRORS)[number];

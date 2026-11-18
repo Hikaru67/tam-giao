@@ -1,3 +1,4 @@
+import { OutboxWriter } from '@tamgiao/db';
 import type { AppEnv, RequireAdmin } from '@tamgiao/http';
 import type { Clock, UnitOfWork } from '@tamgiao/kernel';
 import type { AuditLogger } from '@tamgiao/module-identity/facade';
@@ -16,6 +17,16 @@ import {
   UpdatePartner,
 } from './application/partner/manage-partners.js';
 import { PartnerStaffLogin } from './application/partner/partner-staff-login.js';
+import { CreateVerificationCheckout } from './application/payment/create-verification-checkout.js';
+import { HandlePaymentWebhook } from './application/payment/handle-payment-webhook.js';
+import { BillingFacadeQueries, GetMyPayments } from './application/payment/payment-queries.js';
+import type { BillingFacade } from './application/facade.js';
+import type { PaymentGateway } from './application/ports/payment-gateway.js';
+import {
+  DrizzleLedgerRepository,
+  DrizzleVerificationPaymentRepository,
+  DrizzleVoucherRepository,
+} from './infrastructure/drizzle-payment-repositories.js';
 import {
   DrizzlePartnerRepository,
   DrizzlePartnerStaffRepository,
@@ -28,6 +39,7 @@ import {
 import { createPartnerAdminRoutes } from './presentation/partner-admin-routes.js';
 import { createRequirePartnerStaff } from './presentation/partner-auth-middleware.js';
 import { createPartnerRoutes } from './presentation/partner-routes.js';
+import { createPaymentRoutes, type DevPaymentSimulator } from './presentation/payment-routes.js';
 
 /**
  * Module billing (Sprint 4): thanh toán xác thực, ledger chỉ ghi thêm, voucher hẹn hò, quán đối tác.
@@ -35,6 +47,22 @@ import { createPartnerRoutes } from './presentation/partner-routes.js';
  */
 export type { PartnerStaffAuth } from './application/partner/authenticate-partner-staff.js';
 export type { PartnerEnv, RequirePartnerStaff } from './presentation/partner-auth-middleware.js';
+export type { BillingFacade } from './application/facade.js';
+export type { DevPaymentSimulator } from './presentation/payment-routes.js';
+export {
+  PaymentGatewayError,
+  WEBHOOK_INVALID,
+  type CheckoutSession,
+  type PaymentGateway,
+  type WebhookEvent,
+  type WebhookHeaders,
+} from './application/ports/payment-gateway.js';
+export {
+  FAKE_SIGNATURE_HEADER,
+  FakePaymentGateway,
+  type FakePaymentGatewayOptions,
+  type SignedWebhook,
+} from './infrastructure/gateway/fake-payment-gateway.js';
 
 export interface BillingModuleDeps {
   readonly uow: UnitOfWork;
@@ -47,11 +75,21 @@ export interface BillingModuleDeps {
   readonly requireAdmin: RequireAdmin;
   /** Ghi audit log — `identity.auditLogger`. */
   readonly auditLogger: AuditLogger;
+  /** Cổng thanh toán (D3 chưa chốt — hiện chỉ `FakePaymentGateway`). */
+  readonly paymentGateway: PaymentGateway;
+  /** Tên cổng (`PAYMENT_GATEWAY`) — khớp tham số `:gateway` của route webhook. */
+  readonly paymentGatewayName: string;
+  /** URL cổng chuyển người dùng về sau khi thanh toán. */
+  readonly paymentReturnUrl: string;
+  /** Chỉ truyền khi gateway `fake` và không phải production → mount `POST /dev/payments/fake/:orderId`. */
+  readonly devPaymentSimulator?: DevPaymentSimulator | undefined;
 }
 
 export interface BillingModule {
   readonly name: 'billing';
   readonly routes: Hono<AppEnv>;
+  /** Facade read-only cho module khác (BE-S4-03). */
+  readonly facade: BillingFacade;
 }
 
 /** Composition root của module billing. */
@@ -93,5 +131,35 @@ export function createBillingModule(deps: BillingModuleDeps): BillingModule {
     }),
   );
 
-  return { name: 'billing', routes };
+  // ── Thanh toán xác thực + webhook (BE-S4-03) ──────────────────────────────────────────────────
+  const outbox = new OutboxWriter();
+  const payments = new DrizzleVerificationPaymentRepository(outbox);
+  const gateway = deps.paymentGateway;
+  routes.route(
+    '/',
+    createPaymentRoutes({
+      createCheckout: new CreateVerificationCheckout({
+        uow,
+        clock,
+        payments,
+        gateway,
+        returnUrl: deps.paymentReturnUrl,
+      }),
+      getMyPayments: new GetMyPayments({ uow, payments }),
+      handleWebhook: new HandlePaymentWebhook({
+        uow,
+        clock,
+        gateway,
+        payments,
+        vouchers: new DrizzleVoucherRepository(outbox),
+        ledger: new DrizzleLedgerRepository(),
+      }),
+      gatewayName: deps.paymentGatewayName,
+      requireUser: deps.requireUser,
+      devSimulator: deps.devPaymentSimulator,
+    }),
+  );
+  const facade: BillingFacade = new BillingFacadeQueries({ uow, payments });
+
+  return { name: 'billing', routes, facade };
 }

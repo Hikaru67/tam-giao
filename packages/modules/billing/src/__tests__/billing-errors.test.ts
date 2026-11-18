@@ -10,13 +10,28 @@ import {
   errorRegistry,
 } from '@tamgiao/contracts';
 import { describe, expect, it } from 'vitest';
-import { BILLING_DOMAIN_ERRORS } from '../domain/errors.js';
+import { BILLING_DOMAIN_ERRORS, BILLING_PAYMENT_ERRORS } from '../domain/errors.js';
 import * as payment from '../domain/verification-payment.js';
 import * as voucher from '../domain/voucher.js';
 
 describe('mã lỗi billing (domain)', () => {
   it.each(BILLING_DOMAIN_ERRORS)('%s đã đăng ký HTTP status trong contracts', (code) => {
     expect(errorRegistry.get(code)).toBeDefined();
+  });
+});
+
+describe('mã lỗi thanh toán xác thực (BE-S4-03)', () => {
+  it.each(BILLING_PAYMENT_ERRORS)('%s đã đăng ký HTTP status trong contracts', (code) => {
+    expect(errorRegistry.get(code)).toBeDefined();
+  });
+
+  it('HTTP status theo hợp đồng', () => {
+    expect(BILLING_PAYMENT_ERRORS.map((c) => [c, errorRegistry.statusOf(c)])).toEqual([
+      ['PAYMENT_REQUIRED', 403],
+      ['PAYMENT_ALREADY_EXISTS', 409],
+      ['WEBHOOK_INVALID', 401],
+      ['PAYMENT_GATEWAY_UNAVAILABLE', 503],
+    ]);
   });
 });
 

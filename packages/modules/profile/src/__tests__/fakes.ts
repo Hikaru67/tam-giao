@@ -14,6 +14,7 @@ import type {
   VerificationFacade,
   VerificationSummary,
 } from '@tamgiao/module-verification/facade';
+import type { BillingFacade } from '@tamgiao/module-billing/facade';
 import type { ProfileRepository } from '../application/ports/profile-repository.js';
 import { Profile, type ProfileState } from '../domain/profile.js';
 
@@ -91,5 +92,13 @@ export class FakeVerificationFacade implements VerificationFacade {
   }
   async getBadges(userId: string): Promise<readonly VerificationBadge[]> {
     return (await this.getSummary(userId)).badges;
+  }
+}
+
+/** Facade billing giả: mặc định mọi người dùng đã thanh toán xác thực; thêm vào `unpaid` để mô phỏng chưa (BE-S4-03). */
+export class FakeBillingFacade implements BillingFacade {
+  readonly unpaid = new Set<string>();
+  async hasPaidVerification(userId: string): Promise<boolean> {
+    return !this.unpaid.has(userId);
   }
 }
