@@ -42,6 +42,9 @@ const workerEnvSchema = z
     /** Lịch job xoá ảnh eKYC hết thời hạn lưu (mặc định 03:00 hằng ngày). */
     KYC_MEDIA_RETENTION_CRON: envCron.default('0 3 * * *'),
     KYC_MEDIA_RETENTION_TZ: z.string().min(1).default('Asia/Ho_Chi_Minh'),
+    /** Lịch job chuyển voucher quá hạn sang EXPIRED (mặc định mỗi 15 phút — BE-S4-05). */
+    VOUCHER_EXPIRY_CRON: envCron.default('*/15 * * * *'),
+    VOUCHER_EXPIRY_TZ: z.string().min(1).default('Asia/Ho_Chi_Minh'),
   })
   .transform((e) => ({
     nodeEnv: e.NODE_ENV,
@@ -63,6 +66,7 @@ const workerEnvSchema = z
     auth: { secret: e.AUTH_SECRET },
     jobs: {
       kycMediaRetention: { cron: e.KYC_MEDIA_RETENTION_CRON, tz: e.KYC_MEDIA_RETENTION_TZ },
+      voucherExpiry: { cron: e.VOUCHER_EXPIRY_CRON, tz: e.VOUCHER_EXPIRY_TZ },
     },
   }));
 

@@ -40,6 +40,12 @@ import { createPartnerAdminRoutes } from './presentation/partner-admin-routes.js
 import { createRequirePartnerStaff } from './presentation/partner-auth-middleware.js';
 import { createPartnerRoutes } from './presentation/partner-routes.js';
 import { createPaymentRoutes, type DevPaymentSimulator } from './presentation/payment-routes.js';
+import { ExpireDueVouchers } from './application/voucher/expire-due-vouchers.js';
+import { RedeemVoucher } from './application/voucher/redeem-voucher.js';
+import { GetVoucherQr, ListMyVouchers } from './application/voucher/voucher-queries.js';
+import { DrizzleVoucherLifecycleRepository } from './infrastructure/drizzle-voucher-repository.js';
+import { deriveVoucherQrKey, HmacVoucherQrTokenService } from './infrastructure/voucher-qr-token.js';
+import { createVoucherRoutes } from './presentation/voucher-routes.js';
 
 /**
  * Module billing (Sprint 4): thanh toán xác thực, ledger chỉ ghi thêm, voucher hẹn hò, quán đối tác.
@@ -161,5 +167,47 @@ export function createBillingModule(deps: BillingModuleDeps): BillingModule {
   );
   const facade: BillingFacade = new BillingFacadeQueries({ uow, payments });
 
+  // ── Voucher QR & đổi voucher tại quán (BE-S4-05) ──────────────────────────────────────────────
+  const voucherLifecycle = new DrizzleVoucherLifecycleRepository(outbox);
+  const voucherQrTokens = new HmacVoucherQrTokenService(deriveVoucherQrKey(deps.secret));
+  routes.route(
+    '/',
+    createVoucherRoutes({
+      listMyVouchers: new ListMyVouchers({ uow, vouchers: voucherLifecycle }),
+      getVoucherQr: new GetVoucherQr({ uow, clock, vouchers: voucherLifecycle, tokens: voucherQrTokens }),
+      redeemVoucher: new RedeemVoucher({
+        uow,
+        clock,
+        vouchers: voucherLifecycle,
+        ledger: new DrizzleLedgerRepository(),
+        tokens: voucherQrTokens,
+      }),
+      requireUser: deps.requireUser,
+      requirePartnerStaff,
+    }),
+  );
+
   return { name: 'billing', routes, facade };
+}
+
+// ── Voucher (BE-S4-05) ─────────────────────────────────────────────────────────────────────────────
+export { ActivateVoucher } from './application/voucher/activate-voucher.js';
+export type { VoucherExpirySummary } from './application/voucher/expire-due-vouchers.js';
+export { VOUCHER_QR_TOKEN_TTL_SECONDS } from './domain/voucher-qr.js';
+
+export interface VoucherExpiryJobDeps {
+  readonly uow: UnitOfWork;
+  readonly clock: Clock;
+}
+
+/**
+ * Use case job hết hạn voucher (BE-S4-05) cho worker — tách khỏi `createBillingModule` để worker không phải nối
+ * route/gateway/identity.
+ */
+export function createVoucherExpiryJob(deps: VoucherExpiryJobDeps): ExpireDueVouchers {
+  return new ExpireDueVouchers({
+    uow: deps.uow,
+    clock: deps.clock,
+    vouchers: new DrizzleVoucherLifecycleRepository(new OutboxWriter()),
+  });
 }
