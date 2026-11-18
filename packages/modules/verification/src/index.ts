@@ -1,9 +1,25 @@
 import { OutboxWriter } from '@tamgiao/db';
 import type { AppEnv, RequireAdmin } from '@tamgiao/http';
-import type { BlindIndexer, Clock, Encryptor, UnitOfWork, UploadRegistry } from '@tamgiao/kernel';
+import type {
+  BlindIndexer,
+  Clock,
+  Encryptor,
+  ObjectStorage,
+  UnitOfWork,
+  UploadRegistry,
+} from '@tamgiao/kernel';
+import type { AuditLogger } from '@tamgiao/module-identity/facade';
 import type { Hono, MiddlewareHandler } from 'hono';
-import type { VerificationFacade } from './application/facade.js';
+import { ApproveKyc } from './application/admin/approve-kyc.js';
+import { AssignReviewer } from './application/admin/assign-reviewer.js';
+import { GetKycReviewDetail } from './application/admin/get-kyc-review-detail.js';
+import { GetKycReviewQueue } from './application/admin/get-kyc-review-queue.js';
+import { MarkStepPassed } from './application/admin/mark-step-passed.js';
+import { RejectKyc } from './application/admin/reject-kyc.js';
+import { RequestMoreInfo } from './application/admin/request-more-info.js';
 import { GetMyKyc } from './application/get-my-kyc.js';
+import type { ApplicantDirectory } from './application/ports/applicant-directory.js';
+import type { VerificationFacade } from './application/facade.js';
 import { BookInterview } from './application/interview/book-interview.js';
 import { CancelInterview } from './application/interview/cancel-interview.js';
 import {
@@ -19,10 +35,13 @@ import type { EkycProvider } from './application/ports/ekyc-provider.js';
 import { GetVerificationSummary } from './application/get-verification-summary.js';
 import { SubmitKyc } from './application/submit-kyc.js';
 import { DrizzleInterviewSlotRepository } from './infrastructure/drizzle-interview-slot-repository.js';
+import { DrizzleKycReviewQueue } from './infrastructure/drizzle-kyc-review-queue.js';
 import { DrizzleKycSubmissionRepository } from './infrastructure/drizzle-kyc-submission-repository.js';
+import { createAdminKycRoutes } from './presentation/admin-kyc-routes.js';
 import { createInterviewRoutes } from './presentation/interview-routes.js';
 import { createKycRoutes } from './presentation/kyc-routes.js';
 
+export type { ApplicantDirectory, ApplicantSummary } from './application/ports/applicant-directory.js';
 export type {
   VerificationBadge,
   VerificationFacade,
@@ -54,8 +73,14 @@ export interface VerificationModuleDeps {
   readonly applicants: ApplicantProfileReader;
   /** Guard người dùng app — `requireUser(identity.facade.authenticateUser)`. */
   readonly requireUser: MiddlewareHandler<AppEnv>;
-  /** Guard route admin — `identity.requireAdmin` (phỏng vấn sơ bộ dùng permission `kyc:review`). */
+  /** Họ tên / nghề nghiệp người nộp cho hàng chờ duyệt (facade profile, BE-S3-04). */
+  readonly applicantDirectory: ApplicantDirectory;
+  /** Presigned GET ảnh bucket private cho chuyên viên (BE-S3-04). */
+  readonly storage: ObjectStorage;
+  /** Guard admin — `identity.requireAdmin` (BE-S3-04). */
   readonly requireAdmin: RequireAdmin;
+  /** Ghi audit log — `identity.auditLogger` (BE-S3-04). */
+  readonly auditLogger: AuditLogger;
 }
 
 export interface VerificationModule {
@@ -99,6 +124,33 @@ export function createVerificationModule(deps: VerificationModuleDeps): Verifica
       cancel: new CancelInterview({ uow, clock, slots }),
       recordResult: new RecordInterviewResult({ uow, clock, slots, submissions }),
       requireUser: deps.requireUser,
+      requireAdmin: deps.requireAdmin,
+    }),
+  );
+
+  // Duyệt eKYC của admin (BE-S3-04).
+  const review = { uow, clock, submissions, auditLogger: deps.auditLogger };
+  routes.route(
+    '/',
+    createAdminKycRoutes({
+      getQueue: new GetKycReviewQueue({
+        uow,
+        queue: new DrizzleKycReviewQueue(),
+        applicants: deps.applicantDirectory,
+      }),
+      getDetail: new GetKycReviewDetail({
+        uow,
+        submissions,
+        auditLogger: deps.auditLogger,
+        storage: deps.storage,
+        applicantIdentities: deps.applicants,
+        applicantDirectory: deps.applicantDirectory,
+      }),
+      assignReviewer: new AssignReviewer(review),
+      markStepPassed: new MarkStepPassed(review),
+      approveKyc: new ApproveKyc(review),
+      rejectKyc: new RejectKyc(review),
+      requestMoreInfo: new RequestMoreInfo(review),
       requireAdmin: deps.requireAdmin,
     }),
   );

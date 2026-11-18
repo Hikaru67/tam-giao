@@ -14,6 +14,7 @@ import {
   FakeEkycProvider,
   ResilientEkycProvider,
   createVerificationModule,
+  type ApplicantDirectory,
   type ApplicantProfileReader,
 } from '@tamgiao/module-verification';
 import type { Hono } from 'hono';
@@ -68,6 +69,10 @@ export function buildModules({ config, uow, clock }: ModuleDeps): readonly ApiMo
   const applicants: ApplicantProfileReader = {
     getApplicantIdentity: (userId) => profile.facade.getApplicantIdentity(userId),
   };
+  const applicantDirectory: ApplicantDirectory = {
+    searchUserIds: (text, limit) => profile.facade.searchUserIds(text, limit),
+    getApplicantSummaries: (userIds) => profile.facade.getApplicantSummaries(userIds),
+  };
 
   // eKYC (D2 chưa chốt): `EKYC_PROVIDER=fake` — mỗi người dùng một số CCCD giả khác nhau (theo key ảnh).
   const ekyc = new ResilientEkycProvider(new FakeEkycProvider({ deriveCccdFromKey: true }), {
@@ -83,8 +88,11 @@ export function buildModules({ config, uow, clock }: ModuleDeps): readonly ApiMo
     uploads,
     ekyc,
     applicants,
+    applicantDirectory,
+    storage,
     requireUser: userGuard,
     requireAdmin: identity.requireAdmin,
+    auditLogger: identity.auditLogger,
   });
   const profile = createProfileModule({
     uow,

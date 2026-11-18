@@ -1,6 +1,7 @@
 import {
   fail,
   ok,
+  type DomainError,
   type DomainEvent,
   type Result,
   type Tx,
@@ -10,6 +11,8 @@ import {
   type UploadRegistry,
   type UploadVerifyError,
 } from '@tamgiao/kernel';
+import type { AuditLogger, AuditLogInput } from '@tamgiao/module-identity/facade';
+import type { ApplicantDirectory, ApplicantSummary } from '../application/ports/applicant-directory.js';
 import type { ApplicantProfileReader } from '../application/ports/applicant-profile-reader.js';
 import type {
   KycSaveError,
@@ -28,6 +31,13 @@ export class InMemoryKycSubmissionRepository implements KycSubmissionRepository 
   }
   findByUserIdForUpdate(tx: Tx, userId: string): Promise<KycSubmission | null> {
     return this.findByUserId(tx, userId);
+  }
+  async findById(_tx: Tx, id: string): Promise<KycSubmission | null> {
+    const s = this.rows.get(id);
+    return s ? KycSubmission.restore(s) : null;
+  }
+  findByIdForUpdate(tx: Tx, id: string): Promise<KycSubmission | null> {
+    return this.findById(tx, id);
   }
   async save(_tx: Tx, submission: KycSubmission): Promise<Result<void, KycSaveError>> {
     const s = submission.toState();
@@ -95,5 +105,37 @@ export class FakeApplicantProfileReader implements ApplicantProfileReader {
   readonly identities = new Map<string, { fullName: string; birthDate: string }>();
   async getApplicantIdentity(userId: string) {
     return this.identities.get(userId) ?? null;
+  }
+}
+
+/** Danh bạ hồ sơ in-memory: tìm chuỗi con (không phân biệt hoa/thường) trong họ tên / nghề nghiệp. */
+export class FakeApplicantDirectory implements ApplicantDirectory {
+  readonly summaries = new Map<string, ApplicantSummary>();
+  add(summary: ApplicantSummary): void {
+    this.summaries.set(summary.userId, summary);
+  }
+  async searchUserIds(text: string, limit: number): Promise<readonly string[]> {
+    const needle = text.toLowerCase();
+    return [...this.summaries.values()]
+      .filter((s) => [s.fullName, s.occupation].some((v) => v?.toLowerCase().includes(needle)))
+      .map((s) => s.userId)
+      .slice(0, limit);
+  }
+  async getApplicantSummaries(userIds: readonly string[]): Promise<readonly ApplicantSummary[]> {
+    return userIds.flatMap((id) => this.summaries.get(id) ?? []);
+  }
+}
+
+/** Ghi lại mọi bản ghi audit; `failWith` → trả `Err` (mô phỏng meta bị từ chối). */
+export class RecordingAuditLogger implements AuditLogger {
+  entries: AuditLogInput[] = [];
+  failWith: string | null = null;
+  log(entry: AuditLogInput): Promise<Result<void, DomainError>>;
+  log(tx: Tx, entry: AuditLogInput): Promise<Result<void, DomainError>>;
+  async log(a: Tx | AuditLogInput, b?: AuditLogInput): Promise<Result<void, DomainError>> {
+    if (this.failWith !== null) return fail(this.failWith);
+    const entry = b ?? (a as AuditLogInput);
+    this.entries.push(entry);
+    return ok();
   }
 }

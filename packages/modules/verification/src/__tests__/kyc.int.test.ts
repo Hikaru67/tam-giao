@@ -21,7 +21,7 @@ import { RejectionReason } from '../domain/rejection-reason.js';
 import { DrizzleKycSubmissionRepository } from '../infrastructure/drizzle-kyc-submission-repository.js';
 import { FAKE_EKYC_ID_CARD, FakeEkycProvider } from '../infrastructure/ekyc/fake-ekyc-provider.js';
 import { createVerificationModule } from '../index.js';
-import { FakeApplicantProfileReader } from './fakes.js';
+import { FakeApplicantDirectory, FakeApplicantProfileReader, RecordingAuditLogger } from './fakes.js';
 
 /** Mọi lời gọi eKYC trả CÙNG một số CCCD (mặc định của fake) → dùng để test trùng CCCD giữa 2 tài khoản. */
 const CCCD = FAKE_EKYC_ID_CARD.cccdNumber;
@@ -74,7 +74,10 @@ beforeAll(() => {
     ekyc: new FakeEkycProvider(),
     applicants,
     requireUser,
+    applicantDirectory: new FakeApplicantDirectory(),
+    storage,
     requireAdmin: createRequireAdmin(async () => fail('UNAUTHENTICATED')),
+    auditLogger: new RecordingAuditLogger(),
   });
   const logger = createLogger({
     service: 'api',

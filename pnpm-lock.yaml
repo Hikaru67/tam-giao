@@ -541,6 +541,9 @@ importers:
       '@tamgiao/kernel':
         specifier: workspace:*
         version: link:../../kernel
+      '@tamgiao/module-identity':
+        specifier: workspace:*
+        version: link:../identity
       drizzle-orm:
         specifier: 0.45.4
         version: 0.45.4(@opentelemetry/api@1.10.0)(@types/pg@8.23.1)(pg@8.23.1)

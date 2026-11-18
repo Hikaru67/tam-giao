@@ -9,7 +9,7 @@ import {
   type Database,
 } from '@tamgiao/db';
 import { createRequireAdmin, handleError, handleNotFound, requestContext, type AppEnv } from '@tamgiao/http';
-import { FakeClock, fail, newId, type ObjectStorage } from '@tamgiao/kernel';
+import { FakeClock, fail, newId, ok, type ObjectStorage } from '@tamgiao/kernel';
 import { FakeEkycProvider, createVerificationModule } from '@tamgiao/module-verification';
 import { resetDatabase, testDatabaseUrl } from '@tamgiao/testing';
 import { Hono } from 'hono';
@@ -58,7 +58,10 @@ beforeAll(() => {
     ekyc: new FakeEkycProvider(),
     applicants: { getApplicantIdentity: async () => null },
     requireUser,
+    applicantDirectory: { searchUserIds: async () => [], getApplicantSummaries: async () => [] },
+    storage,
     requireAdmin: createRequireAdmin(async () => fail('UNAUTHENTICATED')),
+    auditLogger: { log: async () => ok(undefined) },
   });
   const module = createProfileModule({
     uow,

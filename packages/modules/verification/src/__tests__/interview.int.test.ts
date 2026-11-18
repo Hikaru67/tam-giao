@@ -28,7 +28,7 @@ import { DrizzleInterviewSlotRepository } from '../infrastructure/drizzle-interv
 import { DrizzleKycSubmissionRepository } from '../infrastructure/drizzle-kyc-submission-repository.js';
 import { FakeEkycProvider } from '../infrastructure/ekyc/fake-ekyc-provider.js';
 import { createVerificationModule } from '../index.js';
-import { FakeApplicantProfileReader } from './fakes.js';
+import { FakeApplicantDirectory, FakeApplicantProfileReader, RecordingAuditLogger } from './fakes.js';
 
 const T0 = new Date('2026-11-18T01:00:00.000Z');
 const NOTES = 'Ứng viên chia sẻ đã ly hôn năm 2020, SĐT 0901234567';
@@ -88,8 +88,11 @@ beforeAll(() => {
     uploads: new UploadService({ uow, clock, storage, putTtlSeconds: 300 }),
     ekyc: new FakeEkycProvider(),
     applicants: new FakeApplicantProfileReader(),
+    applicantDirectory: new FakeApplicantDirectory(),
+    storage,
     requireUser,
     requireAdmin,
+    auditLogger: new RecordingAuditLogger(),
   });
   const logger = createLogger({
     service: 'api',

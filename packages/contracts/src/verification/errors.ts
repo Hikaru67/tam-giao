@@ -17,4 +17,11 @@ export const VERIFICATION_ERROR_CODES = registerErrors('verification', {
   KYC_ALREADY_SUBMITTED: { status: 409, title: 'Hồ sơ xác thực đã được nộp' },
   /** `meta.missing` liệt kê trường key tài liệu còn thiếu. */
   KYC_DOCS_MISSING: { status: 422, title: 'Thiếu tài liệu xác thực bắt buộc' },
+  /** Admin mở / quyết định hồ sơ không tồn tại (BE-S3-04). */
+  KYC_SUBMISSION_NOT_FOUND: { status: 404, title: 'Không tìm thấy hồ sơ xác thực' },
+  /**
+   * Đánh dấu bước `CCCD_CHIP` đạt khi hồ sơ chưa đọc được số CCCD — chặn lách kiểm tra 1 CCCD ↔ 1 tài khoản
+   * (ảnh mờ → OCR không ra số). Yêu cầu người dùng bổ sung ảnh CCCD (BE-S3-04).
+   */
+  KYC_CCCD_NUMBER_MISSING: { status: 409, title: 'Hồ sơ chưa có số CCCD, không thể xác nhận bước CCCD' },
 });
