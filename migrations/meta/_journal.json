@@ -71,6 +71,13 @@
       "when": 1794977465327,
       "tag": "0009_verification_interview_slots",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1794989025226,
+      "tag": "0010_billing_partners",
+      "breakpoints": true
     }
   ]
 }

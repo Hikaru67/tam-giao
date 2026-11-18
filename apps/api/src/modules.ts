@@ -8,6 +8,7 @@ import {
 } from '@tamgiao/db';
 import { requireUser, type AppEnv } from '@tamgiao/http';
 import type { Clock, UnitOfWork } from '@tamgiao/kernel';
+import { createBillingModule } from '@tamgiao/module-billing';
 import { ConsoleSmsSender, createIdentityModule } from '@tamgiao/module-identity';
 import { createProfileModule } from '@tamgiao/module-profile';
 import {
@@ -104,5 +105,15 @@ export function buildModules({ config, uow, clock }: ModuleDeps): readonly ApiMo
     requireUser: userGuard,
   });
 
-  return [identity, uploadModule, profile, verification];
+  // Billing (Sprint 4): quán đối tác + nhân viên quán (BE-S4-06). Khoá partner dẫn xuất từ AUTH_SECRET (HKDF, tách miền).
+  const billing = createBillingModule({
+    uow,
+    clock,
+    secret: config.auth.secret,
+    requireUser: userGuard,
+    requireAdmin: identity.requireAdmin,
+    auditLogger: identity.auditLogger,
+  });
+
+  return [identity, uploadModule, profile, verification, billing];
 }
