@@ -147,7 +147,7 @@ Admin đăng nhập với mật khẩu + 2FA, có phân quyền và audit log.
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| profile | application, infrastructure, presentation | P0 | 1d | BE-S2-05 | — | TODO |
+| profile | application, infrastructure, presentation | P0 | 1d | BE-S2-05 | — | DONE |
 
 **Mục tiêu:** Phục vụ màn "Thiết lập Tiêu chí Bạn đời & Bộ lọc Cứng"; dữ liệu đầu vào cho chấm điểm ghép đôi.
 
@@ -156,8 +156,8 @@ Admin đăng nhập với mật khẩu + 2FA, có phân quyền và audit log.
 - Ngoài: Thuật toán chấm điểm (BE-S5-03).
 
 **Tiêu chí nghiệm thu**
-- [ ] AC1: Số phẩm chất ≠ 3 → `INVALID_CORE_TRAITS`.
-- [ ] AC2: `age_min > age_max` hoặc ngoài [MIN_AGE, 80] → lỗi validate.
+- [x] AC1: Số phẩm chất ≠ 3 → `INVALID_CORE_TRAITS`.
+- [x] AC2: `age_min > age_max` hoặc ngoài [MIN_AGE, 80] → lỗi validate.
 
 **Test bắt buộc:** HTTP validate + integration lưu/đọc.
 
