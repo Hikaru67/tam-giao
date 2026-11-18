@@ -150,7 +150,7 @@ voucher `ACTIVE` → quán quét QR → `REDEEMED` (quét lần 2 bị từ ch�
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| billing | application, infrastructure, presentation | P1 | 1d | Sprint 2 | BE-S4-01 | IN_REVIEW |
+| billing | application, infrastructure, presentation | P1 | 1d | Sprint 2 | BE-S4-01 | DONE |
 
 **Mục tiêu:** Danh sách quán an toàn (The Running Bean, RuNam…) cho màn đặt hẹn và quyền quét QR.
 
