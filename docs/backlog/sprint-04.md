@@ -42,7 +42,7 @@ voucher `ACTIVE` → quán quét QR → `REDEEMED` (quét lần 2 bị từ ch�
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| billing | application, infrastructure | P0 | 2d | Sprint 1 | BE-S4-01 | TODO |
+| billing | application, infrastructure | P0 | 2d | Sprint 1 | BE-S4-01 | IN_REVIEW |
 
 **Mục tiêu:** Tách cổng thanh toán khỏi nghiệp vụ (chưa chốt D3).
 
