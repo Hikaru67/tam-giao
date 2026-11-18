@@ -35,3 +35,36 @@ export const rateLimitHits = identity.table(
   },
   (t) => [index('rate_limit_hits_key_hit_at_idx').on(t.key, t.hitAt)],
 );
+
+/** Phiên đăng nhập của người dùng app (mỗi thiết bị một phiên). */
+export const sessions = identity.table(
+  'sessions',
+  {
+    id: uuid('id').primaryKey(),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id),
+    deviceName: text('device_name'),
+    createdAt: timestamptz('created_at').notNull(),
+    lastUsedAt: timestamptz('last_used_at').notNull(),
+    revokedAt: timestamptz('revoked_at'),
+    revokeReason: text('revoke_reason'),
+  },
+  (t) => [index('sessions_user_id_idx').on(t.userId)],
+);
+
+/** Refresh token của phiên — chỉ lưu SHA-256; giữ cả token đã dùng để phát hiện tái sử dụng. */
+export const refreshTokens = identity.table(
+  'refresh_tokens',
+  {
+    id: uuid('id').primaryKey(),
+    sessionId: uuid('session_id')
+      .notNull()
+      .references(() => sessions.id, { onDelete: 'cascade' }),
+    tokenHash: text('token_hash').notNull().unique('refresh_tokens_token_hash_uq'),
+    createdAt: timestamptz('created_at').notNull(),
+    expiresAt: timestamptz('expires_at').notNull(),
+    usedAt: timestamptz('used_at'),
+  },
+  (t) => [index('refresh_tokens_session_id_idx').on(t.sessionId)],
+);

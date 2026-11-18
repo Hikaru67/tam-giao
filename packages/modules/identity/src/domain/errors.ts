@@ -8,6 +8,10 @@ export const IDENTITY_ERRORS = [
   'OTP_EXPIRED',
   'OTP_LOCKED',
   'RATE_LIMITED',
+  'UNAUTHENTICATED',
+  'TOKEN_EXPIRED',
+  'TOKEN_REUSED',
+  'NOT_FOUND',
 ] as const;
 
 export type IdentityErrorCode = (typeof IDENTITY_ERRORS)[number];

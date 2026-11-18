@@ -1,13 +1,35 @@
-import type { BlindIndexer, DomainEvent, Result, Tx, UnitOfWork } from '@tamgiao/kernel';
+import {
+  fail,
+  ok,
+  type BlindIndexer,
+  type DomainEvent,
+  type Result,
+  type Tx,
+  type UnitOfWork,
+} from '@tamgiao/kernel';
 import type { OtpChallengeRepository } from '../application/ports/otp-challenge-repository.js';
 import type { OtpSecrets } from '../application/ports/otp-secrets.js';
 import type { RateLimitDecision, RateLimiter } from '../application/ports/rate-limiter.js';
 import type { SmsMessage, SmsSender } from '../application/ports/sms-sender.js';
+import type { SessionRepository } from '../application/ports/session-repository.js';
+import type {
+  AccessTokenClaims,
+  AccessTokenError,
+  AccessTokenService,
+  RefreshTokenSecrets,
+} from '../application/ports/token-services.js';
 import type { UserRepository } from '../application/ports/user-repository.js';
 import { OtpChallenge, type OtpChallengeState } from '../domain/otp-challenge.js';
 import type { RateLimitRule } from '../domain/otp-policy.js';
 import type { PhoneNumber } from '../domain/phone-number.js';
-import { User, type UserState } from '../domain/user.js';
+import {
+  Session,
+  type RefreshTokenId,
+  type RefreshTokenRecord,
+  type SessionId,
+  type SessionState,
+} from '../domain/session.js';
+import { User, type UserId, type UserState } from '../domain/user.js';
 
 /** Kho in-memory có thể chụp/khôi phục để `FakeUnitOfWork` giả lập rollback. */
 export class MemoryTable<T> {
@@ -136,5 +158,63 @@ export class RecordingSmsSender implements SmsSender {
 export class FakeBlindIndexer implements BlindIndexer {
   index(value: string, purpose: string): string {
     return `${purpose}|${value}`;
+  }
+}
+
+export class InMemorySessionRepository implements SessionRepository {
+  readonly table = new MemoryTable<SessionState>();
+  readonly tokens = new MemoryTable<RefreshTokenRecord>();
+
+  async findById(_tx: Tx, id: SessionId): Promise<Session | null> {
+    const state = this.table.rows.get(id);
+    return state ? Session.restore(state) : null;
+  }
+
+  async listActiveByUser(_tx: Tx, userId: UserId): Promise<Session[]> {
+    return [...this.table.rows.values()]
+      .filter((s) => s.userId === userId && s.revokedAt === null)
+      .sort((a, b) => b.lastUsedAt.getTime() - a.lastUsedAt.getTime())
+      .map((s) => Session.restore(s));
+  }
+
+  async save(_tx: Tx, session: Session): Promise<void> {
+    this.table.rows.set(session.id, session.toState());
+  }
+
+  async findRefreshTokenForUpdate(_tx: Tx, tokenHash: string): Promise<RefreshTokenRecord | null> {
+    return [...this.tokens.rows.values()].find((t) => t.tokenHash === tokenHash) ?? null;
+  }
+
+  async addRefreshToken(_tx: Tx, token: RefreshTokenRecord): Promise<void> {
+    this.tokens.rows.set(token.id, token);
+  }
+
+  async markRefreshTokenUsed(_tx: Tx, id: RefreshTokenId, usedAt: Date): Promise<void> {
+    const token = this.tokens.rows.get(id);
+    if (token) this.tokens.rows.set(id, { ...token, usedAt });
+  }
+}
+
+/** Token dạng `at|<userId>|<sessionId>|<expMs>` — đủ để test hạn dùng mà không cần ký thật. */
+export class FakeAccessTokenService implements AccessTokenService {
+  issue(claims: AccessTokenClaims, now: Date, ttlSeconds: number): string {
+    return `at|${claims.userId}|${claims.sessionId}|${now.getTime() + ttlSeconds * 1_000}`;
+  }
+
+  verify(token: string, now: Date): Result<AccessTokenClaims, AccessTokenError> {
+    const [prefix, userId, sessionId, exp] = token.split('|');
+    if (prefix !== 'at' || !userId || !sessionId || !exp) return fail('UNAUTHENTICATED');
+    if (now.getTime() >= Number(exp)) return fail('TOKEN_EXPIRED');
+    return ok({ userId, sessionId });
+  }
+}
+
+export class FakeRefreshTokenSecrets implements RefreshTokenSecrets {
+  private counter = 0;
+  generate(): string {
+    return `refresh-token-${String(this.counter++).padStart(8, '0')}`;
+  }
+  hash(token: string): string {
+    return `sha(${token})`;
   }
 }

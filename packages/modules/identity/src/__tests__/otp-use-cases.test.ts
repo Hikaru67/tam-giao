@@ -1,6 +1,7 @@
 import { OTP_MAX_ATTEMPTS, OTP_TTL_SECONDS } from '@tamgiao/contracts/constants';
 import { FakeClock } from '@tamgiao/kernel';
 import { beforeEach, describe, expect, it } from 'vitest';
+import { SessionIssuer } from '../application/session-issuer.js';
 import { RequestOtp } from '../application/use-cases/request-otp.js';
 import { VerifyOtp } from '../application/use-cases/verify-otp.js';
 import {
@@ -9,7 +10,10 @@ import {
   FakeUnitOfWork,
   InMemoryOtpChallengeRepository,
   InMemoryRateLimiter,
+  InMemorySessionRepository,
   InMemoryUserRepository,
+  FakeAccessTokenService,
+  FakeRefreshTokenSecrets,
   RecordingSmsSender,
 } from './fakes.js';
 
@@ -24,10 +28,19 @@ function setup() {
   const sms = new RecordingSmsSender();
   const otpSecrets = new FakeOtpSecrets();
   const blindIndexer = new FakeBlindIndexer();
-  const uow = new FakeUnitOfWork([challenges.table, users.table, users.events, rateLimiter.table]);
+  const sessions = new InMemorySessionRepository();
+  const issuer = new SessionIssuer(sessions, new FakeAccessTokenService(), new FakeRefreshTokenSecrets());
+  const uow = new FakeUnitOfWork([
+    challenges.table,
+    users.table,
+    users.events,
+    rateLimiter.table,
+    sessions.table,
+    sessions.tokens,
+  ]);
   const requestOtp = new RequestOtp({ uow, clock, challenges, rateLimiter, otpSecrets, sms, blindIndexer });
-  const verifyOtp = new VerifyOtp({ uow, clock, challenges, users, otpSecrets, blindIndexer });
-  return { clock, challenges, users, sms, requestOtp, verifyOtp };
+  const verifyOtp = new VerifyOtp({ uow, clock, challenges, users, otpSecrets, blindIndexer, issuer });
+  return { clock, challenges, users, sessions, sms, requestOtp, verifyOtp };
 }
 
 let t: ReturnType<typeof setup>;
@@ -151,10 +164,12 @@ describe('VerifyOtp', () => {
     await t.requestOtp.execute({ phone: PHONE, ip: IP });
     const second = await t.verifyOtp.execute({ phone: PHONE, code: t.sms.lastCode() });
 
-    expect(second.isOk() && second.value).toEqual({
+    expect(second.isOk() && second.value).toMatchObject({
       userId: first.isOk() ? first.value.userId : '',
       isNewUser: false,
     });
+    // Mỗi lần đăng nhập mở một phiên (thiết bị) riêng.
+    expect(t.sessions.table.rows.size).toBe(2);
     expect(t.users.table.rows.size).toBe(1);
     expect(t.users.events.rows.size).toBe(1);
   });
