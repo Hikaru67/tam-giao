@@ -8,7 +8,8 @@
     "./constants": "./src/constants.ts",
     "./errors": "./src/errors.ts",
     "./http": "./src/http.ts",
-    "./identity": "./src/identity/index.ts"
+    "./identity": "./src/identity/index.ts",
+    "./uploads": "./src/uploads/index.ts"
   },
   "scripts": {
     "typecheck": "tsc -p tsconfig.json"

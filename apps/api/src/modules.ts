@@ -1,9 +1,17 @@
-import { HmacBlindIndexer, LocalKeyEncryptor, parseMasterKeyRing } from '@tamgiao/db';
-import type { AppEnv } from '@tamgiao/http';
+import { PRESIGNED_URL_TTL_SECONDS } from '@tamgiao/contracts';
+import {
+  HmacBlindIndexer,
+  LocalKeyEncryptor,
+  S3ObjectStorage,
+  UploadService,
+  parseMasterKeyRing,
+} from '@tamgiao/db';
+import { requireUser, type AppEnv } from '@tamgiao/http';
 import type { Clock, UnitOfWork } from '@tamgiao/kernel';
 import { ConsoleSmsSender, createIdentityModule } from '@tamgiao/module-identity';
 import type { Hono } from 'hono';
 import type { ApiConfig } from './config.js';
+import { createUploadRoutes } from './http/uploads.js';
 
 /**
  * Hợp đồng giữa composition root và từng module nghiệp vụ.
@@ -38,5 +46,13 @@ export function buildModules({ config, uow, clock }: ModuleDeps): readonly ApiMo
     authSecret: config.auth.secret,
   });
 
-  return [identity];
+  // Upload qua presigned URL (BE-S2-07). `uploads` (UploadRegistry) sẽ truyền vào profile/verification/safety.
+  const storage = new S3ObjectStorage({ ...config.storage, presignGetTtlSeconds: PRESIGNED_URL_TTL_SECONDS });
+  const uploads = new UploadService({ uow, clock, storage, putTtlSeconds: PRESIGNED_URL_TTL_SECONDS });
+  const uploadModule: ApiModule = {
+    name: 'uploads',
+    routes: createUploadRoutes({ uploads, requireUser: requireUser(identity.facade.authenticateUser) }),
+  };
+
+  return [identity, uploadModule];
 }
