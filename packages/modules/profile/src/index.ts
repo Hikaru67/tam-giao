@@ -8,13 +8,14 @@ import { GetMe } from './application/get-me.js';
 import { GetProfile } from './application/get-profile.js';
 import { GetPreferences, SavePreferences } from './application/preferences-use-cases.js';
 import { SaveProfile } from './application/save-profile.js';
+import { DrizzleApplicantDirectory } from './infrastructure/drizzle-applicant-directory.js';
 import { DrizzlePreferencesRepository } from './infrastructure/drizzle-preferences-repository.js';
 import { DrizzleProfileRepository } from './infrastructure/drizzle-profile-repository.js';
 import { createMeRoutes } from './presentation/me-routes.js';
 import { createPreferencesRoutes } from './presentation/preferences-routes.js';
 import { createProfileRoutes } from './presentation/profile-routes.js';
 
-export type { ApplicantIdentity, ProfileFacade } from './application/facade.js';
+export type { ApplicantIdentity, ApplicantSummary, ProfileFacade } from './application/facade.js';
 
 export interface ProfileModuleDeps {
   readonly uow: UnitOfWork;
@@ -60,8 +61,11 @@ export function createProfileModule(deps: ProfileModuleDeps): ProfileModule {
     }),
   );
   const applicantIdentity = new GetApplicantIdentity({ uow, profiles });
+  const applicantDirectory = new DrizzleApplicantDirectory(uow);
   const facade: ProfileFacade = {
     getApplicantIdentity: (userId) => applicantIdentity.execute(userId),
+    searchUserIds: (text, limit) => applicantDirectory.searchUserIds(text, limit),
+    getApplicantSummaries: (userIds) => applicantDirectory.getApplicantSummaries(userIds),
   };
   return { name: 'profile', routes, facade };
 }

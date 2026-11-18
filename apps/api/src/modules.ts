@@ -78,6 +78,10 @@ export function buildModules({ config, uow, clock }: ModuleDeps): readonly ApiMo
     ekyc,
     applicants: profile.facade,
     requireUser: userGuard,
+    applicantDirectory: profile.facade,
+    storage,
+    requireAdmin: identity.requireAdmin,
+    auditLogger: identity.auditLogger,
   });
 
   return [identity, uploadModule, profile, verification];

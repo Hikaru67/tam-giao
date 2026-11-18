@@ -27,7 +27,7 @@ import {
 import { RejectionReason } from '../domain/rejection-reason.js';
 import { KYC_CCCD_BIDX_UNIQUE, KYC_USER_UNIQUE, kycSubmissions } from './schema.js';
 
-type Row = typeof kycSubmissions.$inferSelect;
+export type Row = typeof kycSubmissions.$inferSelect;
 
 const cccdContext = (userId: string) => `verification.kyc_submissions.cccd_number:${userId}`;
 
@@ -80,6 +80,20 @@ export class DrizzleKycSubmissionRepository implements KycSubmissionRepository {
       .select()
       .from(kycSubmissions)
       .where(eq(kycSubmissions.userId, userId))
+      .for('update');
+    return row ? this.toDomain(row) : null;
+  }
+
+  async findById(tx: Tx, id: KycSubmissionId): Promise<KycSubmission | null> {
+    const [row] = await asDbTx(tx).select().from(kycSubmissions).where(eq(kycSubmissions.id, id));
+    return row ? this.toDomain(row) : null;
+  }
+
+  async findByIdForUpdate(tx: Tx, id: KycSubmissionId): Promise<KycSubmission | null> {
+    const [row] = await asDbTx(tx)
+      .select()
+      .from(kycSubmissions)
+      .where(eq(kycSubmissions.id, id))
       .for('update');
     return row ? this.toDomain(row) : null;
   }
@@ -190,7 +204,7 @@ function serializeSteps(steps: KycSteps): Record<string, { status: string; decid
   );
 }
 
-function parseSteps(row: Row): KycSteps {
+export function parseSteps(row: Row): KycSteps {
   const raw = row.steps;
   if (!isObject(raw)) invalid(row, 'steps');
   const entry = (step: (typeof KYC_STEPS)[number]): KycStepState => {
@@ -226,7 +240,7 @@ function parseCheck(row: Row, v: unknown): EkycCheck {
   invalid(row, 'ekyc_assessment');
 }
 
-function parseAssessment(row: Row): EkycAssessment {
+export function parseAssessment(row: Row): EkycAssessment {
   const raw = row.ekycAssessment;
   if (!isObject(raw)) invalid(row, 'ekyc_assessment');
   const assessedAt = toDate(raw.assessedAt);

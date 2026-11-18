@@ -12,6 +12,8 @@ export const VERIFICATION_DOMAIN_ERRORS = [
   'KYC_ALREADY_SUBMITTED',
   'KYC_DOCS_MISSING',
   'CCCD_ALREADY_REGISTERED',
+  'KYC_SUBMISSION_NOT_FOUND',
+  'KYC_CCCD_NUMBER_MISSING',
 ] as const;
 
 export type VerificationDomainErrorCode = (typeof VERIFICATION_DOMAIN_ERRORS)[number];

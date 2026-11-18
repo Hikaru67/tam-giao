@@ -94,7 +94,7 @@ chuyên viên duyệt / từ chối / yêu cầu bổ sung trên admin; hệ th�
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| verification | application, infrastructure, presentation | P0 | 2d | BE-S3-03, BE-S2-03, BE-S2-04 | BE-S3-05 | TODO |
+| verification | application, infrastructure, presentation | P0 | 2d | BE-S3-03, BE-S2-03, BE-S2-04 | BE-S3-05 | IN_REVIEW |
 
 **Mục tiêu:** Phục vụ màn "Web Admin – Thẩm định eKYC" (cột hàng chờ + panel chi tiết + thanh nút quyết định).
 
