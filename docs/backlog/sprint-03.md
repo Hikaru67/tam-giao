@@ -67,7 +67,7 @@ chuyên viên duyệt / từ chối / yêu cầu bổ sung trên admin; hệ th�
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| verification | application, infrastructure, presentation | P0 | 2d | BE-S3-01, BE-S3-02 | BE-S3-07 | IN_REVIEW |
+| verification | application, infrastructure, presentation | P0 | 2d | BE-S3-01, BE-S3-02 | BE-S3-07 | DONE |
 
 **Mục tiêu:** Phục vụ màn "Xác thực eKYC" (bước nộp tài liệu).
 
