@@ -2,6 +2,8 @@ import { OutboxWriter } from '@tamgiao/db';
 import type { AppEnv } from '@tamgiao/http';
 import type { Clock, Encryptor, ObjectStorage, UnitOfWork, UploadRegistry } from '@tamgiao/kernel';
 import type { Hono, MiddlewareHandler } from 'hono';
+import type { ProfileFacade } from './application/facade.js';
+import { GetApplicantIdentity } from './application/get-applicant-identity.js';
 import { GetMe } from './application/get-me.js';
 import { GetProfile } from './application/get-profile.js';
 import { GetPreferences, SavePreferences } from './application/preferences-use-cases.js';
@@ -11,6 +13,8 @@ import { DrizzleProfileRepository } from './infrastructure/drizzle-profile-repos
 import { createMeRoutes } from './presentation/me-routes.js';
 import { createPreferencesRoutes } from './presentation/preferences-routes.js';
 import { createProfileRoutes } from './presentation/profile-routes.js';
+
+export type { ApplicantIdentity, ProfileFacade } from './application/facade.js';
 
 export interface ProfileModuleDeps {
   readonly uow: UnitOfWork;
@@ -26,6 +30,7 @@ export interface ProfileModuleDeps {
 export interface ProfileModule {
   readonly name: 'profile';
   readonly routes: Hono<AppEnv>;
+  readonly facade: ProfileFacade;
 }
 
 /** Composition root của module profile (module "mỏng", AGENTS.md A11). */
@@ -54,5 +59,9 @@ export function createProfileModule(deps: ProfileModuleDeps): ProfileModule {
       requireUser: deps.requireUser,
     }),
   );
-  return { name: 'profile', routes };
+  const applicantIdentity = new GetApplicantIdentity({ uow, profiles });
+  const facade: ProfileFacade = {
+    getApplicantIdentity: (userId) => applicantIdentity.execute(userId),
+  };
+  return { name: 'profile', routes, facade };
 }

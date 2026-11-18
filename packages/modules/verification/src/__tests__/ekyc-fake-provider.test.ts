@@ -3,9 +3,11 @@ import { EkycProviderError } from '../application/ports/ekyc-provider.js';
 import {
   FAKE_EKYC_ID_CARD,
   FakeEkycProvider,
+  fakeCccdNumberForKey,
   type FakeEkycProviderOptions,
 } from '../infrastructure/ekyc/fake-ekyc-provider.js';
 import { ResilientEkycProvider } from '../infrastructure/ekyc/resilient-ekyc-provider.js';
+import { CccdNumber } from '../domain/cccd-number.js';
 import { runEkycProviderContract, type EkycContractFixtures } from './ekyc-provider.contract.js';
 
 const fixtures: EkycContractFixtures = {
@@ -25,6 +27,11 @@ const contractOptions: FakeEkycProviderOptions = {
 
 runEkycProviderContract('FakeEkycProvider', () => ({
   provider: new FakeEkycProvider(contractOptions),
+  fixtures,
+}));
+
+runEkycProviderContract('FakeEkycProvider(deriveCccdFromKey)', () => ({
+  provider: new FakeEkycProvider({ ...contractOptions, deriveCccdFromKey: true }),
   fixtures,
 }));
 
@@ -119,5 +126,19 @@ describe('FakeEkycProvider scenarios', () => {
     expect(message).toBe('eKYC ocrIdCard failed: TIMEOUT');
     expect(message).not.toContain(FAKE_EKYC_ID_CARD.cccdNumber);
     expect(message).not.toContain(FAKE_EKYC_ID_CARD.fullName);
+  });
+
+  it('deriveCccdFromKey yields a valid CCCD per key owner, stable across uploads of the same owner', async () => {
+    const provider = new FakeEkycProvider({ deriveCccdFromKey: true });
+    const ownerA1 = await provider.ocrIdCard({ key: 'kyc_doc/user-a/1.jpg' }, idBack);
+    const ownerA2 = await provider.ocrIdCard({ key: 'kyc_doc/user-a/2.jpg' }, idBack);
+    const ownerB = await provider.ocrIdCard({ key: 'kyc_doc/user-b/3.jpg' }, idBack);
+    if (!ownerA1.ok || !ownerA2.ok || !ownerB.ok) throw new Error('expected Ok');
+    expect(ownerA1.value.cccdNumber).toBe(ownerA2.value.cccdNumber);
+    expect(ownerA1.value.cccdNumber).not.toBe(ownerB.value.cccdNumber);
+    expect(ownerA1.value.fullName).toBe(FAKE_EKYC_ID_CARD.fullName);
+    for (let i = 0; i < 200; i++) {
+      expect(CccdNumber.parse(fakeCccdNumberForKey(`kyc_doc/user-${i}/x.jpg`)).isOk()).toBe(true);
+    }
   });
 });

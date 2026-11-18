@@ -56,6 +56,46 @@ export interface MoreInfoRequest {
   readonly requestedAt: Date;
 }
 
+/**
+ * Key object (bucket private) của bộ tài liệu người dùng nộp. Key đã được xác nhận thuộc người dùng qua
+ * `UploadRegistry` ở tầng application trước khi gắn vào hồ sơ.
+ */
+export interface KycDocuments {
+  readonly cccdFrontKey: string;
+  readonly cccdBackKey: string;
+  readonly selfieKey: string;
+  readonly maritalStatusCertificateKey: string;
+}
+
+/**
+ * Kết quả một thao tác eKYC: `OK` (có điểm nếu thao tác trả điểm), `REJECTED` (nhà cung cấp từ chối nghiệp vụ —
+ * ảnh mờ, không khớp…), `ERROR` (lỗi hạ tầng — timeout, mất kết nối…). `reason` là mã phân loại, không chứa PII.
+ */
+export type EkycCheck =
+  | { readonly status: 'OK'; readonly score: number | null }
+  | { readonly status: 'REJECTED'; readonly reason: string; readonly score: number | null }
+  | { readonly status: 'ERROR'; readonly reason: string };
+
+/** Trường thông tin OCR lệch với hồ sơ người dùng (đối chiếu họ tên / ngày sinh). */
+export const APPLICANT_MISMATCH_FIELDS = ['FULL_NAME', 'BIRTH_DATE'] as const;
+export type ApplicantMismatchField = (typeof APPLICANT_MISMATCH_FIELDS)[number];
+
+/**
+ * Đánh giá sơ bộ của eKYC — **chỉ là gợi ý** cho chuyên viên, không tự đánh dấu bước nào đạt.
+ * Không lưu họ tên / ngày sinh OCR (tối thiểu hoá dữ liệu), chỉ lưu cờ lệch.
+ */
+export interface EkycAssessment {
+  readonly ocr: EkycCheck;
+  readonly liveness: EkycCheck;
+  readonly faceMatch: EkycCheck;
+  /**
+   * Trường OCR lệch với hồ sơ (rỗng = khớp). `null` khi không đối chiếu được (OCR không đọc được hoặc hồ sơ
+   * chưa có họ tên / ngày sinh) — chuyên viên tự đối chiếu.
+   */
+  readonly profileMismatches: readonly ApplicantMismatchField[] | null;
+  readonly assessedAt: Date;
+}
+
 /** Snapshot đầy đủ để repository lưu / dựng lại aggregate (`toState` ↔ `restore`). */
 export interface KycSubmissionState {
   readonly id: KycSubmissionId;
@@ -64,6 +104,10 @@ export interface KycSubmissionState {
   readonly steps: KycSteps;
   /** Số CCCD đọc được (OCR) — `null` khi chưa có (eKYC lỗi/timeout vẫn cho chuyên viên duyệt tay). */
   readonly cccdNumber: CccdNumber | null;
+  /** Bộ tài liệu đã nộp — `null` khi hồ sơ còn nháp chưa gắn tài liệu. */
+  readonly documents: KycDocuments | null;
+  /** Đánh giá eKYC của lần nộp gần nhất — `null` khi chưa chạy. */
+  readonly ekycAssessment: EkycAssessment | null;
   readonly reviewerId: ReviewerId | null;
   readonly moreInfoRequest: MoreInfoRequest | null;
   readonly rejectionReason: RejectionReason | null;
@@ -99,7 +143,8 @@ const initialSteps = (): KycSteps => ({
  * (`approve`/`reject`). Event không chứa PII (không số CCCD, không ghi chú) — consumer tự tra theo id.
  *
  * Lưu ý cho repository: chỉ chuyển trạng thái có event mới tăng `version` (kernel `AggregateRoot`);
- * thao tác không phát event (`assignReviewer`, `markStep`, `recordCccdNumber`) chỉ đổi `updatedAt`.
+ * thao tác không phát event (`assignReviewer`, `markStep`, `recordCccdNumber`, `attachDocuments`,
+ * `recordEkycAssessment`) chỉ đổi `updatedAt`.
  */
 export class KycSubmission extends AggregateRoot<KycSubmissionId> {
   protected readonly aggregateType = 'KycSubmission';
@@ -112,7 +157,10 @@ export class KycSubmission extends AggregateRoot<KycSubmissionId> {
   }
 
   /** Tạo hồ sơ nháp (chưa nộp) cho người dùng. */
-  static start(input: { readonly id: KycSubmissionId; readonly userId: KycUserId }, now: Date): KycSubmission {
+  static start(
+    input: { readonly id: KycSubmissionId; readonly userId: KycUserId },
+    now: Date,
+  ): KycSubmission {
     return new KycSubmission(
       {
         id: input.id,
@@ -120,6 +168,8 @@ export class KycSubmission extends AggregateRoot<KycSubmissionId> {
         status: 'DRAFT',
         steps: initialSteps(),
         cccdNumber: null,
+        documents: null,
+        ekycAssessment: null,
         reviewerId: null,
         moreInfoRequest: null,
         rejectionReason: null,
@@ -150,6 +200,10 @@ export class KycSubmission extends AggregateRoot<KycSubmissionId> {
     return this.state.steps;
   }
 
+  get documents(): KycDocuments | null {
+    return this.state.documents;
+  }
+
   get isDecided(): boolean {
     return DECIDED_STATUSES.includes(this.state.status);
   }
@@ -159,6 +213,25 @@ export class KycSubmission extends AggregateRoot<KycSubmissionId> {
     const guard = this.ensureOpen();
     if (guard.isErr()) return guard;
     this.state = { ...this.state, cccdNumber: cccd, updatedAt: now };
+    return ok();
+  }
+
+  /**
+   * Gắn bộ tài liệu người dùng nộp — chỉ khi hồ sơ còn nháp (`DRAFT`) hoặc đang được yêu cầu bổ sung
+   * (`NEEDS_MORE_INFO`, bộ mới thay bộ cũ). Không phát event (event phát ở `submit`/`resubmit`).
+   */
+  attachDocuments(documents: KycDocuments, now: Date): Result<void, KycTransitionError> {
+    const guard = this.ensureStatus('attachDocuments', ['DRAFT', 'NEEDS_MORE_INFO']);
+    if (guard.isErr()) return guard;
+    this.state = { ...this.state, documents: { ...documents }, updatedAt: now };
+    return ok();
+  }
+
+  /** Ghi đánh giá eKYC (gợi ý cho chuyên viên) — chỉ khi hồ sơ chưa được quyết định. Không phát event. */
+  recordEkycAssessment(assessment: EkycAssessment, now: Date): Result<void, KycTransitionError> {
+    const guard = this.ensureOpen();
+    if (guard.isErr()) return guard;
+    this.state = { ...this.state, ekycAssessment: assessment, updatedAt: now };
     return ok();
   }
 

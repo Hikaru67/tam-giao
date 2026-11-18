@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import { err, ok, type Result } from '@tamgiao/kernel';
 import {
   EkycProviderError,
@@ -34,6 +35,12 @@ export interface FakeEkycProviderOptions {
    */
   readonly scenarioByKey?: Readonly<Record<string, FakeEkycScenario>>;
   readonly idCard?: IdCardOcrResult;
+  /**
+   * `true` → số CCCD OCR sinh xác định từ key ảnh mặt trước (theo đoạn `<ownerId>` nếu key dạng
+   * `<purpose>/<ownerId>/<uploadId>.<ext>`, ngược lại theo cả key) thay vì luôn là `idCard.cccdNumber`.
+   * Dùng ở môi trường dev để mỗi người dùng có một số CCCD hợp lệ khác nhau (không dính `CCCD_ALREADY_REGISTERED`).
+   */
+  readonly deriveCccdFromKey?: boolean;
   readonly livenessScore?: number;
   readonly faceMatchScore?: number;
   /** Điểm khớp trả kèm khi `FACE_MISMATCH`. */
@@ -55,6 +62,7 @@ export class FakeEkycProvider implements EkycProvider {
   private scenario: FakeEkycScenario;
   private readonly scenarioByKey: Readonly<Record<string, FakeEkycScenario>>;
   private readonly idCard: IdCardOcrResult;
+  private readonly deriveCccdFromKey: boolean;
   private readonly livenessScore: number;
   private readonly faceMatchScore: number;
   private readonly mismatchScore: number;
@@ -64,6 +72,7 @@ export class FakeEkycProvider implements EkycProvider {
     this.scenario = options.scenario ?? 'SUCCESS';
     this.scenarioByKey = options.scenarioByKey ?? {};
     this.idCard = options.idCard ?? FAKE_EKYC_ID_CARD;
+    this.deriveCccdFromKey = options.deriveCccdFromKey ?? false;
     this.livenessScore = options.livenessScore ?? 0.98;
     this.faceMatchScore = options.faceMatchScore ?? 0.95;
     this.mismatchScore = options.mismatchScore ?? 0.12;
@@ -80,7 +89,10 @@ export class FakeEkycProvider implements EkycProvider {
   async ocrIdCard(front: EkycImageRef, back: EkycImageRef): Promise<Result<IdCardOcrResult, EkycRejection>> {
     const scenario = this.begin('ocrIdCard', [front, back]);
     if (scenario === 'BLURRY') return err({ kind: 'IMAGE_BLURRY' });
-    return ok({ ...this.idCard });
+    return ok({
+      ...this.idCard,
+      ...(this.deriveCccdFromKey ? { cccdNumber: fakeCccdNumberForKey(front.key) } : {}),
+    });
   }
 
   async checkLiveness(selfie: EkycImageRef): Promise<Result<LivenessResult, EkycRejection>> {
@@ -109,4 +121,16 @@ export class FakeEkycProvider implements EkycProvider {
     }
     return scenario;
   }
+}
+
+/**
+ * Số CCCD giả hợp lệ (mã tỉnh 001–096 + 9 chữ số) sinh xác định từ key ảnh: cùng chủ sở hữu → cùng số.
+ */
+export function fakeCccdNumberForKey(key: string): string {
+  const segments = key.split('/');
+  const seed = segments.length >= 3 && segments[1] ? segments[1] : key;
+  const digest = createHash('sha256').update(seed, 'utf8').digest();
+  const province = (digest.readUInt16BE(0) % 96) + 1;
+  const serial = digest.readUInt32BE(2) % 1_000_000_000;
+  return `${String(province).padStart(3, '0')}${String(serial).padStart(9, '0')}`;
 }

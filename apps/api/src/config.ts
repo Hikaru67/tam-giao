@@ -43,11 +43,23 @@ const apiEnvSchema = z
     /** Bí mật gốc của identity (băm OTP, ký access token…). */
     AUTH_SECRET: envBase64Key(32),
     SMS_PROVIDER: z.enum(['console']).default('console'),
+    /** Nhà cung cấp eKYC (D2 chưa chốt): `fake` = `FakeEkycProvider`, bị cấm khi NODE_ENV=production. */
+    EKYC_PROVIDER: z.enum(['fake']).default('fake'),
+    /** Thời gian chờ tối đa mỗi lần gọi nhà cung cấp eKYC (ms). */
+    EKYC_TIMEOUT_MS: z.coerce.number().int().min(100).max(60_000).default(10_000),
+    /** Tổng số lần gọi tối đa (lần đầu + retry) khi gặp lỗi tạm thời (timeout, 5xx). */
+    EKYC_MAX_ATTEMPTS: z.coerce.number().int().min(1).max(5).default(2),
+    /** Chờ trước retry thứ n = `EKYC_BACKOFF_MS * n` (ms). */
+    EKYC_BACKOFF_MS: z.coerce.number().int().min(0).max(10_000).default(500),
   })
   .superRefine((e, ctx) => {
     if (e.NODE_ENV === 'production' && e.SMS_PROVIDER === 'console') {
       // ConsoleSmsSender in OTP ra stdout → không được chạy ở production (AGENTS.md mục 5).
       ctx.addIssue({ code: 'custom', path: ['SMS_PROVIDER'], message: 'console không dùng ở production' });
+    }
+    if (e.NODE_ENV === 'production' && e.EKYC_PROVIDER === 'fake') {
+      // FakeEkycProvider luôn "đạt" → không được chạy ở production.
+      ctx.addIssue({ code: 'custom', path: ['EKYC_PROVIDER'], message: 'fake không dùng ở production' });
     }
   })
   .transform((e) => ({
@@ -78,6 +90,12 @@ const apiEnvSchema = z
     },
     auth: { secret: e.AUTH_SECRET },
     sms: { provider: e.SMS_PROVIDER },
+    ekyc: {
+      provider: e.EKYC_PROVIDER,
+      timeoutMs: e.EKYC_TIMEOUT_MS,
+      maxAttempts: e.EKYC_MAX_ATTEMPTS,
+      backoffMs: e.EKYC_BACKOFF_MS,
+    },
   }));
 
 export type ApiConfig = z.output<typeof apiEnvSchema>;

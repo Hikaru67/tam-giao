@@ -253,6 +253,9 @@ importers:
       '@tamgiao/module-profile':
         specifier: workspace:*
         version: link:../../packages/modules/profile
+      '@tamgiao/module-verification':
+        specifier: workspace:*
+        version: link:../../packages/modules/verification
       hono:
         specifier: 4.13.18
         version: 4.13.18

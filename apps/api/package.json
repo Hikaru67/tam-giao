@@ -17,6 +17,7 @@
     "@tamgiao/kernel": "workspace:*",
     "@tamgiao/module-identity": "workspace:*",
     "@tamgiao/module-profile": "workspace:*",
+    "@tamgiao/module-verification": "workspace:*",
     "hono": "4.13.18",
     "zod": "4.6.7"
   },
