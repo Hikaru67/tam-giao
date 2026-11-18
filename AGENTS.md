@@ -97,6 +97,8 @@ Khai báo tại `packages/contracts/src/constants.ts`. Không hardcode ở chỗ
 | `SAFETY_RESPONSE_SLA_MINUTES` | 30 | Chuyên viên phản hồi báo cáo khẩn cấp |
 | `MIN_AGE` | 20 | **Chờ xác nhận (D6)** |
 | `KYC_MEDIA_RETENTION_DAYS` | 30 | **Chờ xác nhận (D6)** |
+| `INTERVIEW_DURATION_MINUTES` | 15 | Thời lượng slot phỏng vấn sơ bộ (BE-S3-05) |
+| `INTERVIEW_CHANGE_CUTOFF_HOURS` | 2 | Huỷ/đổi lịch phỏng vấn trước giờ bắt đầu ít nhất (BE-S3-05) |
 
 ## 7. Vùng sở hữu file (tránh xung đột khi nhiều subagent chạy song song)
 

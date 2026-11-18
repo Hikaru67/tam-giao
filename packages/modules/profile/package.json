@@ -4,7 +4,8 @@
   "private": true,
   "type": "module",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./facade": "./src/application/facade.ts"
   },
   "scripts": {
     "typecheck": "tsc -p tsconfig.json"
@@ -14,6 +15,7 @@
     "@tamgiao/db": "workspace:*",
     "@tamgiao/http": "workspace:*",
     "@tamgiao/kernel": "workspace:*",
+    "@tamgiao/module-verification": "workspace:*",
     "drizzle-orm": "0.45.4",
     "hono": "4.13.18",
     "zod": "4.6.7"

@@ -1,0 +1,189 @@
+import { OutboxWriter } from '@tamgiao/db';
+import type { AppEnv, RequireAdmin } from '@tamgiao/http';
+import type {
+  BlindIndexer,
+  Clock,
+  Encryptor,
+  ObjectStorage,
+  UnitOfWork,
+  UploadRegistry,
+} from '@tamgiao/kernel';
+import type { AuditLogger } from '@tamgiao/module-identity/facade';
+import type { Hono, MiddlewareHandler } from 'hono';
+import { ApproveKyc } from './application/admin/approve-kyc.js';
+import { AssignReviewer } from './application/admin/assign-reviewer.js';
+import { GetKycReviewDetail } from './application/admin/get-kyc-review-detail.js';
+import { GetKycReviewQueue } from './application/admin/get-kyc-review-queue.js';
+import { MarkStepPassed } from './application/admin/mark-step-passed.js';
+import { RejectKyc } from './application/admin/reject-kyc.js';
+import { RequestMoreInfo } from './application/admin/request-more-info.js';
+import { GetMyKyc } from './application/get-my-kyc.js';
+import type { ApplicantDirectory } from './application/ports/applicant-directory.js';
+import type { VerificationFacade } from './application/facade.js';
+import { BookInterview } from './application/interview/book-interview.js';
+import { CancelInterview } from './application/interview/cancel-interview.js';
+import {
+  GetMyInterview,
+  ListAvailableInterviewSlots,
+  ListInterviewSlots,
+} from './application/interview/interview-queries.js';
+import { OpenInterviewSlot } from './application/interview/open-interview-slot.js';
+import { RecordInterviewResult } from './application/interview/record-interview-result.js';
+import { RescheduleInterview } from './application/interview/reschedule-interview.js';
+import type { ApplicantProfileReader } from './application/ports/applicant-profile-reader.js';
+import type { EkycProvider } from './application/ports/ekyc-provider.js';
+import { GetVerificationSummary } from './application/get-verification-summary.js';
+import { SubmitKyc } from './application/submit-kyc.js';
+import { PurgeExpiredKycMedia } from './application/purge-expired-kyc-media.js';
+import { DrizzleInterviewSlotRepository } from './infrastructure/drizzle-interview-slot-repository.js';
+import { DrizzleKycMediaRetentionRepository } from './infrastructure/drizzle-kyc-media-retention-repository.js';
+import { DrizzleKycReviewQueue } from './infrastructure/drizzle-kyc-review-queue.js';
+import { DrizzleKycSubmissionRepository } from './infrastructure/drizzle-kyc-submission-repository.js';
+import { createAdminKycRoutes } from './presentation/admin-kyc-routes.js';
+import { createInterviewRoutes } from './presentation/interview-routes.js';
+import { createKycRoutes } from './presentation/kyc-routes.js';
+
+export type { ApplicantDirectory, ApplicantSummary } from './application/ports/applicant-directory.js';
+export type {
+  VerificationBadge,
+  VerificationFacade,
+  VerificationStatus,
+  VerificationSummary,
+} from './application/facade.js';
+export type { ApplicantProfileReader } from './application/ports/applicant-profile-reader.js';
+export type {
+  KycMediaPurgeSummary,
+  PurgeExpiredKycMedia,
+  PurgeExpiredKycMediaCommand,
+} from './application/purge-expired-kyc-media.js';
+export { EkycProviderError, type EkycProvider } from './application/ports/ekyc-provider.js';
+export {
+  FakeEkycProvider,
+  type FakeEkycProviderOptions,
+  type FakeEkycScenario,
+} from './infrastructure/ekyc/fake-ekyc-provider.js';
+export {
+  ResilientEkycProvider,
+  type ResilientEkycOptions,
+} from './infrastructure/ekyc/resilient-ekyc-provider.js';
+
+export interface VerificationModuleDeps {
+  readonly uow: UnitOfWork;
+  readonly clock: Clock;
+  readonly encryptor: Encryptor;
+  readonly blindIndexer: BlindIndexer;
+  /** Xác nhận key ảnh thuộc người dùng (BE-S2-07). */
+  readonly uploads: UploadRegistry;
+  /** Nhà cung cấp eKYC (D2) — composition root bọc `ResilientEkycProvider` (timeout + retry). */
+  readonly ekyc: EkycProvider;
+  /** Họ tên + ngày sinh từ hồ sơ (facade profile) để đối chiếu với OCR. */
+  readonly applicants: ApplicantProfileReader;
+  /** Guard người dùng app — `requireUser(identity.facade.authenticateUser)`. */
+  readonly requireUser: MiddlewareHandler<AppEnv>;
+  /** Họ tên / nghề nghiệp người nộp cho hàng chờ duyệt (facade profile, BE-S3-04). */
+  readonly applicantDirectory: ApplicantDirectory;
+  /** Presigned GET ảnh bucket private cho chuyên viên (BE-S3-04). */
+  readonly storage: ObjectStorage;
+  /** Guard admin — `identity.requireAdmin` (BE-S3-04). */
+  readonly requireAdmin: RequireAdmin;
+  /** Ghi audit log — `identity.auditLogger` (BE-S3-04). */
+  readonly auditLogger: AuditLogger;
+}
+
+export interface VerificationModule {
+  readonly name: 'verification';
+  readonly routes: Hono<AppEnv>;
+  /** Facade read-only cho module khác (BE-S3-07). */
+  readonly facade: VerificationFacade;
+  // `handlers` (consumer event, BE-S4-03) thêm ở task tương ứng.
+}
+
+/** Composition root của module verification (eKYC, thẩm định độc thân, phỏng vấn sơ bộ). */
+export function createVerificationModule(deps: VerificationModuleDeps): VerificationModule {
+  const { uow, clock } = deps;
+  const submissions = new DrizzleKycSubmissionRepository(
+    deps.encryptor,
+    deps.blindIndexer,
+    new OutboxWriter(),
+  );
+  const routes = createKycRoutes({
+    submitKyc: new SubmitKyc({
+      uow,
+      clock,
+      submissions,
+      uploads: deps.uploads,
+      ekyc: deps.ekyc,
+      applicants: deps.applicants,
+    }),
+    getMyKyc: new GetMyKyc({ uow, submissions }),
+    requireUser: deps.requireUser,
+  });
+  const slots = new DrizzleInterviewSlotRepository();
+  routes.route(
+    '/',
+    createInterviewRoutes({
+      openSlot: new OpenInterviewSlot({ uow, clock, slots }),
+      listSlots: new ListInterviewSlots({ uow, slots }),
+      listAvailable: new ListAvailableInterviewSlots({ uow, clock, slots }),
+      getMine: new GetMyInterview({ uow, clock, slots }),
+      book: new BookInterview({ uow, clock, slots, submissions }),
+      reschedule: new RescheduleInterview({ uow, clock, slots, submissions }),
+      cancel: new CancelInterview({ uow, clock, slots }),
+      recordResult: new RecordInterviewResult({ uow, clock, slots, submissions }),
+      requireUser: deps.requireUser,
+      requireAdmin: deps.requireAdmin,
+    }),
+  );
+
+  // Duyệt eKYC của admin (BE-S3-04).
+  const review = { uow, clock, submissions, auditLogger: deps.auditLogger };
+  routes.route(
+    '/',
+    createAdminKycRoutes({
+      getQueue: new GetKycReviewQueue({
+        uow,
+        queue: new DrizzleKycReviewQueue(),
+        applicants: deps.applicantDirectory,
+      }),
+      getDetail: new GetKycReviewDetail({
+        uow,
+        submissions,
+        auditLogger: deps.auditLogger,
+        storage: deps.storage,
+        applicantIdentities: deps.applicants,
+        applicantDirectory: deps.applicantDirectory,
+      }),
+      assignReviewer: new AssignReviewer(review),
+      markStepPassed: new MarkStepPassed(review),
+      approveKyc: new ApproveKyc(review),
+      rejectKyc: new RejectKyc(review),
+      requestMoreInfo: new RequestMoreInfo(review),
+      requireAdmin: deps.requireAdmin,
+    }),
+  );
+  const facade: VerificationFacade = new GetVerificationSummary({ uow, submissions });
+  return { name: 'verification', routes, facade };
+}
+
+export interface KycMediaRetentionDeps {
+  readonly uow: UnitOfWork;
+  readonly clock: Clock;
+  /** Xoá object bucket `privateKyc`. */
+  readonly storage: ObjectStorage;
+  /** Ghi audit `kyc.purge_media` (actor `system`) — `identity.auditLogger`. */
+  readonly auditLogger: AuditLogger;
+}
+
+/**
+ * Use case xoá ảnh eKYC hết thời hạn lưu (BE-S3-06) cho worker — tách khỏi `createVerificationModule` để worker
+ * không phải nối route/eKYC/facade profile; không cần `Encryptor` (không giải mã số CCCD).
+ */
+export function createKycMediaRetention(deps: KycMediaRetentionDeps): PurgeExpiredKycMedia {
+  return new PurgeExpiredKycMedia({
+    uow: deps.uow,
+    clock: deps.clock,
+    media: new DrizzleKycMediaRetentionRepository(),
+    storage: deps.storage,
+    auditLogger: deps.auditLogger,
+  });
+}

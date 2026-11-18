@@ -42,6 +42,7 @@ describe('api config', () => {
       },
       auth: { secret: Buffer.from('tamgiao-local-dev-auth-secret-01') },
       sms: { provider: 'console' },
+      ekyc: { provider: 'fake', timeoutMs: 10_000, maxAttempts: 2, backoffMs: 500 },
     });
   });
 
@@ -63,18 +64,19 @@ describe('api config', () => {
     }
   });
 
-  it('khoá quá ngắn hoặc SMS console ở production → ConfigError, không in giá trị', () => {
+  it('khoá quá ngắn hoặc SMS console / eKYC fake ở production → ConfigError, không in giá trị', () => {
     const base = envExample();
-    for (const [override, variable] of [
-      [{ AUTH_SECRET: Buffer.from('short').toString('base64') }, 'AUTH_SECRET'],
-      [{ NODE_ENV: 'production' }, 'SMS_PROVIDER'],
+    for (const [override, variables] of [
+      [{ AUTH_SECRET: Buffer.from('short').toString('base64') }, ['AUTH_SECRET']],
+      [{ NODE_ENV: 'production' }, ['SMS_PROVIDER', 'EKYC_PROVIDER']],
+      [{ EKYC_MAX_ATTEMPTS: '0' }, ['EKYC_MAX_ATTEMPTS']],
     ] as const) {
       try {
         parseApiConfig({ ...base, ...override });
         expect.unreachable();
       } catch (error) {
         expect(error).toBeInstanceOf(ConfigError);
-        expect((error as ConfigError).problems.map((p) => p.split(':')[0])).toEqual([variable]);
+        expect((error as ConfigError).problems.map((p) => p.split(':')[0])).toEqual(variables);
         expect((error as ConfigError).message).not.toContain(base.AUTH_SECRET);
       }
     }

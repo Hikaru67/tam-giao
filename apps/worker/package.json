@@ -10,8 +10,11 @@
   },
   "dependencies": {
     "@tamgiao/config": "workspace:*",
+    "@tamgiao/contracts": "workspace:*",
     "@tamgiao/db": "workspace:*",
     "@tamgiao/kernel": "workspace:*",
+    "@tamgiao/module-identity": "workspace:*",
+    "@tamgiao/module-verification": "workspace:*",
     "drizzle-orm": "0.45.4",
     "pg": "8.23.1",
     "pg-boss": "12.38.2",

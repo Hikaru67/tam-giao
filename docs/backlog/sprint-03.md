@@ -14,7 +14,7 @@ chuyên viên duyệt / từ chối / yêu cầu bổ sung trên admin; hệ th�
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| verification | domain | P0 | 2d | Sprint 2 | BE-S3-02 | TODO |
+| verification | domain | P0 | 2d | Sprint 2 | BE-S3-02 | DONE |
 
 **Mục tiêu:** Mô hình hoá vòng đời thẩm định hồ sơ và tiến trình 4 bước hiển thị ở màn 6.
 
@@ -41,7 +41,7 @@ chuyên viên duyệt / từ chối / yêu cầu bổ sung trên admin; hệ th�
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| verification | application, infrastructure | P0 | 2d | Sprint 2 | BE-S3-01 | TODO |
+| verification | application, infrastructure | P0 | 2d | Sprint 2 | BE-S3-01 | DONE |
 
 **Mục tiêu:** Tách nhà cung cấp eKYC khỏi nghiệp vụ để không bị chặn bởi D2.
 
@@ -67,7 +67,7 @@ chuyên viên duyệt / từ chối / yêu cầu bổ sung trên admin; hệ th�
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| verification | application, infrastructure, presentation | P0 | 2d | BE-S3-01, BE-S3-02 | BE-S3-07 | TODO |
+| verification | application, infrastructure, presentation | P0 | 2d | BE-S3-01, BE-S3-02 | BE-S3-07 | DONE |
 
 **Mục tiêu:** Phục vụ màn "Xác thực eKYC" (bước nộp tài liệu).
 
@@ -94,7 +94,7 @@ chuyên viên duyệt / từ chối / yêu cầu bổ sung trên admin; hệ th�
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| verification | application, infrastructure, presentation | P0 | 2d | BE-S3-03, BE-S2-03, BE-S2-04 | BE-S3-05 | TODO |
+| verification | application, infrastructure, presentation | P0 | 2d | BE-S3-03, BE-S2-03, BE-S2-04 | BE-S3-05 | DONE |
 
 **Mục tiêu:** Phục vụ màn "Web Admin – Thẩm định eKYC" (cột hàng chờ + panel chi tiết + thanh nút quyết định).
 
@@ -121,7 +121,7 @@ chuyên viên duyệt / từ chối / yêu cầu bổ sung trên admin; hệ th�
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| verification | domain, application, infrastructure, presentation | P1 | 1.5d | BE-S3-03 | BE-S3-04 | TODO |
+| verification | domain, application, infrastructure, presentation | P1 | 1.5d | BE-S3-03 | BE-S3-04 | DONE |
 
 **Mục tiêu:** Phục vụ nút "Đặt lịch phỏng vấn làm quen 15 phút" (màn 6) và "Nhật ký phỏng vấn" (admin).
 
@@ -147,7 +147,7 @@ chuyên viên duyệt / từ chối / yêu cầu bổ sung trên admin; hệ th�
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| verification | application, infrastructure | P1 | 1d | BE-S3-04 | — | TODO |
+| verification | application, infrastructure | P1 | 1d | BE-S3-04 | — | DONE |
 
 **Mục tiêu:** Giảm thiểu dữ liệu nhạy cảm lưu giữ theo nguyên tắc tối thiểu hoá dữ liệu.
 
@@ -156,8 +156,8 @@ chuyên viên duyệt / từ chối / yêu cầu bổ sung trên admin; hệ th�
 - Ngoài: Xoá tài khoản theo yêu cầu (BE-S7-06).
 
 **Tiêu chí nghiệm thu**
-- [ ] AC1: Submission quyết định cách đây > N ngày → object bị xoá, cột key set null, có audit.
-- [ ] AC2: Chạy job 2 lần không lỗi (idempotent).
+- [x] AC1: Submission quyết định cách đây > N ngày → object bị xoá, cột key set null, có audit.
+- [x] AC2: Chạy job 2 lần không lỗi (idempotent).
 
 **Test bắt buộc:** Integration với MinIO + FakeClock.
 
@@ -173,7 +173,7 @@ chuyên viên duyệt / từ chối / yêu cầu bổ sung trên admin; hệ th�
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| verification | application | P0 | 0.5d | BE-S3-03 | BE-S3-03 | TODO |
+| verification | application | P0 | 0.5d | BE-S3-03 | BE-S3-03 | DONE |
 
 **Mục tiêu:** Cho matching/profile hỏi trạng thái xác thực mà không đọc bảng verification (A3).
 

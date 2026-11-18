@@ -1,4 +1,5 @@
 import { ok, type Clock, type ObjectStorage, type Result, type UnitOfWork } from '@tamgiao/kernel';
+import type { VerificationFacade } from '@tamgiao/module-verification/facade';
 import { onboardingStep, type OnboardingStep } from '../domain/onboarding.js';
 import { ageAt, type Gender } from '../domain/profile.js';
 import type { PreferencesRepository } from './ports/preferences-repository.js';
@@ -23,14 +24,16 @@ export interface GetMeDeps {
   readonly profiles: ProfileRepository;
   readonly preferences: PreferencesRepository;
   readonly storage: ObjectStorage;
+  /** Trạng thái xác thực + huy hiệu (facade verification, BE-S3-07). */
+  readonly verification: Pick<VerificationFacade, 'getSummary'>;
 }
 
-/** `GET /me`: thông tin cơ bản + bước onboarding để app điều hướng (BE-S2-08). */
+/** `GET /me`: thông tin cơ bản + bước onboarding + huy hiệu để app điều hướng (BE-S2-08, BE-S3-07). */
 export class GetMe {
   constructor(private readonly deps: GetMeDeps) {}
 
   async execute(userId: string): Promise<Result<MeView, never>> {
-    const { uow, clock, profiles, preferences, storage } = this.deps;
+    const { uow, clock, profiles, preferences, storage, verification } = this.deps;
     const loaded = await uow.run(async (tx) =>
       ok({
         profile: await profiles.findById(tx, userId),
@@ -39,6 +42,7 @@ export class GetMe {
     );
     const { profile, hasPreferences } = loaded.unwrapOr({ profile: null, hasPreferences: false });
     const state = profile?.toState() ?? null;
+    const verificationSummary = await verification.getSummary(userId);
 
     let view: MeView['profile'] = null;
     if (state) {
@@ -58,10 +62,13 @@ export class GetMe {
 
     return ok({
       userId,
-      onboardingStep: onboardingStep({ profileStatus: state?.status ?? null, hasPreferences }),
+      onboardingStep: onboardingStep({
+        profileStatus: state?.status ?? null,
+        hasPreferences,
+        verification: verificationSummary.status,
+      }),
       profile: view,
-      // TODO(BE-S3-07): badge `VERIFIED` lấy từ facade verification.
-      badges: [],
+      badges: verificationSummary.badges,
     });
   }
 }

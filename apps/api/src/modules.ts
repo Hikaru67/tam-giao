@@ -10,6 +10,13 @@ import { requireUser, type AppEnv } from '@tamgiao/http';
 import type { Clock, UnitOfWork } from '@tamgiao/kernel';
 import { ConsoleSmsSender, createIdentityModule } from '@tamgiao/module-identity';
 import { createProfileModule } from '@tamgiao/module-profile';
+import {
+  FakeEkycProvider,
+  ResilientEkycProvider,
+  createVerificationModule,
+  type ApplicantDirectory,
+  type ApplicantProfileReader,
+} from '@tamgiao/module-verification';
 import type { Hono } from 'hono';
 import type { ApiConfig } from './config.js';
 import { createUploadRoutes } from './http/uploads.js';
@@ -56,7 +63,46 @@ export function buildModules({ config, uow, clock }: ModuleDeps): readonly ApiMo
     routes: createUploadRoutes({ uploads, requireUser: userGuard }),
   };
 
-  const profile = createProfileModule({ uow, clock, encryptor, uploads, storage, requireUser: userGuard });
+  // Profile ↔ verification cần facade của nhau ở runtime (không phụ thuộc vòng ở package): verification đọc họ tên
+  // để đối chiếu OCR, profile đọc trạng thái xác thực cho `GET /me`. Tạo verification trước; `applicants` chuyển
+  // tiếp sang `profile.facade` lúc xử lý request (khi đó `profile` đã được khởi tạo).
+  const applicants: ApplicantProfileReader = {
+    getApplicantIdentity: (userId) => profile.facade.getApplicantIdentity(userId),
+  };
+  const applicantDirectory: ApplicantDirectory = {
+    searchUserIds: (text, limit) => profile.facade.searchUserIds(text, limit),
+    getApplicantSummaries: (userIds) => profile.facade.getApplicantSummaries(userIds),
+  };
 
-  return [identity, uploadModule, profile];
+  // eKYC (D2 chưa chốt): `EKYC_PROVIDER=fake` — mỗi người dùng một số CCCD giả khác nhau (theo key ảnh).
+  const ekyc = new ResilientEkycProvider(new FakeEkycProvider({ deriveCccdFromKey: true }), {
+    timeoutMs: config.ekyc.timeoutMs,
+    maxAttempts: config.ekyc.maxAttempts,
+    backoffMs: config.ekyc.backoffMs,
+  });
+  const verification = createVerificationModule({
+    uow,
+    clock,
+    encryptor,
+    blindIndexer,
+    uploads,
+    ekyc,
+    applicants,
+    applicantDirectory,
+    storage,
+    requireUser: userGuard,
+    requireAdmin: identity.requireAdmin,
+    auditLogger: identity.auditLogger,
+  });
+  const profile = createProfileModule({
+    uow,
+    clock,
+    encryptor,
+    uploads,
+    storage,
+    verification: verification.facade,
+    requireUser: userGuard,
+  });
+
+  return [identity, uploadModule, profile, verification];
 }

@@ -1,17 +1,69 @@
-import { envLogLevel, envNodeEnv, envPostgresUrl, loadEnvOrExit, parseEnv, type Env } from '@tamgiao/config';
+import {
+  envBoolean,
+  envHttpUrl,
+  envLogLevel,
+  envNodeEnv,
+  envPostgresUrl,
+  loadEnvOrExit,
+  parseEnv,
+  type Env,
+} from '@tamgiao/config';
 import { z } from 'zod';
 
-// Worker chỉ cần DB ở Sprint 1; biến cho storage/push được thêm ở task dùng tới (BE-S3-06, BE-S7-05).
+/** Khoá nhị phân truyền dạng base64, tối thiểu `minBytes` bytes (giống `apps/api/src/config.ts`). */
+const envBase64Key = (minBytes: number) =>
+  z
+    .string()
+    .transform((v) => Buffer.from(v, 'base64'))
+    .refine((key) => key.length >= minBytes);
+
+/** Cron 5 trường (phút giờ ngày tháng thứ) — pg-boss kiểm tra cú pháp chi tiết khi `schedule`. */
+const envCron = z.string().regex(/^\S+(\s+\S+){4}$/, 'cron 5 trường, vd "0 3 * * *"');
+
+// Biến cho push được thêm ở task dùng tới (BE-S7-05).
 const workerEnvSchema = z
   .object({
     NODE_ENV: envNodeEnv.default('development'),
     LOG_LEVEL: envLogLevel.default('info'),
     DATABASE_URL: envPostgresUrl,
+    // Object storage — job xoá ảnh eKYC (BE-S3-06).
+    S3_ENDPOINT: envHttpUrl,
+    S3_REGION: z.string().default('us-east-1'),
+    S3_ACCESS_KEY_ID: z.string(),
+    S3_SECRET_ACCESS_KEY: z.string(),
+    S3_FORCE_PATH_STYLE: envBoolean.default(true),
+    S3_BUCKET_PUBLIC_PROFILE: z.string().default('public-profile'),
+    S3_BUCKET_PRIVATE_KYC: z.string().default('private-kyc'),
+    // Khoá dữ liệu + bí mật identity: composition root của identity cần để dựng `auditLogger` (BE-S3-06).
+    DATA_MASTER_KEYS: z.string(),
+    DATA_MASTER_KEY_VERSION: z.coerce.number().int().min(1).max(65_535).default(1),
+    BLIND_INDEX_KEY: envBase64Key(32),
+    AUTH_SECRET: envBase64Key(32),
+    /** Lịch job xoá ảnh eKYC hết thời hạn lưu (mặc định 03:00 hằng ngày). */
+    KYC_MEDIA_RETENTION_CRON: envCron.default('0 3 * * *'),
+    KYC_MEDIA_RETENTION_TZ: z.string().min(1).default('Asia/Ho_Chi_Minh'),
   })
   .transform((e) => ({
     nodeEnv: e.NODE_ENV,
     logLevel: e.LOG_LEVEL,
     database: { url: e.DATABASE_URL },
+    storage: {
+      endpoint: e.S3_ENDPOINT,
+      region: e.S3_REGION,
+      accessKeyId: e.S3_ACCESS_KEY_ID,
+      secretAccessKey: e.S3_SECRET_ACCESS_KEY,
+      forcePathStyle: e.S3_FORCE_PATH_STYLE,
+      buckets: { publicProfile: e.S3_BUCKET_PUBLIC_PROFILE, privateKyc: e.S3_BUCKET_PRIVATE_KYC },
+    },
+    crypto: {
+      masterKeys: e.DATA_MASTER_KEYS,
+      masterKeyVersion: e.DATA_MASTER_KEY_VERSION,
+      blindIndexKey: e.BLIND_INDEX_KEY,
+    },
+    auth: { secret: e.AUTH_SECRET },
+    jobs: {
+      kycMediaRetention: { cron: e.KYC_MEDIA_RETENTION_CRON, tz: e.KYC_MEDIA_RETENTION_TZ },
+    },
   }));
 
 export type WorkerConfig = z.output<typeof workerEnvSchema>;

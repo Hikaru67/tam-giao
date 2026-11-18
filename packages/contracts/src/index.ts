@@ -4,3 +4,4 @@ export * from './http.js';
 export * from './identity/index.js';
 export * from './uploads/index.js';
 export * from './profile/index.js';
+export * from './verification/index.js';

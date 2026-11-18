@@ -9,6 +9,11 @@ import {
   type UploadRegistry,
   type UploadVerifyError,
 } from '@tamgiao/kernel';
+import type {
+  VerificationBadge,
+  VerificationFacade,
+  VerificationSummary,
+} from '@tamgiao/module-verification/facade';
 import type { ProfileRepository } from '../application/ports/profile-repository.js';
 import { Profile, type ProfileState } from '../domain/profile.js';
 
@@ -72,5 +77,19 @@ export class FakeUploadRegistry implements UploadRegistry {
       contentType: 'image/jpeg',
       sizeBytes: 1,
     });
+  }
+}
+
+/** Facade verification giả: trạng thái theo user, mặc định `NOT_SUBMITTED`. */
+export class FakeVerificationFacade implements VerificationFacade {
+  readonly summaries = new Map<string, VerificationSummary>();
+  async getSummary(userId: string): Promise<VerificationSummary> {
+    return this.summaries.get(userId) ?? { status: 'NOT_SUBMITTED', badges: [] };
+  }
+  async isVerified(userId: string): Promise<boolean> {
+    return (await this.getSummary(userId)).status === 'APPROVED';
+  }
+  async getBadges(userId: string): Promise<readonly VerificationBadge[]> {
+    return (await this.getSummary(userId)).badges;
   }
 }
