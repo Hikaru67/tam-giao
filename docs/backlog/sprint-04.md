@@ -123,7 +123,7 @@ voucher `ACTIVE` → quán quét QR → `REDEEMED` (quét lần 2 bị từ ch�
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| billing | application, infrastructure, presentation | P0 | 2d | BE-S4-03, BE-S4-06 | BE-S4-04 | TODO |
+| billing | application, infrastructure, presentation | P0 | 2d | BE-S4-03, BE-S4-06 | BE-S4-04 | IN_REVIEW |
 
 **Mục tiêu:** Phục vụ thẻ voucher (màn 6, 11, 12) và trang quét QR cho quán đối tác.
 

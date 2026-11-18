@@ -13,12 +13,14 @@ import {
 } from '@tamgiao/db';
 import { PRESIGNED_URL_TTL_SECONDS } from '@tamgiao/contracts';
 import { SystemClock } from '@tamgiao/kernel';
+import { createVoucherExpiryJob } from '@tamgiao/module-billing';
 import { ConsoleSmsSender, createIdentityModule } from '@tamgiao/module-identity';
 import { createKycMediaRetention } from '@tamgiao/module-verification';
 import { PgBoss } from 'pg-boss';
 import { loadWorkerConfig } from './config.js';
 import { registerKycMediaRetentionJob } from './jobs/kyc-media-retention.js';
 import { registerWorkers } from './registry.js';
+import { registerVoucherExpiryJob } from './jobs/voucher-expiry.js';
 
 /** Composition root của worker: relay outbox → hàng đợi consumer, và chạy job hẹn giờ. */
 const SHUTDOWN_TIMEOUT_MS = 15_000;
@@ -59,6 +61,14 @@ await registerKycMediaRetentionJob({
   logger,
   purge: createKycMediaRetention({ uow, clock, storage, auditLogger: identity.auditLogger }),
   ...config.jobs.kycMediaRetention,
+});
+
+// Job chuyển voucher quá hạn sang EXPIRED (BE-S4-05).
+await registerVoucherExpiryJob({
+  boss,
+  logger,
+  expirer: createVoucherExpiryJob({ uow, clock }),
+  ...config.jobs.voucherExpiry,
 });
 
 const relay = new OutboxRelay({ uow, boss, bus, logger });
