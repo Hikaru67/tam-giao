@@ -34,7 +34,9 @@ import type { ApplicantProfileReader } from './application/ports/applicant-profi
 import type { EkycProvider } from './application/ports/ekyc-provider.js';
 import { GetVerificationSummary } from './application/get-verification-summary.js';
 import { SubmitKyc } from './application/submit-kyc.js';
+import { PurgeExpiredKycMedia } from './application/purge-expired-kyc-media.js';
 import { DrizzleInterviewSlotRepository } from './infrastructure/drizzle-interview-slot-repository.js';
+import { DrizzleKycMediaRetentionRepository } from './infrastructure/drizzle-kyc-media-retention-repository.js';
 import { DrizzleKycReviewQueue } from './infrastructure/drizzle-kyc-review-queue.js';
 import { DrizzleKycSubmissionRepository } from './infrastructure/drizzle-kyc-submission-repository.js';
 import { createAdminKycRoutes } from './presentation/admin-kyc-routes.js';
@@ -49,6 +51,11 @@ export type {
   VerificationSummary,
 } from './application/facade.js';
 export type { ApplicantProfileReader } from './application/ports/applicant-profile-reader.js';
+export type {
+  KycMediaPurgeSummary,
+  PurgeExpiredKycMedia,
+  PurgeExpiredKycMediaCommand,
+} from './application/purge-expired-kyc-media.js';
 export { EkycProviderError, type EkycProvider } from './application/ports/ekyc-provider.js';
 export {
   FakeEkycProvider,
@@ -156,4 +163,27 @@ export function createVerificationModule(deps: VerificationModuleDeps): Verifica
   );
   const facade: VerificationFacade = new GetVerificationSummary({ uow, submissions });
   return { name: 'verification', routes, facade };
+}
+
+export interface KycMediaRetentionDeps {
+  readonly uow: UnitOfWork;
+  readonly clock: Clock;
+  /** Xoá object bucket `privateKyc`. */
+  readonly storage: ObjectStorage;
+  /** Ghi audit `kyc.purge_media` (actor `system`) — `identity.auditLogger`. */
+  readonly auditLogger: AuditLogger;
+}
+
+/**
+ * Use case xoá ảnh eKYC hết thời hạn lưu (BE-S3-06) cho worker — tách khỏi `createVerificationModule` để worker
+ * không phải nối route/eKYC/facade profile; không cần `Encryptor` (không giải mã số CCCD).
+ */
+export function createKycMediaRetention(deps: KycMediaRetentionDeps): PurgeExpiredKycMedia {
+  return new PurgeExpiredKycMedia({
+    uow: deps.uow,
+    clock: deps.clock,
+    media: new DrizzleKycMediaRetentionRepository(),
+    storage: deps.storage,
+    auditLogger: deps.auditLogger,
+  });
 }
