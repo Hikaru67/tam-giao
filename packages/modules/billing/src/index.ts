@@ -46,6 +46,19 @@ import { GetVoucherQr, ListMyVouchers } from './application/voucher/voucher-quer
 import { DrizzleVoucherLifecycleRepository } from './infrastructure/drizzle-voucher-repository.js';
 import { deriveVoucherQrKey, HmacVoucherQrTokenService } from './infrastructure/voucher-qr-token.js';
 import { createVoucherRoutes } from './presentation/voucher-routes.js';
+// BE-S4-04 — hoàn tiền + consumer verification.
+import type { EventBus } from '@tamgiao/db';
+import { SetVoucherExpiryOnKycApproved } from './application/kyc-approved/set-voucher-expiry-on-kyc-approved.js';
+import { RefundOnKycRejected } from './application/refund/refund-on-kyc-rejected.js';
+import { FindOverdueRefunds, ListPendingRefunds } from './application/refund/refund-queries.js';
+import { RefundVerificationPayment } from './application/refund/refund-verification-payment.js';
+import { RequestManualRefund } from './application/refund/request-manual-refund.js';
+import {
+  DrizzleRefundPaymentRepository,
+  DrizzleRefundVoucherRepository,
+} from './infrastructure/drizzle-refund-repositories.js';
+import { registerBillingKycConsumers } from './infrastructure/refund-kyc-consumers.js';
+import { createRefundAdminRoutes } from './presentation/refund-admin-routes.js';
 
 /**
  * Module billing (Sprint 4): thanh toán xác thực, ledger chỉ ghi thêm, voucher hẹn hò, quán đối tác.
@@ -187,6 +200,22 @@ export function createBillingModule(deps: BillingModuleDeps): BillingModule {
     }),
   );
 
+  // ── Hoàn tiền thủ công (BE-S4-04): admin chuyển REFUND_PENDING, job worker gọi cổng ──────────────
+  routes.route(
+    '/',
+    createRefundAdminRoutes({
+      requestManualRefund: new RequestManualRefund({
+        uow,
+        clock,
+        auditLogger,
+        payments: new DrizzleRefundPaymentRepository(outbox),
+        vouchers: new DrizzleRefundVoucherRepository(outbox),
+        ledger: new DrizzleLedgerRepository(),
+      }),
+      requireAdmin: deps.requireAdmin,
+    }),
+  );
+
   return { name: 'billing', routes, facade };
 }
 
@@ -210,4 +239,56 @@ export function createVoucherExpiryJob(deps: VoucherExpiryJobDeps): ExpireDueVou
     clock: deps.clock,
     vouchers: new DrizzleVoucherLifecycleRepository(new OutboxWriter()),
   });
+}
+
+// ── Worker billing (BE-S4-04): consumer KycRejected/KycApproved + job hoàn tiền ─────────────────
+export {
+  REFUND_ON_KYC_REJECTED_CONSUMER,
+  SET_VOUCHER_EXPIRY_CONSUMER,
+} from './infrastructure/refund-kyc-consumers.js';
+export type { RefundVerificationPaymentOutcome } from './application/refund/refund-verification-payment.js';
+export type { OverdueRefund } from './application/refund/refund-queries.js';
+export type { PendingRefund } from './application/ports/refund-repositories.js';
+
+export interface BillingWorkerDeps {
+  readonly uow: UnitOfWork;
+  readonly clock: Clock;
+  /** Cổng thanh toán dùng để gọi `refund` (worker — xem `apps/worker/src/main.ts`). */
+  readonly paymentGateway: PaymentGateway;
+}
+
+export interface BillingWorker {
+  /** Đăng ký consumer `billing.refund-on-kyc-rejected` + `billing.set-voucher-expiry` (trước `registerConsumers`). */
+  registerConsumers(bus: EventBus): void;
+  /** Job hoàn tiền một khoản `REFUND_PENDING` (gọi cổng ngoài transaction). */
+  readonly refundPayment: RefundVerificationPayment;
+  /** Liệt kê khoản `REFUND_PENDING` để điều phối job hoàn tiền. */
+  readonly listPendingRefunds: ListPendingRefunds;
+  /** Khoản `REFUND_PENDING` quá `REFUND_SLA_HOURS` (cảnh báo). */
+  readonly findOverdueRefunds: FindOverdueRefunds;
+}
+
+/** Composition root phần worker của billing — `apps/worker` nối vào pg-boss. */
+export function createBillingWorker(deps: BillingWorkerDeps): BillingWorker {
+  const { uow, clock } = deps;
+  const outbox = new OutboxWriter();
+  const payments = new DrizzleRefundPaymentRepository(outbox);
+  const vouchers = new DrizzleRefundVoucherRepository(outbox);
+  const ledger = new DrizzleLedgerRepository();
+  const consumers = {
+    refundOnKycRejected: new RefundOnKycRejected({ clock, payments, vouchers, ledger }),
+    setVoucherExpiry: new SetVoucherExpiryOnKycApproved({ clock, vouchers }),
+  };
+  return {
+    registerConsumers: (bus) => registerBillingKycConsumers(bus, consumers),
+    refundPayment: new RefundVerificationPayment({
+      uow,
+      clock,
+      gateway: deps.paymentGateway,
+      payments,
+      ledger,
+    }),
+    listPendingRefunds: new ListPendingRefunds({ uow, payments }),
+    findOverdueRefunds: new FindOverdueRefunds({ uow, clock, payments }),
+  };
 }

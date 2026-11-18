@@ -36,3 +36,9 @@ export const BILLING_PAYMENT_ERROR_CODES = registerErrors('billing', {
   /** `meta.kind`: không tạo được phiên thanh toán do cổng lỗi — thử lại sau (giữ nguyên idempotency key). */
   PAYMENT_GATEWAY_UNAVAILABLE: { status: 503, title: 'Cổng thanh toán tạm thời không khả dụng' },
 });
+
+/** Mã lỗi hoàn tiền (BE-S4-04). */
+export const BILLING_REFUND_ERROR_CODES = registerErrors('billing', {
+  /** Không có khoản thanh toán với id này (admin hoàn tiền thủ công). */
+  PAYMENT_NOT_FOUND: { status: 404, title: 'Không tìm thấy khoản thanh toán' },
+});

@@ -96,7 +96,7 @@ voucher `ACTIVE` → quán quét QR → `REDEEMED` (quét lần 2 bị từ ch�
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| billing | application, infrastructure, presentation | P0 | 1.5d | BE-S4-03, BE-S3-01 | BE-S4-05 | TODO |
+| billing | application, infrastructure, presentation | P0 | 1.5d | BE-S4-03, BE-S3-01 | BE-S4-05 | DONE |
 
 **Mục tiêu:** Thực hiện cam kết "Hoàn 100% nếu hồ sơ không được duyệt trong `REFUND_SLA_HOURS`".
 

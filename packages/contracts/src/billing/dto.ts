@@ -91,3 +91,16 @@ export type WebhookAckResponse = z.infer<typeof webhookAckResponseSchema>;
 /** `POST /dev/payments/fake/:orderId` (chỉ dev, gateway `fake`) — giả lập kết quả thanh toán. */
 export const devFakePaymentBodySchema = z.object({ outcome: z.enum(['SUCCEEDED', 'FAILED']) });
 export type DevFakePaymentBody = z.infer<typeof devFakePaymentBodySchema>;
+
+/** `POST /admin/payments/:id/refund` (permission `billing:refund`, BE-S4-04) — lý do bắt buộc, lưu ở audit log. */
+export const adminRefundBodySchema = z.object({ reason: z.string().trim().min(1).max(500) });
+export type AdminRefundBody = z.infer<typeof adminRefundBodySchema>;
+
+/** Đã chuyển `REFUND_PENDING` (202) — job gọi cổng hoàn tiền sau, kết quả cuối qua event `RefundCompleted`. */
+export const adminRefundResponseSchema = z.object({
+  paymentId: z.uuid(),
+  status: z.literal('REFUND_PENDING'),
+  refundRequestedAt: z.iso.datetime(),
+  voucherVoided: z.boolean(),
+});
+export type AdminRefundResponse = z.infer<typeof adminRefundResponseSchema>;

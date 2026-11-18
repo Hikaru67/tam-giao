@@ -45,6 +45,16 @@ const workerEnvSchema = z
     /** Lịch job chuyển voucher quá hạn sang EXPIRED (mặc định mỗi 15 phút — BE-S4-05). */
     VOUCHER_EXPIRY_CRON: envCron.default('*/15 * * * *'),
     VOUCHER_EXPIRY_TZ: z.string().min(1).default('Asia/Ho_Chi_Minh'),
+    /** Cổng thanh toán cho job hoàn tiền (BE-S4-04) — D3 chưa chốt, hiện chỉ `fake`, bị cấm ở production. */
+    PAYMENT_GATEWAY: z.enum(['fake']).default('fake'),
+    /** Secret của cổng (fake: ký webhook) — dùng chung giá trị với API. */
+    PAYMENT_WEBHOOK_SECRET: z.string().min(16),
+  })
+  .superRefine((e, ctx) => {
+    if (e.NODE_ENV === 'production' && e.PAYMENT_GATEWAY === 'fake') {
+      // FakePaymentGateway không hoàn tiền thật → không được chạy ở production.
+      ctx.addIssue({ code: 'custom', path: ['PAYMENT_GATEWAY'], message: 'fake không dùng ở production' });
+    }
   })
   .transform((e) => ({
     nodeEnv: e.NODE_ENV,
@@ -68,6 +78,7 @@ const workerEnvSchema = z
       kycMediaRetention: { cron: e.KYC_MEDIA_RETENTION_CRON, tz: e.KYC_MEDIA_RETENTION_TZ },
       voucherExpiry: { cron: e.VOUCHER_EXPIRY_CRON, tz: e.VOUCHER_EXPIRY_TZ },
     },
+    payment: { gateway: e.PAYMENT_GATEWAY, webhookSecret: e.PAYMENT_WEBHOOK_SECRET },
   }));
 
 export type WorkerConfig = z.output<typeof workerEnvSchema>;

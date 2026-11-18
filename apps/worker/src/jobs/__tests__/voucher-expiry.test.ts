@@ -14,6 +14,7 @@ const ENV = {
   DATA_MASTER_KEYS: `1:${KEY}`,
   BLIND_INDEX_KEY: KEY,
   AUTH_SECRET: KEY,
+  PAYMENT_WEBHOOK_SECRET: 'worker-test-payment-secret',
 };
 
 class RecordingLogger implements JobLogger {
