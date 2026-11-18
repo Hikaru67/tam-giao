@@ -42,6 +42,16 @@ const workerEnvSchema = z
     /** Lịch job xoá ảnh eKYC hết thời hạn lưu (mặc định 03:00 hằng ngày). */
     KYC_MEDIA_RETENTION_CRON: envCron.default('0 3 * * *'),
     KYC_MEDIA_RETENTION_TZ: z.string().min(1).default('Asia/Ho_Chi_Minh'),
+    /** Cổng thanh toán cho job hoàn tiền (BE-S4-04) — D3 chưa chốt, hiện chỉ `fake`, bị cấm ở production. */
+    PAYMENT_GATEWAY: z.enum(['fake']).default('fake'),
+    /** Secret của cổng (fake: ký webhook) — dùng chung giá trị với API. */
+    PAYMENT_WEBHOOK_SECRET: z.string().min(16),
+  })
+  .superRefine((e, ctx) => {
+    if (e.NODE_ENV === 'production' && e.PAYMENT_GATEWAY === 'fake') {
+      // FakePaymentGateway không hoàn tiền thật → không được chạy ở production.
+      ctx.addIssue({ code: 'custom', path: ['PAYMENT_GATEWAY'], message: 'fake không dùng ở production' });
+    }
   })
   .transform((e) => ({
     nodeEnv: e.NODE_ENV,
@@ -64,6 +74,7 @@ const workerEnvSchema = z
     jobs: {
       kycMediaRetention: { cron: e.KYC_MEDIA_RETENTION_CRON, tz: e.KYC_MEDIA_RETENTION_TZ },
     },
+    payment: { gateway: e.PAYMENT_GATEWAY, webhookSecret: e.PAYMENT_WEBHOOK_SECRET },
   }));
 
 export type WorkerConfig = z.output<typeof workerEnvSchema>;

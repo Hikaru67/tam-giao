@@ -29,6 +29,11 @@ export interface FakePaymentGatewayOptions {
   readonly refundTransientFailures?: number;
   /** Loại lỗi tạm thời khi `refundTransientFailures > 0`; mặc định `UNAVAILABLE`. */
   readonly refundTransientKind?: Extract<PaymentGatewayErrorKind, 'TIMEOUT' | 'UNAVAILABLE'>;
+  /**
+   * `true`: `refund` chấp nhận cả giao dịch instance này không biết (vd fake trong worker — giao dịch do instance fake
+   * của API tạo). Vẫn từ chối hoàn lần 2 cùng giao dịch. Chỉ cho dev (fake đã bị cấm ở production). Mặc định `false`.
+   */
+  readonly acceptUnknownRefunds?: boolean;
 }
 
 /** Webhook đã ký, sẵn sàng gửi tới `verifyWebhook` hoặc `POST /webhooks/payments/fake`. */
@@ -67,6 +72,7 @@ export class FakePaymentGateway implements PaymentGateway {
   private readonly checkoutBaseUrl: string;
   private refundTransientKind: 'TIMEOUT' | 'UNAVAILABLE';
   private refundFailuresLeft: number;
+  private readonly acceptUnknownRefunds: boolean;
   private readonly checkouts = new Map<string, FakeCheckout>();
   private readonly txns = new Map<string, FakeTxn>();
   private readonly recordedRefunds: FakeRefundCall[] = [];
@@ -78,6 +84,7 @@ export class FakePaymentGateway implements PaymentGateway {
     this.checkoutBaseUrl = options.checkoutBaseUrl ?? 'https://fake-gateway.local/checkout';
     this.refundFailuresLeft = options.refundTransientFailures ?? 0;
     this.refundTransientKind = options.refundTransientKind ?? 'UNAVAILABLE';
+    this.acceptUnknownRefunds = options.acceptUnknownRefunds ?? false;
   }
 
   get refundCalls(): readonly FakeRefundCall[] {
@@ -146,6 +153,9 @@ export class FakePaymentGateway implements PaymentGateway {
       this.refundFailuresLeft -= 1;
       this.recordedRefunds.push({ gatewayTxnId, amount, succeeded: false });
       throw new PaymentGatewayError(this.refundTransientKind, 'refund');
+    }
+    if (this.acceptUnknownRefunds && !this.txns.has(gatewayTxnId) && amount > 0n) {
+      this.txns.set(gatewayTxnId, { orderId: '', amount, status: 'SUCCEEDED', refunded: false });
     }
     const txn = this.txns.get(gatewayTxnId);
     if (

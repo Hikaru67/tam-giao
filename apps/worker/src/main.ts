@@ -19,6 +19,8 @@ import { PgBoss } from 'pg-boss';
 import { loadWorkerConfig } from './config.js';
 import { registerKycMediaRetentionJob } from './jobs/kyc-media-retention.js';
 import { registerWorkers } from './registry.js';
+import { createBillingWorker, FakePaymentGateway } from '@tamgiao/module-billing';
+import { registerBillingRefundJobs } from './jobs/billing-refund.js';
 
 /** Composition root của worker: relay outbox → hàng đợi consumer, và chạy job hẹn giờ. */
 const SHUTDOWN_TIMEOUT_MS = 15_000;
@@ -35,6 +37,18 @@ await boss.start();
 
 const bus = new EventBus();
 const jobs = registerWorkers(bus);
+// Billing (BE-S4-04): consumer KycRejected (hoàn tiền) + KycApproved (đặt hạn voucher), job hoàn tiền bên dưới.
+// Fake trong worker là instance khác với API → không biết giao dịch do API tạo; `acceptUnknownRefunds` để hoàn
+// được ở dev. Config đã cấm `fake` ở production.
+const billingWorker = createBillingWorker({
+  uow,
+  clock: new SystemClock(),
+  paymentGateway: new FakePaymentGateway({
+    secret: config.payment.webhookSecret,
+    acceptUnknownRefunds: true,
+  }),
+});
+billingWorker.registerConsumers(bus);
 await registerConsumers({ boss, uow, bus, logger });
 for (const job of jobs) {
   await registerJob({ boss, uow, logger, ...job });
@@ -60,6 +74,9 @@ await registerKycMediaRetentionJob({
   purge: createKycMediaRetention({ uow, clock, storage, auditLogger: identity.auditLogger }),
   ...config.jobs.kycMediaRetention,
 });
+
+// Hoàn tiền (BE-S4-04): job từng khoản (retry backoff) + điều phối REFUND_PENDING + cảnh báo SLA.
+await registerBillingRefundJobs({ boss, logger, billing: billingWorker });
 
 const relay = new OutboxRelay({ uow, boss, bus, logger });
 relay.start(RELAY_INTERVAL_MS);
