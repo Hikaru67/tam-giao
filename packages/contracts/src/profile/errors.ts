@@ -6,4 +6,6 @@ export const PROFILE_ERROR_CODES = registerErrors('profile', {
   TOO_MANY_PHOTOS: { status: 422, title: 'Vượt quá số ảnh hồ sơ cho phép' },
   /** `meta.missing` liệt kê trường còn thiếu khi bấm "Tiếp tục". */
   PROFILE_INCOMPLETE: { status: 422, title: 'Hồ sơ chưa điền đủ thông tin bắt buộc' },
+  /** Phải chọn đúng 3 phẩm chất cốt lõi, không trùng nhau. */
+  INVALID_CORE_TRAITS: { status: 422, title: 'Cần chọn đúng 3 phẩm chất cốt lõi' },
 });
