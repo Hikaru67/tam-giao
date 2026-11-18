@@ -10,6 +10,11 @@ import { requireUser, type AppEnv } from '@tamgiao/http';
 import type { Clock, UnitOfWork } from '@tamgiao/kernel';
 import { ConsoleSmsSender, createIdentityModule } from '@tamgiao/module-identity';
 import { createProfileModule } from '@tamgiao/module-profile';
+import {
+  FakeEkycProvider,
+  ResilientEkycProvider,
+  createVerificationModule,
+} from '@tamgiao/module-verification';
 import type { Hono } from 'hono';
 import type { ApiConfig } from './config.js';
 import { createUploadRoutes } from './http/uploads.js';
@@ -58,5 +63,22 @@ export function buildModules({ config, uow, clock }: ModuleDeps): readonly ApiMo
 
   const profile = createProfileModule({ uow, clock, encryptor, uploads, storage, requireUser: userGuard });
 
-  return [identity, uploadModule, profile];
+  // eKYC (D2 chưa chốt): `EKYC_PROVIDER=fake` — mỗi người dùng một số CCCD giả khác nhau (theo key ảnh).
+  const ekyc = new ResilientEkycProvider(new FakeEkycProvider({ deriveCccdFromKey: true }), {
+    timeoutMs: config.ekyc.timeoutMs,
+    maxAttempts: config.ekyc.maxAttempts,
+    backoffMs: config.ekyc.backoffMs,
+  });
+  const verification = createVerificationModule({
+    uow,
+    clock,
+    encryptor,
+    blindIndexer,
+    uploads,
+    ekyc,
+    applicants: profile.facade,
+    requireUser: userGuard,
+  });
+
+  return [identity, uploadModule, profile, verification];
 }

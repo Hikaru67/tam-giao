@@ -57,6 +57,13 @@
       "when": 1794973519840,
       "tag": "0007_profile_preferences",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1794976510011,
+      "tag": "0008_verification_kyc_submissions",
+      "breakpoints": true
     }
   ]
 }

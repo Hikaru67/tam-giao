@@ -11,4 +11,10 @@ export const VERIFICATION_ERROR_CODES = registerErrors('verification', {
   /** `meta.steps` liệt kê các bước chưa đạt. */
   KYC_STEPS_INCOMPLETE: { status: 409, title: 'Chưa đủ 4 bước kiểm tra đạt, không thể duyệt' },
   KYC_ALREADY_DECIDED: { status: 409, title: 'Hồ sơ đã được quyết định (duyệt hoặc từ chối)' },
+  /** Số CCCD đọc được đã gắn với hồ sơ của tài khoản khác (1 CCCD ↔ 1 tài khoản). */
+  CCCD_ALREADY_REGISTERED: { status: 409, title: 'Số CCCD đã được dùng cho tài khoản khác' },
+  /** `meta.status`: hồ sơ đã nộp và chưa ở trạng thái được nộp lại (chỉ `NEEDS_MORE_INFO` được nộp bổ sung). */
+  KYC_ALREADY_SUBMITTED: { status: 409, title: 'Hồ sơ xác thực đã được nộp' },
+  /** `meta.missing` liệt kê trường key tài liệu còn thiếu. */
+  KYC_DOCS_MISSING: { status: 422, title: 'Thiếu tài liệu xác thực bắt buộc' },
 });
