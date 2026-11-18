@@ -1,5 +1,6 @@
 import { sql } from 'drizzle-orm';
 import {
+  check,
   index,
   integer,
   jsonb,
@@ -50,4 +51,37 @@ export const processedEvents = platform.table(
     processedAt: timestamptz('processed_at').notNull().defaultNow(),
   },
   (t) => [primaryKey({ columns: [t.consumer, t.eventId] })],
+);
+
+/**
+ * Upload qua presigned URL (BE-S2-07): ghi lại ai được cấp key nào, để module nghiệp vụ xác nhận quyền sở hữu
+ * (`UploadRegistry.verifyOwned`) trước khi gắn key vào hồ sơ. `PENDING` = đã cấp URL; `CONFIRMED` = object đã có
+ * trên storage, đúng loại/kích thước, và đã được một module nhận.
+ */
+export const uploads = platform.table(
+  'uploads',
+  {
+    id: uuid('id').primaryKey(),
+    ownerId: uuid('owner_id').notNull(),
+    key: text('key').notNull().unique('uploads_key_uq'),
+    bucket: text('bucket').notNull(),
+    purpose: text('purpose').notNull(),
+    contentType: text('content_type').notNull(),
+    sizeBytes: integer('size_bytes').notNull(),
+    status: text('status').notNull(),
+    createdAt: timestamptz('created_at').notNull(),
+    /** Hạn của URL PUT; sau mốc này không tải lên được nữa. */
+    expiresAt: timestamptz('expires_at').notNull(),
+    confirmedAt: timestamptz('confirmed_at'),
+  },
+  (t) => [
+    check('uploads_bucket_ck', sql`${t.bucket} in ('publicProfile', 'privateKyc')`),
+    check(
+      'uploads_purpose_ck',
+      sql`${t.purpose} in ('profile_photo', 'kyc_doc', 'kyc_selfie', 'report_evidence')`,
+    ),
+    check('uploads_status_ck', sql`${t.status} in ('PENDING', 'CONFIRMED')`),
+    check('uploads_size_ck', sql`${t.sizeBytes} > 0`),
+    index('uploads_owner_id_idx').on(t.ownerId),
+  ],
 );

@@ -2,9 +2,7 @@ import { Hono } from 'hono';
 import { bodyLimit } from 'hono/body-limit';
 import { cors } from 'hono/cors';
 import { domainError } from '@tamgiao/kernel';
-import { requestContext, type AppEnv } from './http/context.js';
-import { handleError, handleNotFound } from './http/errors.js';
-import { problemResponse } from './http/problem.js';
+import { handleError, handleNotFound, problemResponse, requestContext, type AppEnv } from '@tamgiao/http';
 import type { Logger } from '@tamgiao/config';
 import type { ApiModule } from './modules.js';
 
@@ -19,13 +17,14 @@ export interface AppDeps {
   readonly readinessChecks: readonly ReadinessCheck[];
   readonly corsOrigins: readonly string[];
   readonly bodyLimitBytes: number;
+  readonly trustProxy?: boolean;
 }
 
 /** Dựng Hono app (không mở cổng) — để test bằng `app.request()` và để `main.ts` phục vụ. */
 export function createApp(deps: AppDeps): Hono<AppEnv> {
   const app = new Hono<AppEnv>();
 
-  app.use('*', requestContext(deps.logger));
+  app.use('*', requestContext(deps.logger, { trustProxy: deps.trustProxy ?? false }));
   if (deps.corsOrigins.length > 0) {
     app.use('*', cors({ origin: [...deps.corsOrigins], exposeHeaders: ['x-request-id'] }));
   }

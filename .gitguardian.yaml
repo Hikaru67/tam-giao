@@ -1,0 +1,9 @@
+# Cấu hình GitGuardian (ggshield v2 + GitHub app).
+# Bỏ qua các vị trí chỉ chứa giá trị giả có chủ đích:
+# - .env.example: khoá dev local công khai (môi trường thật cấp qua secret manager).
+# - __tests__: test vector chuẩn (vd secret RFC 6238) và khoá cố định cho test.
+version: 2
+secret:
+  ignored_paths:
+    - .env.example
+    - '**/__tests__/**'

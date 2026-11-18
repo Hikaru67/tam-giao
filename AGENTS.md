@@ -173,7 +173,11 @@ Quy ước trạng thái task: `TODO` → `IN_PROGRESS` → `IN_REVIEW` → `DON
 
 ## 10. Git
 
-- Branch: `feat/<TASK-ID>-<mo-ta-ngan>` (vd `feat/BE-S5-01-match-aggregate`). Không commit/push thẳng `main`.
+- **Nhánh sprint:** mỗi sprint một nhánh `sprint/<NN>` (vd `sprint/02`) tạo từ `main`.
+- **Nhánh task:** `feat/<TASK-ID>-<mo-ta-ngan>` (vd `feat/BE-S5-01-match-aggregate`) tạo từ nhánh sprint.
+  Task xong (đủ mục 8) → merge `--no-ff` vào nhánh sprint, commit merge `Merge <TASK-ID> into sprint/<NN>`;
+  báo cáo mục 9 lưu ở nội dung commit merge hoặc trong báo cáo cho người giao task. Không mở PR cho từng task.
+- **PR vào `main`:** chỉ mở **một PR `sprint/<NN>` → `main`** khi mọi task của sprint đã merge vào nhánh sprint;
+  mô tả PR liệt kê các task kèm block báo cáo mục 9 của từng task. Không commit/push thẳng `main`.
 - Commit: Conventional Commits + task ID: `feat(matching): add Match aggregate [BE-S5-01]`.
 - **Không thêm dòng `Co-Authored-By` hay attribution Claude/AI** vào commit hoặc PR.
-- Mỗi task = 1 PR; mô tả PR dùng lại block báo cáo mục 9.

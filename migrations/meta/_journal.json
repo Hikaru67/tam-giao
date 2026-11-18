@@ -8,6 +8,55 @@
       "when": 1794790838698,
       "tag": "0000_platform_outbox",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1794808542640,
+      "tag": "0001_identity_users_otp",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1794808920528,
+      "tag": "0002_identity_sessions",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1794963317597,
+      "tag": "0003_identity_admin",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1794971285973,
+      "tag": "0004_identity_audit_logs",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1794972581850,
+      "tag": "0005_platform_uploads",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1794973155061,
+      "tag": "0006_profile_profiles",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1794973519840,
+      "tag": "0007_profile_preferences",
+      "breakpoints": true
     }
   ]
 }

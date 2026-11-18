@@ -13,7 +13,7 @@ Admin đăng nhập với mật khẩu + 2FA, có phân quyền và audit log.
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| identity | domain, application, infrastructure, presentation | P0 | 2d | Sprint 1 | BE-S2-03, BE-S2-07 | TODO |
+| identity | domain, application, infrastructure, presentation | P0 | 2d | Sprint 1 | BE-S2-03, BE-S2-07 | DONE |
 
 **Mục tiêu:** Phục vụ màn "Đăng nhập & Đăng ký" và "Xác thực SĐT & OTP".
 
@@ -22,10 +22,10 @@ Admin đăng nhập với mật khẩu + 2FA, có phân quyền và audit log.
 - Ngoài: Phát token (BE-S2-02), đăng nhập VNeID/Apple/Google (chưa làm).
 
 **Tiêu chí nghiệm thu**
-- [ ] AC1: OTP đúng trong TTL → thành công, OTP bị vô hiệu sau khi dùng.
-- [ ] AC2: OTP hết hạn → `OTP_EXPIRED`; sai quá 5 lần → `OTP_LOCKED`.
-- [ ] AC3: Gọi request liên tục → `RATE_LIMITED` kèm thời gian chờ.
-- [ ] AC4: OTP và SĐT không xuất hiện trong log.
+- [x] AC1: OTP đúng trong TTL → thành công, OTP bị vô hiệu sau khi dùng.
+- [x] AC2: OTP hết hạn → `OTP_EXPIRED`; sai quá 5 lần → `OTP_LOCKED`.
+- [x] AC3: Gọi request liên tục → `RATE_LIMITED` kèm thời gian chờ.
+- [x] AC4: OTP và SĐT không xuất hiện trong log.
 
 **Test bắt buộc:** Domain (OtpChallenge), use case với FakeClock, integration rate limit.
 
@@ -41,7 +41,7 @@ Admin đăng nhập với mật khẩu + 2FA, có phân quyền và audit log.
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| identity | application, infrastructure, presentation | P0 | 1.5d | BE-S2-01 | BE-S2-04 | TODO |
+| identity | application, infrastructure, presentation | P0 | 1.5d | BE-S2-01 | BE-S2-04 | DONE |
 
 **Mục tiêu:** Xác thực mọi request của app người dùng.
 
@@ -50,8 +50,8 @@ Admin đăng nhập với mật khẩu + 2FA, có phân quyền và audit log.
 - Ngoài: Auth admin (BE-S2-03).
 
 **Tiêu chí nghiệm thu**
-- [ ] AC1: Refresh token cũ dùng lại sau khi đã xoay → toàn bộ phiên của thiết bị bị thu hồi.
-- [ ] AC2: Route có `requireUser()` trả 401 khi thiếu/hết hạn token.
+- [x] AC1: Refresh token cũ dùng lại sau khi đã xoay → toàn bộ phiên của thiết bị bị thu hồi.
+- [x] AC2: Route có `requireUser()` trả 401 khi thiếu/hết hạn token.
 
 **Test bắt buộc:** Use case xoay token; HTTP test middleware.
 
@@ -67,7 +67,7 @@ Admin đăng nhập với mật khẩu + 2FA, có phân quyền và audit log.
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| identity | domain, application, infrastructure, presentation | P0 | 2d | Sprint 1 | BE-S2-01 | TODO |
+| identity | domain, application, infrastructure, presentation | P0 | 2d | Sprint 1 | BE-S2-01 | DONE |
 
 **Mục tiêu:** Phục vụ màn "Đăng nhập Quản trị" và phân quyền cho cổng vận hành.
 
@@ -76,9 +76,9 @@ Admin đăng nhập với mật khẩu + 2FA, có phân quyền và audit log.
 - Ngoài: SSO/USB token.
 
 **Tiêu chí nghiệm thu**
-- [ ] AC1: Đúng mật khẩu nhưng thiếu/sai TOTP → không đăng nhập được.
-- [ ] AC2: `MATCHMAKER` gọi endpoint duyệt eKYC (permission `kyc:review`) → 403.
-- [ ] AC3: Sai 5 lần → khoá 15 phút.
+- [x] AC1: Đúng mật khẩu nhưng thiếu/sai TOTP → không đăng nhập được.
+- [x] AC2: `MATCHMAKER` gọi endpoint duyệt eKYC (permission `kyc:review`) → 403.
+- [x] AC3: Sai 5 lần → khoá 15 phút.
 
 **Test bắt buộc:** Domain + HTTP test phân quyền theo bảng permission.
 
@@ -94,7 +94,7 @@ Admin đăng nhập với mật khẩu + 2FA, có phân quyền và audit log.
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| identity | application, infrastructure | P0 | 1d | BE-S2-03 | BE-S2-02 | TODO |
+| identity | application, infrastructure | P0 | 1d | BE-S2-03 | BE-S2-02 | DONE |
 
 **Mục tiêu:** Ghi vết mọi thao tác nhạy cảm của admin (yêu cầu Nghị định 13 + màn admin "Audit Trail").
 
@@ -103,8 +103,8 @@ Admin đăng nhập với mật khẩu + 2FA, có phân quyền và audit log.
 - Ngoài: Ghi log ở từng use case (mỗi module tự gọi).
 
 **Tiêu chí nghiệm thu**
-- [ ] AC1: Role DB của app không thể UPDATE/DELETE `audit_logs` (test integration).
-- [ ] AC2: `meta` không được chứa PII thô (validate key cấm).
+- [x] AC1: Role DB của app không thể UPDATE/DELETE `audit_logs` (test integration).
+- [x] AC2: `meta` không được chứa PII thô (validate key cấm).
 
 **Test bắt buộc:** Integration quyền DB; unit validate meta.
 
@@ -120,7 +120,7 @@ Admin đăng nhập với mật khẩu + 2FA, có phân quyền và audit log.
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| profile | application, infrastructure, presentation | P0 | 2d | BE-S2-02, BE-S2-07 | BE-S2-06 | TODO |
+| profile | application, infrastructure, presentation | P0 | 2d | BE-S2-02, BE-S2-07 | BE-S2-06 | DONE |
 
 **Mục tiêu:** Phục vụ màn "Khởi tạo Hồ sơ Miễn phí".
 
@@ -129,9 +129,9 @@ Admin đăng nhập với mật khẩu + 2FA, có phân quyền và audit log.
 - Ngoài: Hiển thị hồ sơ cho người khác (BE-S5-06).
 
 **Tiêu chí nghiệm thu**
-- [ ] AC1: Tuổi < `MIN_AGE` → `AGE_NOT_ELIGIBLE`.
-- [ ] AC2: Trường riêng tư lưu dạng mã hoá trong DB, trả về đúng cho chính chủ.
-- [ ] AC3: Quá 5 ảnh → `TOO_MANY_PHOTOS`.
+- [x] AC1: Tuổi < `MIN_AGE` → `AGE_NOT_ELIGIBLE`.
+- [x] AC2: Trường riêng tư lưu dạng mã hoá trong DB, trả về đúng cho chính chủ.
+- [x] AC3: Quá 5 ảnh → `TOO_MANY_PHOTOS`.
 
 **Test bắt buộc:** Integration lưu/đọc mã hoá; HTTP validate.
 
@@ -147,7 +147,7 @@ Admin đăng nhập với mật khẩu + 2FA, có phân quyền và audit log.
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| profile | application, infrastructure, presentation | P0 | 1d | BE-S2-05 | — | TODO |
+| profile | application, infrastructure, presentation | P0 | 1d | BE-S2-05 | — | DONE |
 
 **Mục tiêu:** Phục vụ màn "Thiết lập Tiêu chí Bạn đời & Bộ lọc Cứng"; dữ liệu đầu vào cho chấm điểm ghép đôi.
 
@@ -156,8 +156,8 @@ Admin đăng nhập với mật khẩu + 2FA, có phân quyền và audit log.
 - Ngoài: Thuật toán chấm điểm (BE-S5-03).
 
 **Tiêu chí nghiệm thu**
-- [ ] AC1: Số phẩm chất ≠ 3 → `INVALID_CORE_TRAITS`.
-- [ ] AC2: `age_min > age_max` hoặc ngoài [MIN_AGE, 80] → lỗi validate.
+- [x] AC1: Số phẩm chất ≠ 3 → `INVALID_CORE_TRAITS`.
+- [x] AC2: `age_min > age_max` hoặc ngoài [MIN_AGE, 80] → lỗi validate.
 
 **Test bắt buộc:** HTTP validate + integration lưu/đọc.
 
@@ -173,7 +173,7 @@ Admin đăng nhập với mật khẩu + 2FA, có phân quyền và audit log.
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| platform (db) | infrastructure, presentation | P0 | 1.5d | Sprint 1 | BE-S2-01, BE-S2-03 | TODO |
+| platform (db) | infrastructure, presentation | P0 | 1.5d | Sprint 1 | BE-S2-01, BE-S2-03 | DONE |
 
 **Mục tiêu:** Upload ảnh hồ sơ và tài liệu eKYC mà không đi qua API server.
 
@@ -182,8 +182,8 @@ Admin đăng nhập với mật khẩu + 2FA, có phân quyền và audit log.
 - Ngoài: Xử lý ảnh (resize, bỏ EXIF) — ghi vào việc phát sinh.
 
 **Tiêu chí nghiệm thu**
-- [ ] AC1: User A không thể dùng key upload của user B trong hồ sơ của mình (`UPLOAD_NOT_OWNED`).
-- [ ] AC2: Mime/kích thước sai → từ chối trước khi cấp URL.
+- [x] AC1: User A không thể dùng key upload của user B trong hồ sơ của mình (`UPLOAD_NOT_OWNED`).
+- [x] AC2: Mime/kích thước sai → từ chối trước khi cấp URL.
 
 **Test bắt buộc:** Integration với MinIO (Testcontainers).
 
@@ -199,7 +199,7 @@ Admin đăng nhập với mật khẩu + 2FA, có phân quyền và audit log.
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| profile | application, presentation | P1 | 0.5d | BE-S2-05, BE-S2-06 | — | TODO |
+| profile | application, presentation | P1 | 0.5d | BE-S2-05, BE-S2-06 | — | DONE |
 
 **Mục tiêu:** App mobile biết điều hướng người dùng tới màn nào.
 
@@ -208,7 +208,7 @@ Admin đăng nhập với mật khẩu + 2FA, có phân quyền và audit log.
 - Ngoài: —
 
 **Tiêu chí nghiệm thu**
-- [ ] AC1: User mới tạo hồ sơ chưa xong → `PROFILE`; xong hồ sơ + tiêu chí → `VERIFICATION`.
+- [x] AC1: User mới tạo hồ sơ chưa xong → `PROFILE`; xong hồ sơ + tiêu chí → `VERIFICATION`.
 
 **Test bắt buộc:** HTTP test các bước.
 

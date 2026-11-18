@@ -8,3 +8,14 @@ export { AggregateRoot, Entity } from './entity.js';
 export type { Tx, UnitOfWork } from './unit-of-work.js';
 export type { BlindIndexer, Encryptor } from './crypto.js';
 export type { ScheduledJob, Scheduler } from './scheduler.js';
+export {
+  UPLOAD_PURPOSES,
+  type ObjectHead,
+  type ObjectStorage,
+  type PresignedRequest,
+  type StorageBucket,
+  type UploadPurpose,
+  type UploadRef,
+  type UploadRegistry,
+  type UploadVerifyError,
+} from './storage.js';

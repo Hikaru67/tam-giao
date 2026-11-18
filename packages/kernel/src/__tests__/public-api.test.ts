@@ -12,6 +12,7 @@ describe('@tamgiao/kernel public API', () => {
         'Money',
         'Ok',
         'SystemClock',
+        'UPLOAD_PURPOSES',
         'addDuration',
         'domainError',
         'durationToMs',

@@ -141,7 +141,7 @@ describe('migration', () => {
     const { rows } = await database.pool.query<{ table_name: string }>(
       `select table_name from information_schema.tables where table_schema = 'platform' order by table_name`,
     );
-    expect(rows.map((r) => r.table_name)).toEqual(['outbox', 'processed_events']);
+    expect(rows.map((r) => r.table_name)).toEqual(['outbox', 'processed_events', 'uploads']);
     await expect(runMigrations(database.db)).resolves.toBeUndefined();
   });
 });
