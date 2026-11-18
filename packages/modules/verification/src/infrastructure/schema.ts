@@ -1,6 +1,6 @@
 import { bytea, timestamptz } from '@tamgiao/db';
 import { sql } from 'drizzle-orm';
-import { check, index, integer, jsonb, pgSchema, text, unique, uuid } from 'drizzle-orm/pg-core';
+import { check, index, integer, jsonb, pgSchema, text, unique, uniqueIndex, uuid } from 'drizzle-orm/pg-core';
 
 /** Schema Postgres của module verification (AGENTS.md mục 4). */
 export const verification = pgSchema('verification');
@@ -54,5 +54,45 @@ export const kycSubmissions = verification.table(
     check('kyc_submissions_cccd_pair_ck', sql`(${t.cccdNumberEnc} is null) = (${t.cccdNumberBidx} is null)`),
     check('kyc_submissions_rejection_ck', sql`(${t.status} = 'REJECTED') = (${t.rejectionCode} is not null)`),
     index('kyc_submissions_status_submitted_idx').on(t.status, t.submittedAt),
+  ],
+);
+
+export const INTERVIEW_ACTIVE_BOOKING_UNIQUE = 'interview_slots_active_booking_uq';
+export const INTERVIEW_INTERVIEWER_START_UNIQUE = 'interview_slots_interviewer_starts_at_uq';
+
+/**
+ * Slot phỏng vấn sơ bộ (BE-S3-05). Một slot một người đặt (khoá dòng khi đặt); mỗi người tối đa một lịch
+ * `BOOKED` (partial unique index trên `booked_by`). Slot `COMPLETED` giữ `booked_by` làm nhật ký.
+ */
+export const interviewSlots = verification.table(
+  'interview_slots',
+  {
+    id: uuid('id').primaryKey(),
+    interviewerId: uuid('interviewer_id').notNull(),
+    startsAt: timestamptz('starts_at').notNull(),
+    endsAt: timestamptz('ends_at').notNull(),
+    meetingUrl: text('meeting_url'),
+    status: text('status').notNull(),
+    bookedBy: uuid('booked_by'),
+    bookedAt: timestamptz('booked_at'),
+    outcome: text('outcome'),
+    /** Nhận xét phỏng vấn — có thể chứa thông tin cá nhân, chỉ trả ở API admin. */
+    notes: text('notes'),
+    recordedBy: uuid('recorded_by'),
+    recordedAt: timestamptz('recorded_at'),
+    createdAt: timestamptz('created_at').notNull(),
+    updatedAt: timestamptz('updated_at').notNull(),
+  },
+  (t) => [
+    unique(INTERVIEW_INTERVIEWER_START_UNIQUE).on(t.interviewerId, t.startsAt),
+    uniqueIndex(INTERVIEW_ACTIVE_BOOKING_UNIQUE)
+      .on(t.bookedBy)
+      .where(sql`${t.status} = 'BOOKED'`),
+    check('interview_slots_status_ck', sql`${t.status} in ('OPEN', 'BOOKED', 'COMPLETED')`),
+    check('interview_slots_outcome_ck', sql`${t.outcome} is null or ${t.outcome} in ('PASSED', 'FAILED')`),
+    check('interview_slots_booked_ck', sql`(${t.status} = 'OPEN') = (${t.bookedBy} is null)`),
+    check('interview_slots_completed_ck', sql`(${t.status} = 'COMPLETED') = (${t.outcome} is not null)`),
+    check('interview_slots_time_ck', sql`${t.endsAt} > ${t.startsAt}`),
+    index('interview_slots_status_starts_at_idx').on(t.status, t.startsAt),
   ],
 );
