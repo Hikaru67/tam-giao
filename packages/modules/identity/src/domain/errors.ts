@@ -12,6 +12,13 @@ export const IDENTITY_ERRORS = [
   'TOKEN_EXPIRED',
   'TOKEN_REUSED',
   'NOT_FOUND',
+  'VALIDATION_FAILED',
+  'FORBIDDEN',
+  'INVALID_CREDENTIALS',
+  'MFA_REQUIRED',
+  'ADMIN_LOCKED',
+  'PASSWORD_TOO_WEAK',
+  'ADMIN_EMAIL_TAKEN',
 ] as const;
 
 export type IdentityErrorCode = (typeof IDENTITY_ERRORS)[number];

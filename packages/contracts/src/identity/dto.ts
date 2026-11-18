@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { ADMIN_PERMISSIONS, ADMIN_ROLES } from './permissions.js';
 
 /** SĐT do người dùng nhập (0912…, 84912…, +84912…); server chuẩn hoá về E.164 và trả `PHONE_INVALID` nếu sai. */
 const phoneInput = z.string().trim().min(9).max(20);
@@ -54,3 +55,38 @@ export const deviceSessionSchema = z.object({
 });
 export const listSessionsResponseSchema = z.object({ items: z.array(deviceSessionSchema) });
 export type ListSessionsResponse = z.infer<typeof listSessionsResponseSchema>;
+
+export const adminLoginBodySchema = z.object({
+  email: z.string().trim().min(3).max(254),
+  password: z.string().min(1).max(256),
+  /** Mã 6 số từ app Authenticator; thiếu → 401 `MFA_REQUIRED`. */
+  totpCode: z
+    .string()
+    .regex(/^\d{6}$/)
+    .optional(),
+  /** "Ghi nhớ thiết bị": phiên 12 giờ thay vì 8 giờ. */
+  rememberDevice: z.boolean().optional(),
+});
+export type AdminLoginBody = z.infer<typeof adminLoginBodySchema>;
+
+export const adminProfileSchema = z.object({
+  id: z.uuid(),
+  email: z.string(),
+  role: z.enum(ADMIN_ROLES),
+  permissions: z.array(z.enum(ADMIN_PERMISSIONS)),
+});
+
+export const adminLoginResponseSchema = z.object({
+  /** Token phiên, gửi ở header `Authorization: Bearer <token>`. */
+  token: z.string(),
+  expiresAt: z.iso.datetime(),
+  admin: adminProfileSchema,
+});
+export type AdminLoginResponse = z.infer<typeof adminLoginResponseSchema>;
+
+export const adminMeResponseSchema = z.object({
+  adminId: z.uuid(),
+  role: z.enum(ADMIN_ROLES),
+  permissions: z.array(z.enum(ADMIN_PERMISSIONS)),
+});
+export type AdminMeResponse = z.infer<typeof adminMeResponseSchema>;

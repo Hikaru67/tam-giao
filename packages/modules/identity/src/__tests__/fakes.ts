@@ -7,6 +7,9 @@ import {
   type Tx,
   type UnitOfWork,
 } from '@tamgiao/kernel';
+import type { AdminSessionRepository, AdminUserRepository } from '../application/ports/admin-repositories.js';
+import type { PasswordHasher } from '../application/ports/password-hasher.js';
+import type { TotpService } from '../application/ports/totp.js';
 import type { OtpChallengeRepository } from '../application/ports/otp-challenge-repository.js';
 import type { OtpSecrets } from '../application/ports/otp-secrets.js';
 import type { RateLimitDecision, RateLimiter } from '../application/ports/rate-limiter.js';
@@ -19,6 +22,8 @@ import type {
   RefreshTokenSecrets,
 } from '../application/ports/token-services.js';
 import type { UserRepository } from '../application/ports/user-repository.js';
+import { AdminSession, type AdminSessionState } from '../domain/admin-session.js';
+import { AdminUser, type AdminEmail, type AdminUserId, type AdminUserState } from '../domain/admin-user.js';
 import { OtpChallenge, type OtpChallengeState } from '../domain/otp-challenge.js';
 import type { RateLimitRule } from '../domain/otp-policy.js';
 import type { PhoneNumber } from '../domain/phone-number.js';
@@ -216,5 +221,77 @@ export class FakeRefreshTokenSecrets implements RefreshTokenSecrets {
   }
   hash(token: string): string {
     return `sha(${token})`;
+  }
+}
+
+export class InMemoryAdminUserRepository implements AdminUserRepository {
+  readonly table = new MemoryTable<AdminUserState>();
+
+  async findByEmailForUpdate(_tx: Tx, email: AdminEmail): Promise<AdminUser | null> {
+    const state = [...this.table.rows.values()].find((a) => a.email.equals(email));
+    return state ? AdminUser.restore(state) : null;
+  }
+
+  async findById(_tx: Tx, id: AdminUserId): Promise<AdminUser | null> {
+    const state = this.table.rows.get(id);
+    return state ? AdminUser.restore(state) : null;
+  }
+
+  async insert(_tx: Tx, admin: AdminUser): Promise<boolean> {
+    const state = admin.toState();
+    if ([...this.table.rows.values()].some((a) => a.email.equals(state.email))) return false;
+    this.table.rows.set(state.id, state);
+    return true;
+  }
+
+  async update(_tx: Tx, admin: AdminUser): Promise<void> {
+    this.table.rows.set(admin.id, admin.toState());
+  }
+}
+
+export class InMemoryAdminSessionRepository implements AdminSessionRepository {
+  readonly table = new MemoryTable<AdminSessionState>();
+
+  async findByTokenHash(_tx: Tx, tokenHash: string): Promise<AdminSession | null> {
+    const state = [...this.table.rows.values()].find((s) => s.tokenHash === tokenHash);
+    return state ? AdminSession.restore(state) : null;
+  }
+
+  async save(_tx: Tx, session: AdminSession): Promise<void> {
+    this.table.rows.set(session.id, session.toState());
+  }
+}
+
+export class FakePasswordHasher implements PasswordHasher {
+  dummyChecks = 0;
+  async hash(password: string): Promise<string> {
+    return `hashed(${password})`;
+  }
+  async verify(hash: string | null, password: string): Promise<boolean> {
+    if (hash === null) {
+      this.dummyChecks++;
+      return false;
+    }
+    return hash === `hashed(${password})`;
+  }
+}
+
+/** Mã TOTP đúng của bước `s` là `String(s % 1_000_000).padStart(6, '0')` — test tự tính được mã. */
+export class FakeTotp implements TotpService {
+  static codeAt(now: Date): string {
+    return String(Math.floor(now.getTime() / 30_000) % 1_000_000).padStart(6, '0');
+  }
+  generateSecret(): string {
+    return 'JBSWY3DPEHPK3PXP';
+  }
+  verify(_secret: string, code: string, now: Date): number | null {
+    const step = Math.floor(now.getTime() / 30_000);
+    for (const s of [step - 1, step, step + 1]) {
+      if (String(s % 1_000_000).padStart(6, '0') === code) return s;
+    }
+    return null;
+  }
+  otpauthUri(secret: string, account: string): string {
+    return `otpauth://totp/TamGiao:${account}?secret=${secret}`;
   }
 }

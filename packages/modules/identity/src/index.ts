@@ -1,16 +1,25 @@
 import { OutboxWriter } from '@tamgiao/db';
-import { requireUser, type AppEnv } from '@tamgiao/http';
+import { createRequireAdmin, requireUser, type AppEnv, type RequireAdmin } from '@tamgiao/http';
 import type { BlindIndexer, Clock, Encryptor, UnitOfWork } from '@tamgiao/kernel';
 import type { Hono } from 'hono';
 import type { IdentityFacade } from './application/facade.js';
 import type { SmsSender } from './application/ports/sms-sender.js';
+import { AuthenticateAdmin } from './application/queries/authenticate-admin.js';
 import { AuthenticateUser } from './application/queries/authenticate-user.js';
+import { AdminLogin } from './application/use-cases/admin-login.js';
+import { AdminLogout } from './application/use-cases/admin-logout.js';
+import { CreateAdminUser } from './application/use-cases/create-admin-user.js';
 import { SessionIssuer } from './application/session-issuer.js';
 import { ListSessions, RevokeSession } from './application/use-cases/manage-sessions.js';
 import { RefreshSession } from './application/use-cases/refresh-session.js';
 import { RequestOtp } from './application/use-cases/request-otp.js';
 import { VerifyOtp } from './application/use-cases/verify-otp.js';
+import { Argon2PasswordHasher } from './infrastructure/argon2-password-hasher.js';
 import { deriveKey } from './infrastructure/derive-key.js';
+import {
+  DrizzleAdminSessionRepository,
+  DrizzleAdminUserRepository,
+} from './infrastructure/drizzle-admin-repositories.js';
 import { DrizzleOtpChallengeRepository } from './infrastructure/drizzle-otp-challenge-repository.js';
 import { DrizzleSessionRepository } from './infrastructure/drizzle-session-repository.js';
 import { DrizzleUserRepository } from './infrastructure/drizzle-user-repository.js';
@@ -18,9 +27,16 @@ import { HmacOtpSecrets } from './infrastructure/hmac-otp-secrets.js';
 import { Hs256AccessTokenService } from './infrastructure/hs256-access-token-service.js';
 import { PostgresRateLimiter } from './infrastructure/postgres-rate-limiter.js';
 import { RandomRefreshTokenSecrets } from './infrastructure/random-refresh-token-secrets.js';
+import { Rfc6238Totp } from './infrastructure/rfc6238-totp.js';
+import { createAdminAuthRoutes } from './presentation/admin-auth-routes.js';
 import { createAuthRoutes } from './presentation/auth-routes.js';
 
-export type { AuthenticatedUser, IdentityFacade } from './application/facade.js';
+export type { AuthenticatedAdmin, AuthenticatedUser, IdentityFacade } from './application/facade.js';
+export type {
+  CreateAdminUserCommand,
+  CreateAdminUserError,
+  CreateAdminUserResult,
+} from './application/use-cases/create-admin-user.js';
 export type { SmsMessage, SmsSender } from './application/ports/sms-sender.js';
 export { ConsoleSmsSender } from './infrastructure/console-sms-sender.js';
 
@@ -38,6 +54,10 @@ export interface IdentityModule {
   readonly name: 'identity';
   readonly routes: Hono<AppEnv>;
   readonly facade: IdentityFacade;
+  /** Guard cho route admin của mọi module: `requireAdmin('kyc:review')`. */
+  readonly requireAdmin: RequireAdmin;
+  /** Thao tác chỉ dành cho CLI vận hành (không mở qua HTTP). */
+  readonly commands: { readonly createAdminUser: CreateAdminUser };
 }
 
 /** Composition root của module identity. */
@@ -51,10 +71,24 @@ export function createIdentityModule(deps: IdentityModuleDeps): IdentityModule {
   const refreshSecrets = new RandomRefreshTokenSecrets();
   const issuer = new SessionIssuer(sessions, accessTokens, refreshSecrets);
 
+  const admins = new DrizzleAdminUserRepository(deps.encryptor);
+  const adminSessions = new DrizzleAdminSessionRepository();
+  const passwords = new Argon2PasswordHasher();
+  const totp = new Rfc6238Totp();
+
   const authenticateUser = new AuthenticateUser({ uow, clock, sessions, accessTokens });
+  const authenticateAdmin = new AuthenticateAdmin({
+    uow,
+    clock,
+    admins,
+    sessions: adminSessions,
+    tokens: refreshSecrets,
+  });
   const facade: IdentityFacade = {
     authenticateUser: (accessToken) => authenticateUser.execute(accessToken),
+    authenticateAdmin: (token) => authenticateAdmin.execute(token),
   };
+  const requireAdmin = createRequireAdmin(facade.authenticateAdmin);
 
   const routes = createAuthRoutes({
     requestOtp: new RequestOtp({
@@ -73,5 +107,23 @@ export function createIdentityModule(deps: IdentityModuleDeps): IdentityModule {
     requireUser: requireUser(facade.authenticateUser),
   });
 
-  return { name: 'identity', routes, facade };
+  routes.route(
+    '/',
+    createAdminAuthRoutes({
+      adminLogin: new AdminLogin({
+        uow,
+        clock,
+        admins,
+        sessions: adminSessions,
+        passwords,
+        totp,
+        tokens: refreshSecrets,
+      }),
+      adminLogout: new AdminLogout({ uow, clock, sessions: adminSessions, tokens: refreshSecrets }),
+      requireAdmin,
+    }),
+  );
+
+  const createAdminUser = new CreateAdminUser({ uow, clock, admins, passwords, totp });
+  return { name: 'identity', routes, facade, requireAdmin, commands: { createAdminUser } };
 }
