@@ -14,7 +14,7 @@ chuyên viên duyệt / từ chối / yêu cầu bổ sung trên admin; hệ th�
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| verification | domain | P0 | 2d | Sprint 2 | BE-S3-02 | IN_REVIEW |
+| verification | domain | P0 | 2d | Sprint 2 | BE-S3-02 | DONE |
 
 **Mục tiêu:** Mô hình hoá vòng đời thẩm định hồ sơ và tiến trình 4 bước hiển thị ở màn 6.
 
@@ -41,7 +41,7 @@ chuyên viên duyệt / từ chối / yêu cầu bổ sung trên admin; hệ th�
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| verification | application, infrastructure | P0 | 2d | Sprint 2 | BE-S3-01 | IN_REVIEW |
+| verification | application, infrastructure | P0 | 2d | Sprint 2 | BE-S3-01 | DONE |
 
 **Mục tiêu:** Tách nhà cung cấp eKYC khỏi nghiệp vụ để không bị chặn bởi D2.
 
