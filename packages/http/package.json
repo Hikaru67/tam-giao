@@ -1,0 +1,24 @@
+{
+  "name": "@tamgiao/http",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@tamgiao/config": "workspace:*",
+    "@tamgiao/contracts": "workspace:*",
+    "@tamgiao/kernel": "workspace:*",
+    "hono": "4.13.18",
+    "zod": "4.6.7"
+  },
+  "devDependencies": {
+    "@types/node": "22.20.5",
+    "typescript": "5.9.3",
+    "vitest": "3.2.7"
+  }
+}

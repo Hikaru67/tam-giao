@@ -42,6 +42,8 @@ tam-giao/
     kernel/           Entity, AggregateRoot, DomainEvent, Result, Id, Clock, Money, UnitOfWork port
     contracts/        Zod DTO, mã lỗi, hằng số nghiệp vụ, event payload (dùng chung BE ↔ FE)
     db/               Drizzle client, Tx, DrizzleUnitOfWork, outbox, processed_events, migration
+    http/             Bộ khung HTTP dùng chung cho apps/api và presentation của module: AppEnv, requestContext,
+                      Problem JSON (`sendResult`, `problemResponse`), `parseBody`/`parseQuery`, middleware xác thực
     testing/          Testcontainers helper, factory, FakeClock re-export
     modules/
       identity/ profile/ verification/ billing/ matching/ messaging/ dating/ safety/ notification/

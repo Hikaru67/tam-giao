@@ -3,8 +3,7 @@ import { fail, ok } from '@tamgiao/kernel';
 import { Hono } from 'hono';
 import { describe, expect, it } from 'vitest';
 import { createApp, type ReadinessCheck } from '../app.js';
-import type { AppEnv } from '../http/context.js';
-import { sendResult } from '../http/problem.js';
+import { sendResult, type AppEnv } from '@tamgiao/http';
 import { createLogger } from '@tamgiao/config';
 
 registerErrors('api-test', {

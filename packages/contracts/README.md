@@ -7,6 +7,7 @@ Hợp đồng dùng chung giữa backend và frontend (mobile, admin, partner). 
 | `@tamgiao/contracts/constants` | Hằng số nghiệp vụ (thuần TS, không Zod) | Mọi nơi, kể cả domain/application |
 | `@tamgiao/contracts/errors` | Registry mã lỗi + HTTP status | presentation, FE |
 | `@tamgiao/contracts/http` | Problem JSON, phân trang cursor (Zod) | presentation, FE |
+| `@tamgiao/contracts/identity` | DTO auth, mã lỗi, payload event của module identity | presentation, FE |
 | `@tamgiao/contracts` | Tất cả ở trên | presentation, FE |
 
 ## Quy ước thư mục theo module

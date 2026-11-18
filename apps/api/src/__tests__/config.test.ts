@@ -25,7 +25,7 @@ describe('api config', () => {
       nodeEnv: 'development',
       logLevel: 'info',
       port: 3000,
-      http: { corsOrigins: [], bodyLimitBytes: 1_048_576 },
+      http: { corsOrigins: [], bodyLimitBytes: 1_048_576, trustProxy: false },
       database: { url: 'postgres://tamgiao@localhost:5433/tamgiao' },
       storage: {
         endpoint: 'http://localhost:8333',
@@ -35,6 +35,13 @@ describe('api config', () => {
         forcePathStyle: true,
         buckets: { publicProfile: 'public-profile', privateKyc: 'private-kyc' },
       },
+      crypto: {
+        masterKeys: `1:${Buffer.from('tamgiao-local-dev-master-key-001').toString('base64')}`,
+        masterKeyVersion: 1,
+        blindIndexKey: Buffer.from('tamgiao-local-dev-blind-index-01'),
+      },
+      auth: { secret: Buffer.from('tamgiao-local-dev-auth-secret-01') },
+      sms: { provider: 'console' },
     });
   });
 
@@ -49,7 +56,27 @@ describe('api config', () => {
         'S3_ENDPOINT',
         'S3_ACCESS_KEY_ID',
         'S3_SECRET_ACCESS_KEY',
+        'DATA_MASTER_KEYS',
+        'BLIND_INDEX_KEY',
+        'AUTH_SECRET',
       ]);
+    }
+  });
+
+  it('khoá quá ngắn hoặc SMS console ở production → ConfigError, không in giá trị', () => {
+    const base = envExample();
+    for (const [override, variable] of [
+      [{ AUTH_SECRET: Buffer.from('short').toString('base64') }, 'AUTH_SECRET'],
+      [{ NODE_ENV: 'production' }, 'SMS_PROVIDER'],
+    ] as const) {
+      try {
+        parseApiConfig({ ...base, ...override });
+        expect.unreachable();
+      } catch (error) {
+        expect(error).toBeInstanceOf(ConfigError);
+        expect((error as ConfigError).problems.map((p) => p.split(':')[0])).toEqual([variable]);
+        expect((error as ConfigError).message).not.toContain(base.AUTH_SECRET);
+      }
     }
   });
 });
