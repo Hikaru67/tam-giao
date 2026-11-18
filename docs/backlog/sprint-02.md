@@ -120,7 +120,7 @@ Admin đăng nhập với mật khẩu + 2FA, có phân quyền và audit log.
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| profile | application, infrastructure, presentation | P0 | 2d | BE-S2-02, BE-S2-07 | BE-S2-06 | TODO |
+| profile | application, infrastructure, presentation | P0 | 2d | BE-S2-02, BE-S2-07 | BE-S2-06 | DONE |
 
 **Mục tiêu:** Phục vụ màn "Khởi tạo Hồ sơ Miễn phí".
 
@@ -129,9 +129,9 @@ Admin đăng nhập với mật khẩu + 2FA, có phân quyền và audit log.
 - Ngoài: Hiển thị hồ sơ cho người khác (BE-S5-06).
 
 **Tiêu chí nghiệm thu**
-- [ ] AC1: Tuổi < `MIN_AGE` → `AGE_NOT_ELIGIBLE`.
-- [ ] AC2: Trường riêng tư lưu dạng mã hoá trong DB, trả về đúng cho chính chủ.
-- [ ] AC3: Quá 5 ảnh → `TOO_MANY_PHOTOS`.
+- [x] AC1: Tuổi < `MIN_AGE` → `AGE_NOT_ELIGIBLE`.
+- [x] AC2: Trường riêng tư lưu dạng mã hoá trong DB, trả về đúng cho chính chủ.
+- [x] AC3: Quá 5 ảnh → `TOO_MANY_PHOTOS`.
 
 **Test bắt buộc:** Integration lưu/đọc mã hoá; HTTP validate.
 

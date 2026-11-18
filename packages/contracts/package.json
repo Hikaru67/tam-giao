@@ -9,7 +9,8 @@
     "./errors": "./src/errors.ts",
     "./http": "./src/http.ts",
     "./identity": "./src/identity/index.ts",
-    "./uploads": "./src/uploads/index.ts"
+    "./uploads": "./src/uploads/index.ts",
+    "./profile": "./src/profile/index.ts"
   },
   "scripts": {
     "typecheck": "tsc -p tsconfig.json"
