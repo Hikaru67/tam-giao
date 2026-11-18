@@ -2,11 +2,13 @@ import { OutboxWriter } from '@tamgiao/db';
 import type { AppEnv } from '@tamgiao/http';
 import type { Clock, Encryptor, ObjectStorage, UnitOfWork, UploadRegistry } from '@tamgiao/kernel';
 import type { Hono, MiddlewareHandler } from 'hono';
+import { GetMe } from './application/get-me.js';
 import { GetProfile } from './application/get-profile.js';
 import { GetPreferences, SavePreferences } from './application/preferences-use-cases.js';
 import { SaveProfile } from './application/save-profile.js';
 import { DrizzlePreferencesRepository } from './infrastructure/drizzle-preferences-repository.js';
 import { DrizzleProfileRepository } from './infrastructure/drizzle-profile-repository.js';
+import { createMeRoutes } from './presentation/me-routes.js';
 import { createPreferencesRoutes } from './presentation/preferences-routes.js';
 import { createProfileRoutes } from './presentation/profile-routes.js';
 
@@ -42,6 +44,13 @@ export function createProfileModule(deps: ProfileModuleDeps): ProfileModule {
     createPreferencesRoutes({
       savePreferences: new SavePreferences({ uow, clock, preferences }),
       getPreferences: new GetPreferences({ uow, preferences }),
+      requireUser: deps.requireUser,
+    }),
+  );
+  routes.route(
+    '/',
+    createMeRoutes({
+      getMe: new GetMe({ uow, clock, profiles, preferences, storage: deps.storage }),
       requireUser: deps.requireUser,
     }),
   );
