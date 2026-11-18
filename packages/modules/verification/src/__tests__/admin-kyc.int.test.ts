@@ -35,7 +35,12 @@ import {
 import { DrizzleKycSubmissionRepository } from '../infrastructure/drizzle-kyc-submission-repository.js';
 import { FakeEkycProvider } from '../infrastructure/ekyc/fake-ekyc-provider.js';
 import { createVerificationModule } from '../index.js';
-import { FakeApplicantDirectory, FakeApplicantProfileReader, RecordingAuditLogger } from './fakes.js';
+import {
+  FakeApplicantDirectory,
+  FakeApplicantProfileReader,
+  FakePaymentStatusReader,
+  RecordingAuditLogger,
+} from './fakes.js';
 
 const PASSWORD = 'correct horse battery staple';
 const IP = '203.0.113.7';
@@ -125,6 +130,7 @@ beforeAll(async () => {
     uploads: new UploadService({ uow, clock, storage, putTtlSeconds: 300 }),
     ekyc: new FakeEkycProvider(),
     applicants: new FakeApplicantProfileReader(),
+    payments: new FakePaymentStatusReader(),
     requireUser: createMiddleware<AppEnv>(async (c) => c.json({ code: 'UNAUTHENTICATED' }, 401)),
     applicantDirectory: directory,
     storage,

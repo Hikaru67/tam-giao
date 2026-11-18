@@ -16,10 +16,13 @@ import { Hono } from 'hono';
 import { createMiddleware } from 'hono/factory';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { createProfileModule } from '../index.js';
+import { FakeBillingFacade } from './fakes.js';
 
 let database: Database;
 let app: Hono<AppEnv>;
 let uploads: UploadService;
+/** Facade billing giả — mặc định đã thanh toán xác thực (BE-S4-03). */
+const billing = new FakeBillingFacade();
 const clock = new FakeClock(new Date('2026-11-18T01:00:00.000Z'));
 const declared = new Map<string, { sizeBytes: number; contentType: string }>();
 const storage: ObjectStorage = {
@@ -57,6 +60,7 @@ beforeAll(() => {
     uploads,
     ekyc: new FakeEkycProvider(),
     applicants: { getApplicantIdentity: async () => null },
+    payments: billing,
     requireUser,
     applicantDirectory: { searchUserIds: async () => [], getApplicantSummaries: async () => [] },
     storage,
@@ -70,6 +74,7 @@ beforeAll(() => {
     uploads,
     storage,
     verification: verification.facade,
+    billing,
     requireUser,
   });
   app = new Hono<AppEnv>();
@@ -185,7 +190,14 @@ async function onboarded(): Promise<string> {
 describe('GET /me onboarding steps (AC1)', () => {
   it('new user with no profile → PROFILE', async () => {
     const userId = newId<'User'>();
-    expect(await me(userId)).toEqual({ userId, onboardingStep: 'PROFILE', profile: null, badges: [] });
+    billing.unpaid.add(userId);
+    expect(await me(userId)).toEqual({
+      userId,
+      onboardingStep: 'PROFILE',
+      profile: null,
+      badges: [],
+      verificationPaid: false,
+    });
   });
 
   it('draft profile → PROFILE (with basic info so far)', async () => {
@@ -205,6 +217,7 @@ describe('GET /me onboarding steps (AC1)', () => {
 
   it('completed profile + criteria → VERIFICATION, with age and avatar', async () => {
     const userId = newId<'User'>();
+    billing.unpaid.add(userId);
     const avatar = await completeProfile(userId);
     expect((await request('PUT', '/me/preferences', userId, preferences)).status).toBe(200);
     expect(await me(userId)).toEqual({
@@ -218,6 +231,7 @@ describe('GET /me onboarding steps (AC1)', () => {
         avatarUrl: `https://s.test/get/${avatar}`,
       },
       badges: [],
+      verificationPaid: false,
     });
   });
 
@@ -243,6 +257,17 @@ describe('GET /me onboarding steps (AC1)', () => {
       expect(await me(userId)).toMatchObject({ onboardingStep: 'UNDER_REVIEW', badges: ['CCCD_VERIFIED'] });
     },
   );
+
+  it('paid + submitted → UNDER_REVIEW with verificationPaid; submitted but unpaid → VERIFICATION (BE-S4-03)', async () => {
+    const paid = await onboarded();
+    await seedKyc(paid, 'SUBMITTED');
+    expect(await me(paid)).toMatchObject({ onboardingStep: 'UNDER_REVIEW', verificationPaid: true });
+
+    const unpaid = await onboarded();
+    billing.unpaid.add(unpaid);
+    await seedKyc(unpaid, 'SUBMITTED');
+    expect(await me(unpaid)).toMatchObject({ onboardingStep: 'VERIFICATION', verificationPaid: false });
+  });
 
   it('rejected verification → REJECTED without badges', async () => {
     const userId = await onboarded();

@@ -14,6 +14,7 @@ import {
 import type { AuditLogger, AuditLogInput } from '@tamgiao/module-identity/facade';
 import type { ApplicantDirectory, ApplicantSummary } from '../application/ports/applicant-directory.js';
 import type { ApplicantProfileReader } from '../application/ports/applicant-profile-reader.js';
+import type { PaymentStatusReader } from '../application/ports/payment-status-reader.js';
 import type {
   KycSaveError,
   KycSubmissionRepository,
@@ -105,6 +106,14 @@ export class FakeApplicantProfileReader implements ApplicantProfileReader {
   readonly identities = new Map<string, { fullName: string; birthDate: string }>();
   async getApplicantIdentity(userId: string) {
     return this.identities.get(userId) ?? null;
+  }
+}
+
+/** Mặc định mọi người dùng đã thanh toán xác thực; thêm vào `unpaid` để mô phỏng chưa thanh toán (BE-S4-03). */
+export class FakePaymentStatusReader implements PaymentStatusReader {
+  readonly unpaid = new Set<string>();
+  async hasPaidVerification(userId: string): Promise<boolean> {
+    return !this.unpaid.has(userId);
   }
 }
 

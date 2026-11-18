@@ -71,7 +71,8 @@ export type ProfileResponse = z.infer<typeof profileResponseSchema>;
 /**
  * Bước onboarding để app điều hướng: `PROFILE` → `CRITERIA` → `VERIFICATION` → `UNDER_REVIEW` → `ACTIVE`,
  * hoặc `REJECTED` khi hồ sơ xác thực bị từ chối (chi tiết lý do ở `GET /me/kyc`).
- * Ba bước cuối lấy từ facade verification (BE-S3-07); điều kiện đã thanh toán nối ở BE-S4-03.
+ * Ba bước cuối lấy từ facade verification (BE-S3-07); `UNDER_REVIEW` chỉ khi đã nộp eKYC và đã thanh toán xác thực
+ * (facade billing, BE-S4-03).
  */
 export const ONBOARDING_STEPS = [
   'PROFILE',
@@ -101,5 +102,10 @@ export const meResponseSchema = z.object({
    * `CCCD_VERIFIED`, `SINGLE_VERIFIED`, `INTERVIEWED`); để `string` để module khác có thể bổ sung huy hiệu.
    */
   badges: z.array(z.string()),
+  /**
+   * Đã thanh toán xác thực thành công (BE-S4-03) — `false`: hiện CTA thanh toán (màn 5); `true`: thẻ "Đã ghi nhận"
+   * (màn 6). Khoản đang/đã hoàn tiền tính là `false`. Chi tiết ở `GET /me/payments`.
+   */
+  verificationPaid: z.boolean(),
 });
 export type MeResponse = z.infer<typeof meResponseSchema>;

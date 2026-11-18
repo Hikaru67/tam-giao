@@ -51,6 +51,12 @@ const apiEnvSchema = z
     EKYC_MAX_ATTEMPTS: z.coerce.number().int().min(1).max(5).default(2),
     /** Chờ trước retry thứ n = `EKYC_BACKOFF_MS * n` (ms). */
     EKYC_BACKOFF_MS: z.coerce.number().int().min(0).max(10_000).default(500),
+    /** Cổng thanh toán (D3 chưa chốt): `fake` = `FakePaymentGateway`, bị cấm khi NODE_ENV=production. */
+    PAYMENT_GATEWAY: z.enum(['fake']).default('fake'),
+    /** Bí mật xác thực chữ ký webhook của cổng thanh toán (≥ 16 ký tự). */
+    PAYMENT_WEBHOOK_SECRET: z.string().min(16),
+    /** URL cổng chuyển người dùng về sau khi thanh toán (deep link hoặc trang web của app). */
+    PAYMENT_RETURN_URL: z.url().default('tamgiao://payments/return'),
   })
   .superRefine((e, ctx) => {
     if (e.NODE_ENV === 'production' && e.SMS_PROVIDER === 'console') {
@@ -60,6 +66,10 @@ const apiEnvSchema = z
     if (e.NODE_ENV === 'production' && e.EKYC_PROVIDER === 'fake') {
       // FakeEkycProvider luôn "đạt" → không được chạy ở production.
       ctx.addIssue({ code: 'custom', path: ['EKYC_PROVIDER'], message: 'fake không dùng ở production' });
+    }
+    if (e.NODE_ENV === 'production' && e.PAYMENT_GATEWAY === 'fake') {
+      // FakePaymentGateway không thu tiền thật và có endpoint giả lập thanh toán → không được chạy ở production.
+      ctx.addIssue({ code: 'custom', path: ['PAYMENT_GATEWAY'], message: 'fake không dùng ở production' });
     }
   })
   .transform((e) => ({
@@ -95,6 +105,11 @@ const apiEnvSchema = z
       timeoutMs: e.EKYC_TIMEOUT_MS,
       maxAttempts: e.EKYC_MAX_ATTEMPTS,
       backoffMs: e.EKYC_BACKOFF_MS,
+    },
+    payment: {
+      gateway: e.PAYMENT_GATEWAY,
+      webhookSecret: e.PAYMENT_WEBHOOK_SECRET,
+      returnUrl: e.PAYMENT_RETURN_URL,
     },
   }));
 

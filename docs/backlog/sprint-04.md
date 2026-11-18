@@ -68,7 +68,7 @@ voucher `ACTIVE` → quán quét QR → `REDEEMED` (quét lần 2 bị từ ch�
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| billing | application, infrastructure, presentation | P0 | 2d | BE-S4-01, BE-S4-02 | — | TODO |
+| billing | application, infrastructure, presentation | P0 | 2d | BE-S4-01, BE-S4-02 | — | IN_REVIEW |
 
 **Mục tiêu:** Phục vụ CTA "Ký quỹ 299.000đ & Nhận Voucher 300k" (màn 5) và thẻ "Đã ghi nhận" (màn 6).
 

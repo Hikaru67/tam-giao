@@ -559,6 +559,9 @@ importers:
       '@tamgiao/kernel':
         specifier: workspace:*
         version: link:../../kernel
+      '@tamgiao/module-billing':
+        specifier: workspace:*
+        version: link:../billing
       '@tamgiao/module-verification':
         specifier: workspace:*
         version: link:../verification

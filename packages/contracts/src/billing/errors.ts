@@ -21,3 +21,18 @@ export const BILLING_ERROR_CODES = registerErrors('billing', {
   VOUCHER_EXPIRED: { status: 410, title: 'Voucher đã hết hạn' },
   VOUCHER_PARTNER_MISMATCH: { status: 403, title: 'Voucher không áp dụng tại quán này' },
 });
+
+/** Mã lỗi thanh toán xác thực + webhook (BE-S4-03). */
+export const BILLING_PAYMENT_ERROR_CODES = registerErrors('billing', {
+  /**
+   * Chưa thanh toán xác thực → chưa được nộp eKYC. Dùng 403 vì `HttpErrorStatus` không có 402: yêu cầu hợp lệ nhưng
+   * người dùng chưa đủ điều kiện thực hiện.
+   */
+  PAYMENT_REQUIRED: { status: 403, title: 'Cần hoàn tất thanh toán xác thực trước' },
+  /** `meta.status`: người dùng đã có khoản thanh toán xác thực thành công (hoặc đang/đã hoàn tiền). */
+  PAYMENT_ALREADY_EXISTS: { status: 409, title: 'Đã có khoản thanh toán xác thực' },
+  /** Webhook thiếu/sai chữ ký hoặc sai định dạng — không ghi gì. */
+  WEBHOOK_INVALID: { status: 401, title: 'Webhook thanh toán không hợp lệ' },
+  /** `meta.kind`: không tạo được phiên thanh toán do cổng lỗi — thử lại sau (giữ nguyên idempotency key). */
+  PAYMENT_GATEWAY_UNAVAILABLE: { status: 503, title: 'Cổng thanh toán tạm thời không khả dụng' },
+});

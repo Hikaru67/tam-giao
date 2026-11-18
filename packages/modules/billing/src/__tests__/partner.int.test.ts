@@ -17,7 +17,7 @@ import { Hono } from 'hono';
 import { createMiddleware } from 'hono/factory';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { PARTNER_MAX_FAILED_LOGINS, PARTNER_STAFF_TOKEN_TTL_HOURS } from '../domain/partner-staff.js';
-import { createBillingModule } from '../index.js';
+import { createBillingModule, FakePaymentGateway } from '../index.js';
 import { RecordingPartnerAuditLogger } from './partner-fakes.js';
 
 const T0 = new Date('2026-11-18T01:00:00.000Z');
@@ -57,6 +57,9 @@ beforeAll(() => {
     requireUser,
     requireAdmin,
     auditLogger: audit,
+    paymentGateway: new FakePaymentGateway({ secret: 'partner-test-webhook-secret', clock }),
+    paymentGatewayName: 'fake',
+    paymentReturnUrl: 'tamgiao://payments/return',
   });
   const logger = createLogger({
     service: 'api',
