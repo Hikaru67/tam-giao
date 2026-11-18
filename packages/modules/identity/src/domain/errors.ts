@@ -19,6 +19,7 @@ export const IDENTITY_ERRORS = [
   'ADMIN_LOCKED',
   'PASSWORD_TOO_WEAK',
   'ADMIN_EMAIL_TAKEN',
+  'AUDIT_ENTRY_INVALID',
 ] as const;
 
 export type IdentityErrorCode = (typeof IDENTITY_ERRORS)[number];

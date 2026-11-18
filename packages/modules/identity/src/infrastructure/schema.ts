@@ -1,6 +1,17 @@
 import { bytea, timestamptz } from '@tamgiao/db';
 import { sql } from 'drizzle-orm';
-import { bigint, bigserial, boolean, check, index, integer, pgSchema, text, uuid } from 'drizzle-orm/pg-core';
+import {
+  bigint,
+  bigserial,
+  boolean,
+  check,
+  index,
+  integer,
+  jsonb,
+  pgSchema,
+  text,
+  uuid,
+} from 'drizzle-orm/pg-core';
 
 /** Schema Postgres của module identity (AGENTS.md mục 4). */
 export const identity = pgSchema('identity');
@@ -105,4 +116,35 @@ export const adminSessions = identity.table(
     revokedAt: timestamptz('revoked_at'),
   },
   (t) => [index('admin_sessions_admin_id_idx').on(t.adminId)],
+);
+
+/**
+ * Audit log thao tác nhạy cảm (BE-S2-04). **Chỉ ghi thêm**: migration gắn trigger chặn mọi UPDATE/DELETE
+ * (kể cả từ role owner mà app đang dùng) và thu hồi UPDATE/DELETE/TRUNCATE khỏi PUBLIC.
+ * Không FK tới `admin_users`/`users` vì actor có thể là người dùng app hoặc hệ thống, và bản ghi phải
+ * còn nguyên khi tài khoản bị xoá/ẩn danh.
+ */
+export const auditLogs = identity.table(
+  'audit_logs',
+  {
+    id: uuid('id').primaryKey(),
+    occurredAt: timestamptz('occurred_at').notNull(),
+    actorType: text('actor_type').notNull(),
+    actorId: uuid('actor_id'),
+    action: text('action').notNull(),
+    targetType: text('target_type').notNull(),
+    targetId: text('target_id').notNull(),
+    ip: text('ip'),
+    meta: jsonb('meta').notNull(),
+  },
+  (t) => [
+    check('audit_logs_actor_type_ck', sql`${t.actorType} in ('admin', 'user', 'system')`),
+    check(
+      'audit_logs_actor_id_ck',
+      sql`(${t.actorType} = 'system' and ${t.actorId} is null) or (${t.actorType} <> 'system' and ${t.actorId} is not null)`,
+    ),
+    index('audit_logs_occurred_at_idx').on(t.occurredAt.desc(), t.id.desc()),
+    index('audit_logs_actor_idx').on(t.actorId, t.occurredAt.desc()),
+    index('audit_logs_target_idx').on(t.targetType, t.targetId, t.occurredAt.desc()),
+  ],
 );

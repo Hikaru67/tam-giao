@@ -1,4 +1,4 @@
-import type { DomainError, Result } from '@tamgiao/kernel';
+import type { DomainError, Result, Tx } from '@tamgiao/kernel';
 
 /**
  * API công khai của module identity cho module khác và composition root (AGENTS.md A3).
@@ -22,4 +22,34 @@ export interface IdentityFacade {
   authenticateUser(accessToken: string): Promise<Result<AuthenticatedUser, DomainError>>;
   /** Kiểm tra token phiên admin (còn hạn, chưa thu hồi) và trả role + permission hiện hành. */
   authenticateAdmin(token: string): Promise<Result<AuthenticatedAdmin, DomainError>>;
+}
+
+/**
+ * Một thao tác cần ghi vết (BE-S2-04). `meta` chỉ chứa dữ liệu không nhạy cảm — khoá có tên gợi PII
+ * (`phone`, `cccd`, `income`, `email`, `message`…) bị từ chối với `AUDIT_ENTRY_INVALID`.
+ */
+export interface AuditLogInput {
+  readonly actor: {
+    readonly type: 'admin' | 'user' | 'system';
+    /** UUID v7 của admin/người dùng; bỏ trống khi `type = 'system'`. */
+    readonly id?: string | null;
+  };
+  /** `<miền>.<hành động>`, chữ thường + `_`, vd `kyc.view_detail`, `billing.refund`. */
+  readonly action: string;
+  /** vd `kyc_submission`, `user`, `payment`. */
+  readonly targetType: string;
+  readonly targetId: string;
+  /** IP client (`c.get('clientIp')`); `unknown` được coi như không có. */
+  readonly ip?: string | null;
+  readonly meta?: Readonly<Record<string, unknown>>;
+}
+
+/**
+ * Ghi audit log cho mọi module. Truyền `tx` để bản ghi audit commit/rollback cùng thao tác nghiệp vụ
+ * (nên dùng cho thao tác ghi); không truyền thì tự mở transaction riêng.
+ * `Err` = lỗi lập trình của nơi gọi (input sai định dạng / meta chứa PII), không phải lỗi người dùng.
+ */
+export interface AuditLogger {
+  log(entry: AuditLogInput): Promise<Result<void, DomainError>>;
+  log(tx: Tx, entry: AuditLogInput): Promise<Result<void, DomainError>>;
 }
