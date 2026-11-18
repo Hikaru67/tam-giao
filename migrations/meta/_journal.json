@@ -43,6 +43,13 @@
       "when": 1794972581850,
       "tag": "0005_platform_uploads",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1794973155061,
+      "tag": "0006_profile_profiles",
+      "breakpoints": true
     }
   ]
 }

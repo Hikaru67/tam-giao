@@ -9,6 +9,7 @@ import {
 import { requireUser, type AppEnv } from '@tamgiao/http';
 import type { Clock, UnitOfWork } from '@tamgiao/kernel';
 import { ConsoleSmsSender, createIdentityModule } from '@tamgiao/module-identity';
+import { createProfileModule } from '@tamgiao/module-profile';
 import type { Hono } from 'hono';
 import type { ApiConfig } from './config.js';
 import { createUploadRoutes } from './http/uploads.js';
@@ -49,10 +50,13 @@ export function buildModules({ config, uow, clock }: ModuleDeps): readonly ApiMo
   // Upload qua presigned URL (BE-S2-07). `uploads` (UploadRegistry) sẽ truyền vào profile/verification/safety.
   const storage = new S3ObjectStorage({ ...config.storage, presignGetTtlSeconds: PRESIGNED_URL_TTL_SECONDS });
   const uploads = new UploadService({ uow, clock, storage, putTtlSeconds: PRESIGNED_URL_TTL_SECONDS });
+  const userGuard = requireUser(identity.facade.authenticateUser);
   const uploadModule: ApiModule = {
     name: 'uploads',
-    routes: createUploadRoutes({ uploads, requireUser: requireUser(identity.facade.authenticateUser) }),
+    routes: createUploadRoutes({ uploads, requireUser: userGuard }),
   };
 
-  return [identity, uploadModule];
+  const profile = createProfileModule({ uow, clock, encryptor, uploads, storage, requireUser: userGuard });
+
+  return [identity, uploadModule, profile];
 }

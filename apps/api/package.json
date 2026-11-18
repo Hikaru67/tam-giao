@@ -16,6 +16,7 @@
     "@tamgiao/http": "workspace:*",
     "@tamgiao/kernel": "workspace:*",
     "@tamgiao/module-identity": "workspace:*",
+    "@tamgiao/module-profile": "workspace:*",
     "hono": "4.13.18",
     "zod": "4.6.7"
   },
