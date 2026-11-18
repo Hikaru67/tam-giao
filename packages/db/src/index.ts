@@ -4,7 +4,7 @@ export { asDbTx, asPgClient, toTx, type DbTx, type DbTxHandle } from './tx.js';
 export { DrizzleUnitOfWork } from './unit-of-work.js';
 export { OutboxWriter } from './outbox/outbox-writer.js';
 export { MIGRATIONS_FOLDER, runMigrations } from './migrate.js';
-export { outbox, platform, processedEvents } from './schema/platform.js';
+export { outbox, platform, processedEvents, uploads } from './schema/platform.js';
 export {
   HmacBlindIndexer,
   LocalKeyEncryptor,
@@ -26,3 +26,13 @@ export {
 } from './jobs/pg-boss.js';
 export { EventBus, consumerQueue, type EventHandler, type Subscription } from './outbox/event-bus.js';
 export { OutboxRelay, deliverOnce, registerConsumers } from './outbox/outbox-relay.js';
+export { S3ObjectStorage, type S3ObjectStorageConfig } from './storage/s3-object-storage.js';
+export {
+  UPLOAD_CONTENT_TYPES,
+  UPLOAD_MAX_BYTES,
+  UploadService,
+  bucketForPurpose,
+  type RequestUploadInput,
+  type UploadServiceDeps,
+  type UploadTicket,
+} from './storage/upload-service.js';

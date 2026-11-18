@@ -173,7 +173,7 @@ Admin đăng nhập với mật khẩu + 2FA, có phân quyền và audit log.
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| platform (db) | infrastructure, presentation | P0 | 1.5d | Sprint 1 | BE-S2-01, BE-S2-03 | TODO |
+| platform (db) | infrastructure, presentation | P0 | 1.5d | Sprint 1 | BE-S2-01, BE-S2-03 | DONE |
 
 **Mục tiêu:** Upload ảnh hồ sơ và tài liệu eKYC mà không đi qua API server.
 
@@ -182,8 +182,8 @@ Admin đăng nhập với mật khẩu + 2FA, có phân quyền và audit log.
 - Ngoài: Xử lý ảnh (resize, bỏ EXIF) — ghi vào việc phát sinh.
 
 **Tiêu chí nghiệm thu**
-- [ ] AC1: User A không thể dùng key upload của user B trong hồ sơ của mình (`UPLOAD_NOT_OWNED`).
-- [ ] AC2: Mime/kích thước sai → từ chối trước khi cấp URL.
+- [x] AC1: User A không thể dùng key upload của user B trong hồ sơ của mình (`UPLOAD_NOT_OWNED`).
+- [x] AC2: Mime/kích thước sai → từ chối trước khi cấp URL.
 
 **Test bắt buộc:** Integration với MinIO (Testcontainers).
 
