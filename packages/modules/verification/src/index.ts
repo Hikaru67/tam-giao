@@ -2,13 +2,21 @@ import { OutboxWriter } from '@tamgiao/db';
 import type { AppEnv } from '@tamgiao/http';
 import type { BlindIndexer, Clock, Encryptor, UnitOfWork, UploadRegistry } from '@tamgiao/kernel';
 import type { Hono, MiddlewareHandler } from 'hono';
+import type { VerificationFacade } from './application/facade.js';
 import { GetMyKyc } from './application/get-my-kyc.js';
 import type { ApplicantProfileReader } from './application/ports/applicant-profile-reader.js';
 import type { EkycProvider } from './application/ports/ekyc-provider.js';
+import { GetVerificationSummary } from './application/get-verification-summary.js';
 import { SubmitKyc } from './application/submit-kyc.js';
 import { DrizzleKycSubmissionRepository } from './infrastructure/drizzle-kyc-submission-repository.js';
 import { createKycRoutes } from './presentation/kyc-routes.js';
 
+export type {
+  VerificationBadge,
+  VerificationFacade,
+  VerificationStatus,
+  VerificationSummary,
+} from './application/facade.js';
 export type { ApplicantProfileReader } from './application/ports/applicant-profile-reader.js';
 export { EkycProviderError, type EkycProvider } from './application/ports/ekyc-provider.js';
 export {
@@ -39,7 +47,9 @@ export interface VerificationModuleDeps {
 export interface VerificationModule {
   readonly name: 'verification';
   readonly routes: Hono<AppEnv>;
-  // `facade` (BE-S3-07) và `handlers` (consumer event, BE-S4-03) thêm ở task tương ứng.
+  /** Facade read-only cho module khác (BE-S3-07). */
+  readonly facade: VerificationFacade;
+  // `handlers` (consumer event, BE-S4-03) thêm ở task tương ứng.
 }
 
 /** Composition root của module verification (eKYC, thẩm định độc thân, phỏng vấn sơ bộ). */
@@ -62,5 +72,6 @@ export function createVerificationModule(deps: VerificationModuleDeps): Verifica
     getMyKyc: new GetMyKyc({ uow, submissions }),
     requireUser: deps.requireUser,
   });
-  return { name: 'verification', routes };
+  const facade: VerificationFacade = new GetVerificationSummary({ uow, submissions });
+  return { name: 'verification', routes, facade };
 }

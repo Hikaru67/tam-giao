@@ -14,6 +14,7 @@ import {
   FakeEkycProvider,
   ResilientEkycProvider,
   createVerificationModule,
+  type ApplicantProfileReader,
 } from '@tamgiao/module-verification';
 import type { Hono } from 'hono';
 import type { ApiConfig } from './config.js';
@@ -61,7 +62,12 @@ export function buildModules({ config, uow, clock }: ModuleDeps): readonly ApiMo
     routes: createUploadRoutes({ uploads, requireUser: userGuard }),
   };
 
-  const profile = createProfileModule({ uow, clock, encryptor, uploads, storage, requireUser: userGuard });
+  // Profile ↔ verification cần facade của nhau ở runtime (không phụ thuộc vòng ở package): verification đọc họ tên
+  // để đối chiếu OCR, profile đọc trạng thái xác thực cho `GET /me`. Tạo verification trước; `applicants` chuyển
+  // tiếp sang `profile.facade` lúc xử lý request (khi đó `profile` đã được khởi tạo).
+  const applicants: ApplicantProfileReader = {
+    getApplicantIdentity: (userId) => profile.facade.getApplicantIdentity(userId),
+  };
 
   // eKYC (D2 chưa chốt): `EKYC_PROVIDER=fake` — mỗi người dùng một số CCCD giả khác nhau (theo key ảnh).
   const ekyc = new ResilientEkycProvider(new FakeEkycProvider({ deriveCccdFromKey: true }), {
@@ -76,7 +82,16 @@ export function buildModules({ config, uow, clock }: ModuleDeps): readonly ApiMo
     blindIndexer,
     uploads,
     ekyc,
-    applicants: profile.facade,
+    applicants,
+    requireUser: userGuard,
+  });
+  const profile = createProfileModule({
+    uow,
+    clock,
+    encryptor,
+    uploads,
+    storage,
+    verification: verification.facade,
     requireUser: userGuard,
   });
 

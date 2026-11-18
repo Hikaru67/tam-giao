@@ -53,3 +53,10 @@ export const kycProgressResponseSchema = z.object({
   rejectionReason: z.enum(KYC_REJECTION_REASON_CODES).nullable(),
 });
 export type KycProgressResponse = z.infer<typeof kycProgressResponseSchema>;
+
+/**
+ * Huy hiệu xác thực trả trong `GET /me` (`badges`) — theo từng bước đã đạt, không có khi hồ sơ bị từ chối:
+ * `CCCD_VERIFIED` (bước `CCCD_CHIP`), `SINGLE_VERIFIED` (`MARITAL_STATUS`), `INTERVIEWED` (`INTERVIEW`).
+ */
+export const VERIFICATION_BADGES = ['CCCD_VERIFIED', 'SINGLE_VERIFIED', 'INTERVIEWED'] as const;
+export type VerificationBadge = (typeof VERIFICATION_BADGES)[number];

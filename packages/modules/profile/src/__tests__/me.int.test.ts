@@ -2,6 +2,7 @@ import { createLogger } from '@tamgiao/config';
 import { meResponseSchema } from '@tamgiao/contracts';
 import {
   DrizzleUnitOfWork,
+  HmacBlindIndexer,
   LocalKeyEncryptor,
   UploadService,
   createDatabase,
@@ -9,6 +10,7 @@ import {
 } from '@tamgiao/db';
 import { handleError, handleNotFound, requestContext, type AppEnv } from '@tamgiao/http';
 import { FakeClock, newId, type ObjectStorage } from '@tamgiao/kernel';
+import { FakeEkycProvider, createVerificationModule } from '@tamgiao/module-verification';
 import { resetDatabase, testDatabaseUrl } from '@tamgiao/testing';
 import { Hono } from 'hono';
 import { createMiddleware } from 'hono/factory';
@@ -45,12 +47,25 @@ beforeAll(() => {
     c.set('auth', { userId, sessionId: newId() });
     return next();
   });
+  const encryptor = new LocalKeyEncryptor({ currentVersion: 1, keys: new Map([[1, Buffer.alloc(32, 3)]]) });
+  // Facade verification thật (đọc `verification.kyc_submissions`) — nối như composition root.
+  const verification = createVerificationModule({
+    uow,
+    clock,
+    encryptor,
+    blindIndexer: new HmacBlindIndexer(Buffer.alloc(32, 9)),
+    uploads,
+    ekyc: new FakeEkycProvider(),
+    applicants: { getApplicantIdentity: async () => null },
+    requireUser,
+  });
   const module = createProfileModule({
     uow,
     clock,
-    encryptor: new LocalKeyEncryptor({ currentVersion: 1, keys: new Map([[1, Buffer.alloc(32, 3)]]) }),
+    encryptor,
     uploads,
     storage,
+    verification: verification.facade,
     requireUser,
   });
   app = new Hono<AppEnv>();
@@ -118,6 +133,51 @@ const preferences = {
   coreTraits: ['honest', 'kind', 'family_oriented'],
 };
 
+type StepStatus = 'PENDING' | 'PASSED' | 'FAILED';
+
+/** Seed hồ sơ eKYC trực tiếp trong bảng của verification (chỉ test; module profile không đọc bảng này). */
+async function seedKyc(
+  userId: string,
+  status: 'SUBMITTED' | 'UNDER_REVIEW' | 'NEEDS_MORE_INFO' | 'APPROVED' | 'REJECTED',
+  steps: Partial<Record<'CCCD_CHIP' | 'MARITAL_STATUS' | 'MANUAL_REVIEW' | 'INTERVIEW', StepStatus>> = {},
+): Promise<void> {
+  const now = clock.now();
+  const step = (name: keyof typeof steps) => {
+    const s = steps[name] ?? 'PENDING';
+    return { status: s, decidedAt: s === 'PENDING' ? null : now.toISOString() };
+  };
+  const decided = status === 'APPROVED' || status === 'REJECTED';
+  await database.pool.query(
+    `insert into verification.kyc_submissions
+       (id, user_id, status, steps, more_info_request, rejection_code, created_at, submitted_at, decided_at, updated_at, version)
+     values ($1, $2, $3, $4, $5, $6, $7, $7, $8, $7, 1)`,
+    [
+      newId(),
+      userId,
+      status,
+      JSON.stringify({
+        CCCD_CHIP: step('CCCD_CHIP'),
+        MARITAL_STATUS: step('MARITAL_STATUS'),
+        MANUAL_REVIEW: step('MANUAL_REVIEW'),
+        INTERVIEW: step('INTERVIEW'),
+      }),
+      status === 'NEEDS_MORE_INFO'
+        ? JSON.stringify({ items: ['SELFIE'], note: null, requestedAt: now.toISOString() })
+        : null,
+      status === 'REJECTED' ? 'FACE_MISMATCH' : null,
+      now,
+      decided ? now : null,
+    ],
+  );
+}
+
+async function onboarded(): Promise<string> {
+  const userId = newId<'User'>();
+  await completeProfile(userId);
+  expect((await request('PUT', '/me/preferences', userId, preferences)).status).toBe(200);
+  return userId;
+}
+
 describe('GET /me onboarding steps (AC1)', () => {
   it('new user with no profile → PROFILE', async () => {
     const userId = newId<'User'>();
@@ -155,6 +215,41 @@ describe('GET /me onboarding steps (AC1)', () => {
       },
       badges: [],
     });
+  });
+
+  it('approved verification → ACTIVE with all badges (BE-S3-07 AC1)', async () => {
+    const userId = await onboarded();
+    await seedKyc(userId, 'APPROVED', {
+      CCCD_CHIP: 'PASSED',
+      MARITAL_STATUS: 'PASSED',
+      MANUAL_REVIEW: 'PASSED',
+      INTERVIEW: 'PASSED',
+    });
+    expect(await me(userId)).toMatchObject({
+      onboardingStep: 'ACTIVE',
+      badges: ['CCCD_VERIFIED', 'SINGLE_VERIFIED', 'INTERVIEWED'],
+    });
+  });
+
+  it.each(['SUBMITTED', 'UNDER_REVIEW', 'NEEDS_MORE_INFO'] as const)(
+    '%s verification → UNDER_REVIEW with badges of passed steps',
+    async (status) => {
+      const userId = await onboarded();
+      await seedKyc(userId, status, { CCCD_CHIP: 'PASSED', MARITAL_STATUS: 'FAILED' });
+      expect(await me(userId)).toMatchObject({ onboardingStep: 'UNDER_REVIEW', badges: ['CCCD_VERIFIED'] });
+    },
+  );
+
+  it('rejected verification → REJECTED without badges', async () => {
+    const userId = await onboarded();
+    await seedKyc(userId, 'REJECTED', { CCCD_CHIP: 'PASSED' });
+    expect(await me(userId)).toMatchObject({ onboardingStep: 'REJECTED', badges: [] });
+  });
+
+  it('profile step still wins over an approved verification', async () => {
+    const userId = newId<'User'>();
+    await seedKyc(userId, 'APPROVED', { CCCD_CHIP: 'PASSED' });
+    expect(await me(userId)).toMatchObject({ onboardingStep: 'PROFILE', badges: ['CCCD_VERIFIED'] });
   });
 
   it('requires a logged-in user', async () => {
