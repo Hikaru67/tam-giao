@@ -1,12 +1,7 @@
 import { newId, type DomainEvent, type Result } from '@tamgiao/kernel';
 import { describe, expect, it } from 'vitest';
 import { CccdNumber } from '../domain/cccd-number.js';
-import {
-  KYC_STEPS,
-  KycSubmission,
-  type KycStatus,
-  type KycSubmissionId,
-} from '../domain/kyc-submission.js';
+import { KYC_STEPS, KycSubmission, type KycStatus, type KycSubmissionId } from '../domain/kyc-submission.js';
 import { RejectionReason } from '../domain/rejection-reason.js';
 
 const T0 = new Date('2026-11-01T00:00:00.000Z');
@@ -35,7 +30,12 @@ const inStatus = (status: KycStatus): KycSubmission => {
   const s = draft();
   passAllSteps(s);
   if (status !== 'DRAFT') unwrap(s.submit(at(2)));
-  if (status === 'UNDER_REVIEW' || status === 'NEEDS_MORE_INFO' || status === 'APPROVED' || status === 'REJECTED')
+  if (
+    status === 'UNDER_REVIEW' ||
+    status === 'NEEDS_MORE_INFO' ||
+    status === 'APPROVED' ||
+    status === 'REJECTED'
+  )
     unwrap(s.assignReviewer(REVIEWER, at(3)));
   if (status === 'NEEDS_MORE_INFO') unwrap(s.requestMoreInfo({ items: ['SELFIE'] }, at(4)));
   if (status === 'APPROVED') unwrap(s.approve(REVIEWER, at(4)));
@@ -146,7 +146,11 @@ const MATRIX: Readonly<Record<KycStatus, Readonly<Record<Action, Expected>>>> = 
 };
 
 const cases = Object.entries(MATRIX).flatMap(([from, actions]) =>
-  Object.entries(actions).map(([action, expected]) => ({ from: from as KycStatus, action: action as Action, expected })),
+  Object.entries(actions).map(([action, expected]) => ({
+    from: from as KycStatus,
+    action: action as Action,
+    expected,
+  })),
 );
 
 describe('KycSubmission — ma trận chuyển trạng thái', () => {
@@ -206,7 +210,10 @@ describe('KycSubmission — luật nghiệp vụ', () => {
     const s = inStatus('UNDER_REVIEW');
     unwrap(s.markStep(missing, 'FAILED', at(5)));
     const result = s.approve(REVIEWER, at(6));
-    expect(result.isErr() && result.error).toEqual({ code: 'KYC_STEPS_INCOMPLETE', details: { steps: [missing] } });
+    expect(result.isErr() && result.error).toEqual({
+      code: 'KYC_STEPS_INCOMPLETE',
+      details: { steps: [missing] },
+    });
   });
 
   it('a failed step can be re-marked PASSED before decision, then approve succeeds', () => {
@@ -221,7 +228,12 @@ describe('KycSubmission — luật nghiệp vụ', () => {
     const s = inStatus('UNDER_REVIEW');
     unwrap(s.approve(REVIEWER, at(5)));
     const state = s.toState();
-    expect(state).toMatchObject({ status: 'APPROVED', decidedBy: REVIEWER, decidedAt: at(5), updatedAt: at(5) });
+    expect(state).toMatchObject({
+      status: 'APPROVED',
+      decidedBy: REVIEWER,
+      decidedAt: at(5),
+      updatedAt: at(5),
+    });
     const [event] = s.pullEvents() as [DomainEvent];
     expect(event).toMatchObject({
       type: 'KycApproved',
@@ -300,7 +312,9 @@ describe('KycSubmission — luật nghiệp vụ', () => {
     expect(empty.isErr() && empty.error.code).toBe('KYC_MORE_INFO_ITEMS_REQUIRED');
     expect(s.status).toBe('UNDER_REVIEW');
 
-    unwrap(s.requestMoreInfo({ items: ['SELFIE', 'SELFIE', 'CCCD_BACK'], note: '  Chụp lại rõ hơn  ' }, at(6)));
+    unwrap(
+      s.requestMoreInfo({ items: ['SELFIE', 'SELFIE', 'CCCD_BACK'], note: '  Chụp lại rõ hơn  ' }, at(6)),
+    );
     expect(s.toState().moreInfoRequest).toEqual({
       items: ['SELFIE', 'CCCD_BACK'],
       note: 'Chụp lại rõ hơn',
@@ -315,7 +329,11 @@ describe('KycSubmission — luật nghiệp vụ', () => {
     unwrap(s.assignReviewer(REVIEWER, at(5)));
     expect(s.toState()).toMatchObject({ status: 'UNDER_REVIEW', reviewerId: REVIEWER });
     unwrap(s.assignReviewer(OTHER_REVIEWER, at(6)));
-    expect(s.toState()).toMatchObject({ status: 'UNDER_REVIEW', reviewerId: OTHER_REVIEWER, updatedAt: at(6) });
+    expect(s.toState()).toMatchObject({
+      status: 'UNDER_REVIEW',
+      reviewerId: OTHER_REVIEWER,
+      updatedAt: at(6),
+    });
   });
 
   it('recordCccdNumber keeps the number in state but never in events', () => {

@@ -145,10 +145,7 @@
       "compositePrimaryKeys": {
         "processed_events_consumer_event_id_pk": {
           "name": "processed_events_consumer_event_id_pk",
-          "columns": [
-            "consumer",
-            "event_id"
-          ]
+          "columns": ["consumer", "event_id"]
         }
       },
       "uniqueConstraints": {},
@@ -250,9 +247,7 @@
         "uploads_key_uq": {
           "name": "uploads_key_uq",
           "nullsNotDistinct": false,
-          "columns": [
-            "key"
-          ]
+          "columns": ["key"]
         }
       },
       "policies": {},
@@ -346,12 +341,8 @@
           "tableFrom": "admin_sessions",
           "tableTo": "admin_users",
           "schemaTo": "identity",
-          "columnsFrom": [
-            "admin_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["admin_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -361,9 +352,7 @@
         "admin_sessions_token_hash_uq": {
           "name": "admin_sessions_token_hash_uq",
           "nullsNotDistinct": false,
-          "columns": [
-            "token_hash"
-          ]
+          "columns": ["token_hash"]
         }
       },
       "policies": {},
@@ -436,9 +425,7 @@
         "admin_users_email_uq": {
           "name": "admin_users_email_uq",
           "nullsNotDistinct": false,
-          "columns": [
-            "email"
-          ]
+          "columns": ["email"]
         }
       },
       "policies": {},
@@ -768,12 +755,8 @@
           "tableFrom": "refresh_tokens",
           "tableTo": "sessions",
           "schemaTo": "identity",
-          "columnsFrom": [
-            "session_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["session_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -783,9 +766,7 @@
         "refresh_tokens_token_hash_uq": {
           "name": "refresh_tokens_token_hash_uq",
           "nullsNotDistinct": false,
-          "columns": [
-            "token_hash"
-          ]
+          "columns": ["token_hash"]
         }
       },
       "policies": {},
@@ -862,12 +843,8 @@
           "tableFrom": "sessions",
           "tableTo": "users",
           "schemaTo": "identity",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -920,9 +897,7 @@
         "users_phone_bidx_uq": {
           "name": "users_phone_bidx_uq",
           "nullsNotDistinct": false,
-          "columns": [
-            "phone_bidx"
-          ]
+          "columns": ["phone_bidx"]
         }
       },
       "policies": {},
@@ -1365,16 +1340,12 @@
         "kyc_submissions_user_id_uq": {
           "name": "kyc_submissions_user_id_uq",
           "nullsNotDistinct": false,
-          "columns": [
-            "user_id"
-          ]
+          "columns": ["user_id"]
         },
         "kyc_submissions_cccd_number_bidx_uq": {
           "name": "kyc_submissions_cccd_number_bidx_uq",
           "nullsNotDistinct": false,
-          "columns": [
-            "cccd_number_bidx"
-          ]
+          "columns": ["cccd_number_bidx"]
         }
       },
       "policies": {},

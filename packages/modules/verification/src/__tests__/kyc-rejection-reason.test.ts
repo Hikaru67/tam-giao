@@ -1,10 +1,17 @@
 import { describe, expect, it } from 'vitest';
-import { REJECTION_NOTE_MAX_LENGTH, REJECTION_REASON_CODES, RejectionReason } from '../domain/rejection-reason.js';
+import {
+  REJECTION_NOTE_MAX_LENGTH,
+  REJECTION_REASON_CODES,
+  RejectionReason,
+} from '../domain/rejection-reason.js';
 
 describe('RejectionReason', () => {
   it.each(REJECTION_REASON_CODES.filter((c) => c !== 'OTHER'))('accepts %s without a note', (code) => {
     const result = RejectionReason.create({ code });
-    expect(result.isOk() && { code: result.value.code, note: result.value.note }).toEqual({ code, note: null });
+    expect(result.isOk() && { code: result.value.code, note: result.value.note }).toEqual({
+      code,
+      note: null,
+    });
   });
 
   it('trims the note and keeps it', () => {
@@ -19,12 +26,18 @@ describe('RejectionReason', () => {
     ['unknown code', { code: 'BECAUSE' }],
   ])('rejects %s with REJECTION_REASON_REQUIRED (field=code)', (_label, input) => {
     const result = RejectionReason.create(input);
-    expect(result.isErr() && result.error).toEqual({ code: 'REJECTION_REASON_REQUIRED', details: { field: 'code' } });
+    expect(result.isErr() && result.error).toEqual({
+      code: 'REJECTION_REASON_REQUIRED',
+      details: { field: 'code' },
+    });
   });
 
   it.each([null, '', '   '])('OTHER requires a note (note=%j)', (note) => {
     const result = RejectionReason.create({ code: 'OTHER', note });
-    expect(result.isErr() && result.error).toEqual({ code: 'REJECTION_REASON_REQUIRED', details: { field: 'note' } });
+    expect(result.isErr() && result.error).toEqual({
+      code: 'REJECTION_REASON_REQUIRED',
+      details: { field: 'note' },
+    });
   });
 
   it('rejects a note longer than the max length', () => {

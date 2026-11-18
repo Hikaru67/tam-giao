@@ -21,12 +21,12 @@ describe('mã lỗi verification (domain)', () => {
 // Domain không được import contracts ngoài `constants` (A1) → giữ bản sao, test này bảo đảm hai nơi khớp nhau.
 describe('danh mục KYC khớp contracts', () => {
   it('event type names', () => {
-    expect([domain.KYC_SUBMITTED, domain.KYC_APPROVED, domain.KYC_REJECTED, domain.KYC_MORE_INFO_REQUESTED]).toEqual([
-      KYC_SUBMITTED,
-      KYC_APPROVED,
-      KYC_REJECTED,
-      KYC_MORE_INFO_REQUESTED,
-    ]);
+    expect([
+      domain.KYC_SUBMITTED,
+      domain.KYC_APPROVED,
+      domain.KYC_REJECTED,
+      domain.KYC_MORE_INFO_REQUESTED,
+    ]).toEqual([KYC_SUBMITTED, KYC_APPROVED, KYC_REJECTED, KYC_MORE_INFO_REQUESTED]);
   });
 
   it('rejection reason codes', () => {
