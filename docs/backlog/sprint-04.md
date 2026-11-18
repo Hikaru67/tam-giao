@@ -15,7 +15,7 @@ voucher `ACTIVE` → quán quét QR → `REDEEMED` (quét lần 2 bị từ ch�
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| billing | domain | P0 | 2d | Sprint 1 | BE-S4-02, BE-S4-06 | IN_REVIEW |
+| billing | domain | P0 | 2d | Sprint 1 | BE-S4-02, BE-S4-06 | DONE |
 
 **Mục tiêu:** Mô hình hoá tiền và voucher chính xác, không thể sai lệch.
 
