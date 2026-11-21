@@ -40,7 +40,7 @@ báo cáo (màn 14) → match `LOCKED`, hội thoại đóng, admin thấy báo 
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| messaging | presentation, infrastructure | P0 | 2.5d | BE-S6-01 | BE-S6-06 | IN_REVIEW |
+| messaging | presentation, infrastructure | P0 | 2.5d | BE-S6-01 | BE-S6-06 | DONE |
 
 **Mục tiêu:** Tin nhắn realtime, chạy được nhiều instance API.
 
