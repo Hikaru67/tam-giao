@@ -146,7 +146,7 @@ báo cáo (màn 14) → match `LOCKED`, hội thoại đóng, admin thấy báo 
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| safety | application, infrastructure, presentation | P0 | 1.5d | BE-S6-05, BE-S6-03 | BE-S6-02 | IN_REVIEW |
+| safety | application, infrastructure, presentation | P0 | 1.5d | BE-S6-05, BE-S6-03 | BE-S6-02 | DONE |
 
 **Mục tiêu:** Phục vụ mục "Báo cáo Vi phạm & Khiếu nại" và thẻ "Cảnh báo vi phạm" trên admin.
 
