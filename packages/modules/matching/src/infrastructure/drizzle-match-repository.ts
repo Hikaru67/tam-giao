@@ -156,4 +156,18 @@ export class DrizzleMatchRepository implements MatchRepository {
       .limit(1);
     return row ? toMatch(row) : null;
   }
+
+  async findLatestBetween(tx: Tx, userA: string, userB: string): Promise<Match | null> {
+    const a = userA.toLowerCase();
+    const b = userB.toLowerCase();
+    const [row] = await asDbTx(tx)
+      .select()
+      .from(matches)
+      .where(
+        or(and(eq(matches.userA, a), eq(matches.userB, b)), and(eq(matches.userA, b), eq(matches.userB, a))),
+      )
+      .orderBy(desc(matches.offeredAt), desc(matches.id))
+      .limit(1);
+    return row ? toMatch(row) : null;
+  }
 }

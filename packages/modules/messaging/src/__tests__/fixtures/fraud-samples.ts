@@ -1,0 +1,93 @@
+/**
+ * Bộ câu mẫu cho bộ lọc lừa đảo (BE-S6-03, AC1). Dữ liệu giả lập — số tài khoản/SĐT không có thật.
+ *
+ * - `SCAM_SAMPLES`: câu lừa đảo tài chính thường gặp trong hẹn hò (có dấu, không dấu, viết lách bằng khoảng trắng /
+ *   ký tự đặc biệt, leetspeak). Yêu cầu: phát hiện ≥ 90%.
+ * - `BENIGN_SAMPLES`: câu bình thường của cặp đang tìm hiểu, gồm câu dễ báo nhầm. Yêu cầu: báo nhầm ≤ 1.
+ */
+
+export const SCAM_SAMPLES: readonly string[] = [
+  // Có dấu
+  'Em ơi anh đang kẹt tiền, chuyển khoản giúp anh 5 triệu nhé, STK 0123456789 Vietcombank',
+  'Anh đầu tư Bitcoin trên sàn Binance, lãi 30% mỗi tuần, em muốn thử không?',
+  'Em tải app này về nạp tiền làm nhiệm vụ, mỗi ngày kiếm thêm 500k',
+  'Anh có người quen ở sàn giao dịch vàng, cam kết lợi nhuận, không lo lỗ',
+  'Em đọc giúp anh mã OTP vừa gửi về điện thoại em với',
+  'Cho anh mượn tạm 10 triệu, tuần sau anh trả cả gốc lẫn lãi',
+  'Ví MoMo của anh bị khoá, em chuyển tiền qua momo hộ anh 2 triệu được không',
+  'Anh gửi quà từ Mỹ về, em đóng phí hải quan 3 triệu để nhận kiện hàng nha',
+  'Mình chơi tài xỉu online không em, nhà cái uy tín, nạp 100k là chơi được',
+  'Em chuyển tiền cho anh dautu dự án này, lợi nhuận gấp đôi, anh đảm bảo hoàn vốn',
+  'Em có ví điện tử không? Anh nhờ nhận giúp 5tr rồi chuyển lại cho anh',
+  'Anh là chuyên gia phân tích Forex, em mở tài khoản theo anh vào lệnh nhé',
+  'Bên anh tuyển cộng tác viên online, việc nhẹ lương cao, chỉ cần nạp tiền trước',
+  'Đọc cho anh dãy số xác thực ngân hàng gửi qua tin nhắn nha',
+  'Em bấm vào bit.ly/qua-tang-em để nhận quà nhé',
+  'Anh ở nước ngoài, cần em đứng tên nhận tiền giúp rồi chuyển lại cho anh',
+  'Kiếm tiền online dễ lắm em, nạp 500k nhận lại 800k sau 1 giờ',
+  'Em gửi mình mã xác nhận Zalo 6 số để anh đăng nhập giúp nhé',
+  'Anh cần 20tr gấp để đóng viện phí, em cho anh mượn được không, STK đây 9704123456789',
+  'Sàn mình đang có kèo thơm, nạp tối thiểu 1000 đô la, hoa hồng 10% mỗi ngày',
+  'Mình có mối hàng xách tay, em chuyển cọc trước 50% qua tài khoản ngân hàng nha',
+  'Nhờ em nhận hộ anh khoản tiền 3000 usd từ bạn bên Úc, phí chuyển tiền em ứng trước nhé',
+  'Em ơi giữ bí mật nhé, chuyển khoản 5 triệu cho anh trước, mai anh gửi lại gấp đôi',
+  // Không dấu
+  'Chuyen khoan cho anh 2tr qua so tai khoan 19033445566778 techcombank nha em',
+  'dau tu forex cung anh di, loi nhuan on dinh 20% moi thang',
+  'tien ao dang tang manh, em mua eth qua san giao dich cua anh, loi nhuan cao lam',
+  'Nap USDT vao vi nay em nhe, anh huong dan danh coin kiem loi',
+  // Viết lách bằng khoảng trắng / ký tự đặc biệt
+  'o t p gửi về máy em đó, đọc anh 6 số nha',
+  'c.h.u.y.ể.n k.h.o.ả.n vào s.t.k này giúp anh 3 triệu',
+  'S-T-K: 0451 0003 8888 99 Vietinbank, chủ tài khoản Nguyen Van A, em ck giúp anh nhé',
+  'C r y p t o là tương lai, đầu tư sớm thì giàu sớm em ạ',
+  'F.o.r.e.x với vàng lãi 5% một ngày, anh dạy em vào lệnh',
+  'Đầu-tư 10 triệu qua s@n giao dịch của anh, sau 7 ngày nhận về 15 triệu',
+  'chu.yển khoản giúp anh, s_t_k 0987.654.321.012 nha',
+  // Leetspeak
+  'Bên anh ch0 vay online lãi suất 0%, giải ngân trong 30 phút',
+  'b1tc0in đang lên, em bỏ 50 triệu vào anh lo cho, x2 tài khoản trong 1 tháng',
+  'ban oi z@lo pay của mình đang lỗi, ck qua tk này giúp mình 2tr nhé',
+  'Mã 0TP ngân hàng gửi về em đọc anh với',
+];
+
+export const BENIGN_SAMPLES: readonly string[] = [
+  'Cuối tuần này mình đi chuyển nhà, em có rảnh qua phụ không?',
+  'Đầu tuần sau anh đi công tác Đà Nẵng.',
+  'Em dùng chung tài khoản Netflix với bạn, tối nay xem phim nhé.',
+  'Hôm nay đi làm mệt quá, về nhà nằm luôn.',
+  'Anh thích ăn phở hay bún chả hơn?',
+  'Cuối tuần mình đi xem phim, vé 90k một người, anh mời nhé.',
+  'Công ty em làm bên mảng đầu tư xây dựng.',
+  'Lãi suất ngân hàng dạo này thấp ghê, mẹ em than suốt.',
+  'Mình gặp nhau ở quán cà phê gần hồ Gươm nhé.',
+  'Em đang học thêm tiếng Anh buổi tối.',
+  'Như vậy tiện cho cả hai mình.',
+  'Anh mới chuyển công tác ra Hà Nội được 2 năm.',
+  'Tặng em bó hoa hồng nhân ngày 20/10 nè.',
+  'Mẹ em hay nhắc phải tiết kiệm, gửi tiết kiệm ngân hàng cho chắc.',
+  'Thứ 7 này anh rảnh, mình đi dạo phố đi bộ không?',
+  'Em nuôi một con mèo tên là Mướp.',
+  'Hôm qua anh đi đá bóng, thua 2-3 tiếc ghê.',
+  'Em thích nghe nhạc Trịnh Công Sơn lắm.',
+  'Mình chia đôi tiền ăn tối qua nhé, em trả bằng Momo cho nhanh.',
+  'Lúc nãy anh gửi tiền về quê cho bố mẹ rồi.',
+  'Tuần sau là sinh nhật em, anh nhớ không?',
+  'Anh đang đọc cuốn sách về tâm lý học, hay lắm.',
+  'Em làm kế toán ở một công ty nhỏ ở quận 3.',
+  'Hôm nay trời mưa to quá, đi đường cẩn thận nha.',
+  'Anh có hay về quê không? Quê anh ở Nam Định đúng không?',
+  'Mã giảm giá Grab hôm nay ngon lắm, em đặt đồ ăn được giảm 50k.',
+  'Em đang săn vé máy bay đi Phú Quốc dịp Tết.',
+  'Chiều nay anh phải họp đến 6 giờ, tối anh gọi em nhé.',
+  'Bố em làm ở ngân hàng Vietcombank hơn 20 năm rồi.',
+  'Em có hay tập gym không? Anh mới đăng ký thẻ tập 3 tháng.',
+  'Gặp nhau xong anh thấy em dễ thương thật đó.',
+  'Cho anh mượn cuốn sách đó tuần sau anh trả nhé.',
+  't có việc bận chút, lát t nhắn lại nha.',
+  'Tối qua em thức khuya chạy deadline, sáng nay đi làm muộn 15 phút.',
+  'Số anh là 0912 345 678 nhé, có gì em gọi.',
+  'Đi chợ hết 200k mua đồ nấu lẩu, vui ghê.',
+  'Hôm nay em được tăng lương, tối đi ăn mừng nhé.',
+  'Anh vừa đổi mật khẩu wifi nhà, quên mất tiêu.',
+];

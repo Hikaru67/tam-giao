@@ -27,6 +27,7 @@ describe('api config', () => {
       port: 3000,
       http: { corsOrigins: [], bodyLimitBytes: 1_048_576, trustProxy: false },
       database: { url: 'postgres://tamgiao@localhost:5433/tamgiao' },
+      redis: { url: 'redis://localhost:6380' },
       storage: {
         endpoint: 'http://localhost:8333',
         region: 'us-east-1',
@@ -59,6 +60,7 @@ describe('api config', () => {
       expect(error).toBeInstanceOf(ConfigError);
       expect((error as ConfigError).problems.map((p) => p.split(':')[0])).toEqual([
         'DATABASE_URL',
+        'REDIS_URL',
         'S3_ENDPOINT',
         'S3_ACCESS_KEY_ID',
         'S3_SECRET_ACCESS_KEY',

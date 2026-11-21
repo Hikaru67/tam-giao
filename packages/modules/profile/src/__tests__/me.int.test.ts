@@ -118,6 +118,8 @@ async function completeProfile(userId: string): Promise<string> {
     currentCity: 'Cần Thơ',
     education: 'bachelor',
     occupation: 'Dược sĩ',
+    religion: 'none',
+    childrenPlan: 'open',
     photos: [ticket.value.key],
     submit: true,
   });

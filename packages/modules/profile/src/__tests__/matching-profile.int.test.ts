@@ -62,6 +62,9 @@ describe('ProfileFacade.getMatchingProfile (BE-S5-03)', () => {
       birthDate: '1995-04-10',
       currentCity: 'Đà Nẵng',
       education: 'bachelor',
+      // Hồ sơ cũ (trước BE-S6-07) chưa khai → null.
+      religion: null,
+      childrenPlan: null,
       criteria: {
         ageMin: 24,
         ageMax: 32,
@@ -81,6 +84,21 @@ describe('ProfileFacade.getMatchingProfile (BE-S5-03)', () => {
       },
       profileVersion: 3,
       preferencesVersion: 2,
+    });
+  });
+
+  it('trả tôn giáo / kế hoạch con cái của chính người dùng (BE-S6-07)', async () => {
+    const u = newId();
+    await insertProfile(u, 'COMPLETED');
+    await database.pool.query(
+      `update profile.profiles set religion = 'catholicism', children_plan = 'no_children' where user_id = $1`,
+      [u],
+    );
+    await insertPreferences(u);
+    expect(await reader.getMatchingProfile(u)).toMatchObject({
+      religion: 'catholicism',
+      childrenPlan: 'no_children',
+      criteria: { religion: 'buddhism', childrenPlan: 'want_children' },
     });
   });
 

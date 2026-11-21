@@ -21,14 +21,16 @@ const jobs = await startApiJobScheduler({
   onError: (error) => logger.error({ err: error }, 'pg-boss error'),
 });
 
+const modules = buildModules({
+  config,
+  uow: new DrizzleUnitOfWork(database.pool),
+  clock: new SystemClock(),
+  scheduler: jobs.scheduler,
+  logger,
+});
 const app = createApp({
   logger,
-  modules: buildModules({
-    config,
-    uow: new DrizzleUnitOfWork(database.pool),
-    clock: new SystemClock(),
-    scheduler: jobs.scheduler,
-  }),
+  modules,
   readinessChecks: [{ name: 'database', check: async () => void (await database.pool.query('select 1')) }],
   corsOrigins: config.http.corsOrigins,
   bodyLimitBytes: config.http.bodyLimitBytes,
@@ -38,6 +40,8 @@ const app = createApp({
 const server = serve({ fetch: app.fetch, port: config.port }, (info) => {
   logger.info({ port: info.port, env: config.nodeEnv }, 'api listening');
 });
+// WebSocket (chat realtime, BE-S6-02) nghe sự kiện `upgrade` của cùng HTTP server.
+for (const module of modules) await module.realtime?.attach(server);
 
 let shuttingDown = false;
 async function shutdown(signal: string): Promise<void> {
@@ -50,6 +54,8 @@ async function shutdown(signal: string): Promise<void> {
   }, SHUTDOWN_TIMEOUT_MS);
   force.unref();
 
+  // Đóng WS trước: `server.close` chờ mọi kết nối (kể cả WS đã upgrade) kết thúc.
+  for (const module of modules) await module.realtime?.close();
   await new Promise<void>((resolve) => server.close(() => resolve()));
   await jobs.stop();
   await database.close();

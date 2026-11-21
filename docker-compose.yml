@@ -18,6 +18,18 @@ services:
       timeout: 3s
       retries: 20
 
+  # Pub/sub chat realtime giữa các instance API (BE-S6-02). Chỉ dùng máy dev: không mật khẩu, cổng chỉ mở trên 127.0.0.1.
+  redis:
+    image: redis:7.4-alpine
+    command: ['redis-server', '--save', '', '--appendonly', 'no']
+    ports:
+      - '127.0.0.1:6380:6379'
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
   seaweedfs:
     image: chrislusf/seaweedfs:4.53
     command: >

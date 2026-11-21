@@ -3,7 +3,16 @@ import { ok, type UnitOfWork } from '@tamgiao/kernel';
 import { and, eq } from 'drizzle-orm';
 import type { MatchingProfile } from '../application/facade.js';
 import { CHILDREN_PLANS, RELIGIONS, type ChildrenPlan, type Religion } from '../domain/preferences.js';
-import { EDUCATION_LEVELS, GENDERS, type EducationLevel, type Gender } from '../domain/profile.js';
+import {
+  EDUCATION_LEVELS,
+  GENDERS,
+  PROFILE_CHILDREN_PLANS,
+  PROFILE_RELIGIONS,
+  type EducationLevel,
+  type Gender,
+  type ProfileChildrenPlan,
+  type ProfileReligion,
+} from '../domain/profile.js';
 import { parseDetails } from './drizzle-preferences-repository.js';
 import { preferences, profiles } from './schema.js';
 
@@ -16,6 +25,8 @@ const isGender = isOneOf<Gender>(GENDERS);
 const isEducation = isOneOf<EducationLevel>(EDUCATION_LEVELS);
 const isChildrenPlan = isOneOf<ChildrenPlan>(CHILDREN_PLANS);
 const isReligion = isOneOf<Religion>(RELIGIONS);
+const isOwnReligion = isOneOf<ProfileReligion>(PROFILE_RELIGIONS);
+const isOwnChildrenPlan = isOneOf<ProfileChildrenPlan>(PROFILE_CHILDREN_PLANS);
 
 /**
  * Hiện thực `ProfileFacade.getMatchingProfile` (BE-S5-03). Module "mỏng" (A11): đọc thẳng `profile.profiles` +
@@ -33,6 +44,8 @@ export class DrizzleMatchingProfileReader {
           birthDate: profiles.birthDate,
           currentCity: profiles.currentCity,
           education: profiles.education,
+          ownReligion: profiles.religion,
+          ownChildrenPlan: profiles.childrenPlan,
           profileVersion: profiles.version,
           ageMin: preferences.ageMin,
           ageMax: preferences.ageMax,
@@ -53,6 +66,7 @@ export class DrizzleMatchingProfileReader {
     if (row === null) return null;
 
     const { gender, birthDate, currentCity, education, childrenPlan, religion, minEducation } = row;
+    const { ownReligion, ownChildrenPlan } = row;
     if (
       !isGender(gender) ||
       birthDate === null ||
@@ -60,7 +74,9 @@ export class DrizzleMatchingProfileReader {
       !isEducation(education) ||
       !isChildrenPlan(childrenPlan) ||
       !isReligion(religion) ||
-      (minEducation !== null && !isEducation(minEducation))
+      (minEducation !== null && !isEducation(minEducation)) ||
+      (ownReligion !== null && !isOwnReligion(ownReligion)) ||
+      (ownChildrenPlan !== null && !isOwnChildrenPlan(ownChildrenPlan))
     ) {
       throw new Error(`profile ${row.userId}: dữ liệu hồ sơ/tiêu chí trong DB không hợp lệ`);
     }
@@ -71,6 +87,8 @@ export class DrizzleMatchingProfileReader {
       birthDate,
       currentCity,
       education,
+      religion: ownReligion,
+      childrenPlan: ownChildrenPlan,
       criteria: {
         ageMin: row.ageMin,
         ageMax: row.ageMax,

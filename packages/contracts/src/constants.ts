@@ -34,3 +34,7 @@ export const KYC_MEDIA_RETENTION_DAYS = 30;
 export const INTERVIEW_DURATION_MINUTES = 15;
 /** Huỷ/đổi lịch phỏng vấn chỉ khi còn ít nhất ngần này giờ trước giờ bắt đầu (BE-S3-05). */
 export const INTERVIEW_CHANGE_CUTOFF_HOURS = 2;
+/** Độ dài tối đa (ký tự Unicode, sau khi bỏ khoảng trắng hai đầu) của một tin nhắn chat (BE-S6-01). */
+export const MESSAGE_MAX_LENGTH = 2_000;
+/** Số tin tối đa một người gửi được trong 60 giây gần nhất của một hội thoại (BE-S6-01). */
+export const MESSAGE_RATE_LIMIT_PER_MINUTE = 30;

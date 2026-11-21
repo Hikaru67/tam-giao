@@ -1,4 +1,4 @@
-import { OutboxWriter } from '@tamgiao/db';
+import { OutboxWriter, type EventBus } from '@tamgiao/db';
 import { createRequireAdmin, requireUser, type AppEnv, type RequireAdmin } from '@tamgiao/http';
 import type { BlindIndexer, Clock, Encryptor, UnitOfWork } from '@tamgiao/kernel';
 import type { Hono } from 'hono';
@@ -9,6 +9,7 @@ import { AuthenticateUser } from './application/queries/authenticate-user.js';
 import { SearchAuditLogs } from './application/queries/search-audit-logs.js';
 import { AdminLogin } from './application/use-cases/admin-login.js';
 import { AdminLogout } from './application/use-cases/admin-logout.js';
+import { BlockBannedUser } from './application/use-cases/block-banned-user.js';
 import { CreateAdminUser } from './application/use-cases/create-admin-user.js';
 import { SessionIssuer } from './application/session-issuer.js';
 import { ListSessions, RevokeSession } from './application/use-cases/manage-sessions.js';
@@ -19,6 +20,7 @@ import { VerifyOtp } from './application/use-cases/verify-otp.js';
 import { Argon2PasswordHasher } from './infrastructure/argon2-password-hasher.js';
 import { deriveKey } from './infrastructure/derive-key.js';
 import { DrizzleAuditLogRepository } from './infrastructure/drizzle-audit-log-repository.js';
+import { DrizzleBannedUserRegistry } from './infrastructure/drizzle-banned-user-registry.js';
 import {
   DrizzleAdminSessionRepository,
   DrizzleAdminUserRepository,
@@ -31,6 +33,7 @@ import { Hs256AccessTokenService } from './infrastructure/hs256-access-token-ser
 import { PostgresRateLimiter } from './infrastructure/postgres-rate-limiter.js';
 import { RandomRefreshTokenSecrets } from './infrastructure/random-refresh-token-secrets.js';
 import { Rfc6238Totp } from './infrastructure/rfc6238-totp.js';
+import { registerUserBannedConsumer } from './infrastructure/user-banned-consumer.js';
 import { createAdminAuthRoutes } from './presentation/admin-auth-routes.js';
 import { createAuditRoutes } from './presentation/audit-routes.js';
 import { createAuthRoutes } from './presentation/auth-routes.js';
@@ -49,6 +52,22 @@ export type {
 } from './application/use-cases/create-admin-user.js';
 export type { SmsMessage, SmsSender } from './application/ports/sms-sender.js';
 export { ConsoleSmsSender } from './infrastructure/console-sms-sender.js';
+export { IDENTITY_BLOCK_ON_USER_BANNED_CONSUMER } from './infrastructure/user-banned-consumer.js';
+
+export interface IdentityWorker {
+  /** Đăng ký consumer của identity (worker gọi trước `registerConsumers`): `UserBanned` → thu hồi phiên (BE-S6-06). */
+  registerConsumers(bus: EventBus): void;
+}
+
+/** Phần worker của module identity: `UserBanned` (safety) → chặn đăng nhập + thu hồi mọi phiên (BE-S6-06). */
+export function createIdentityWorker(deps: { readonly clock: Clock }): IdentityWorker {
+  const blockBannedUser = new BlockBannedUser({
+    clock: deps.clock,
+    sessions: new DrizzleSessionRepository(),
+    bannedUsers: new DrizzleBannedUserRegistry(),
+  });
+  return { registerConsumers: (bus) => registerUserBannedConsumer(bus, blockBannedUser) };
+}
 
 export interface IdentityModuleDeps {
   readonly uow: UnitOfWork;
@@ -112,7 +131,16 @@ export function createIdentityModule(deps: IdentityModuleDeps): IdentityModule {
       sms: deps.smsSender,
       blindIndexer,
     }),
-    verifyOtp: new VerifyOtp({ uow, clock, challenges, users, otpSecrets, blindIndexer, issuer }),
+    verifyOtp: new VerifyOtp({
+      uow,
+      clock,
+      challenges,
+      users,
+      otpSecrets,
+      blindIndexer,
+      issuer,
+      bannedUsers: new DrizzleBannedUserRegistry(),
+    }),
     refreshSession: new RefreshSession({ uow, clock, sessions, refreshSecrets, issuer }),
     listSessions: new ListSessions({ uow, clock, sessions }),
     revokeSession: new RevokeSession({ uow, clock, sessions }),

@@ -14,7 +14,7 @@ báo cáo (màn 14) → match `LOCKED`, hội thoại đóng, admin thấy báo 
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| messaging | domain, application, infrastructure | P0 | 1.5d | Sprint 5 | BE-S6-03, BE-S6-05 | TODO |
+| messaging | domain, application, infrastructure | P0 | 1.5d | Sprint 5 | BE-S6-03, BE-S6-05 | DONE |
 
 **Mục tiêu:** Chat chỉ tồn tại khi match đang DATING (nguyên tắc "một người thật, một lúc").
 
@@ -40,7 +40,7 @@ báo cáo (màn 14) → match `LOCKED`, hội thoại đóng, admin thấy báo 
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| messaging | presentation, infrastructure | P0 | 2.5d | BE-S6-01 | BE-S6-06 | TODO |
+| messaging | presentation, infrastructure | P0 | 2.5d | BE-S6-01 | BE-S6-06 | DONE |
 
 **Mục tiêu:** Tin nhắn realtime, chạy được nhiều instance API.
 
@@ -67,7 +67,7 @@ báo cáo (màn 14) → match `LOCKED`, hội thoại đóng, admin thấy báo 
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| messaging | domain, application | P0 | 2d | Sprint 5 | BE-S6-01, BE-S6-05 | TODO |
+| messaging | domain, application | P0 | 2d | Sprint 5 | BE-S6-01, BE-S6-05 | DONE |
 
 **Mục tiêu:** Thực hiện cam kết "phát hiện & chặn lừa đảo tài chính" trên màn chat.
 
@@ -93,7 +93,7 @@ báo cáo (màn 14) → match `LOCKED`, hội thoại đóng, admin thấy báo 
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| messaging | application, presentation | P1 | 1d | BE-S6-02 | — | TODO |
+| messaging | application, presentation | P1 | 1d | BE-S6-02 | — | DONE |
 
 **Mục tiêu:** Phục vụ danh sách hộp thư (màn 10) và chip "Chủ đề sâu" (màn 11).
 
@@ -119,7 +119,7 @@ báo cáo (màn 14) → match `LOCKED`, hội thoại đóng, admin thấy báo 
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| safety | domain, application, infrastructure, presentation | P0 | 2d | Sprint 5 | BE-S6-01, BE-S6-03 | TODO |
+| safety | domain, application, infrastructure, presentation | P0 | 2d | Sprint 5 | BE-S6-01, BE-S6-03 | DONE |
 
 **Mục tiêu:** Phục vụ màn "Báo cáo Vi phạm & Trung tâm An toàn Khẩn cấp".
 
@@ -146,7 +146,7 @@ báo cáo (màn 14) → match `LOCKED`, hội thoại đóng, admin thấy báo 
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| safety | application, infrastructure, presentation | P0 | 1.5d | BE-S6-05, BE-S6-03 | BE-S6-02 | TODO |
+| safety | application, infrastructure, presentation | P0 | 1.5d | BE-S6-05, BE-S6-03 | BE-S6-02 | DONE |
 
 **Mục tiêu:** Phục vụ mục "Báo cáo Vi phạm & Khiếu nại" và thẻ "Cảnh báo vi phạm" trên admin.
 
@@ -155,8 +155,8 @@ báo cáo (màn 14) → match `LOCKED`, hội thoại đóng, admin thấy báo 
 - Ngoài: Bàn giao cơ quan chức năng (quy trình ngoài hệ thống).
 
 **Tiêu chí nghiệm thu**
-- [ ] AC1: User bị ban → mọi token bị thu hồi, không còn trong `CandidateFinder`.
-- [ ] AC2: Mỗi lần mở chi tiết báo cáo/tin gắn cờ có audit log.
+- [x] AC1: User bị ban → mọi token bị thu hồi, không còn trong `CandidateFinder`.
+- [x] AC2: Mỗi lần mở chi tiết báo cáo/tin gắn cờ có audit log.
 
 **Test bắt buộc:** Integration chuỗi `UserBanned`; HTTP phân quyền.
 
@@ -172,7 +172,7 @@ báo cáo (màn 14) → match `LOCKED`, hội thoại đóng, admin thấy báo 
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| profile, matching | domain, application, infrastructure, presentation | P1 | 1.5d | BE-S5-03 | BE-S6-01, BE-S6-03, BE-S6-05 | TODO |
+| profile, matching | domain, application, infrastructure, presentation | P1 | 1.5d | BE-S5-03 | BE-S6-01, BE-S6-03, BE-S6-05 | DONE |
 
 **Mục tiêu:** Lọc cứng tôn giáo / con cái đúng nghĩa (người kia *là* gì so với điều mình *muốn*). Hiện hồ sơ chưa có hai
 trường này nên BE-S5-03 so khớp đối xứng hai giá trị tiêu chí — PO đã chốt bổ sung trường vào hồ sơ (review BE-S5-03).
@@ -186,8 +186,8 @@ trường này nên BE-S5-03 so khớp đối xứng hai giá trị tiêu chí �
 - Ngoài: đổi trọng số chấm điểm (giữ nguyên trừ khi PO yêu cầu).
 
 **Tiêu chí nghiệm thu**
-- [ ] AC1: A muốn bạn đời theo Phật giáo, B là Công giáo → B bị loại khỏi danh sách của A và A khỏi danh sách của B.
-- [ ] AC2: Hồ sơ cũ chưa có hai trường → hành vi lọc được định nghĩa rõ (ghi trong ARCHITECTURE) và có test.
+- [x] AC1: A muốn bạn đời theo Phật giáo, B là Công giáo → B bị loại khỏi danh sách của A và A khỏi danh sách của B.
+- [x] AC2: Hồ sơ cũ chưa có hai trường → hành vi lọc được định nghĩa rõ (ghi trong ARCHITECTURE) và có test.
 
 **Test bắt buộc:** Unit `passesHardFilters` dạng bảng; integration finder đối chiếu SQL ↔ domain trên lưới mẫu; HTTP profile.
 

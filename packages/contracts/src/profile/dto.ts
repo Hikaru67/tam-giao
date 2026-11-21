@@ -5,6 +5,21 @@ export const GENDERS = ['male', 'female'] as const;
 export const EDUCATION_LEVELS = ['high_school', 'college', 'bachelor', 'master', 'doctorate'] as const;
 export const INCOME_RANGES = ['under_10m', '10m_20m', '20m_40m', '40m_70m', 'over_70m'] as const;
 export const HOUSING_TYPES = ['own_home', 'renting', 'with_family', 'other'] as const;
+/**
+ * Tôn giáo của **chính người dùng** (BE-S6-07) — cùng mã với tiêu chí `RELIGIONS` nhưng không có `not_important`.
+ * Dữ liệu nhạy cảm (NĐ 13) — không log, không hiển thị cho người dùng khác.
+ */
+export const PROFILE_RELIGIONS = [
+  'none',
+  'buddhism',
+  'catholicism',
+  'protestantism',
+  'caodaism',
+  'hoa_hao',
+  'other',
+] as const;
+/** Kế hoạch con cái của **chính người dùng** (BE-S6-07); `open` = còn để ngỏ / chưa quyết định. */
+export const PROFILE_CHILDREN_PLANS = ['want_children', 'no_children', 'open'] as const;
 
 export const PROFILE_BIO_MAX_LENGTH = 800;
 export const PROFILE_INTERESTS_MAX = 20;
@@ -26,6 +41,10 @@ export const updateProfileBodySchema = z.object({
   currentCity: shortText.nullish(),
   education: z.enum(EDUCATION_LEVELS).nullish(),
   occupation: shortText.nullish(),
+  /** Tôn giáo của bản thân — bắt buộc khi `submit: true` (BE-S6-07). */
+  religion: z.enum(PROFILE_RELIGIONS).nullish(),
+  /** Kế hoạch con cái của bản thân — bắt buộc khi `submit: true` (BE-S6-07). */
+  childrenPlan: z.enum(PROFILE_CHILDREN_PLANS).nullish(),
   bio: z.string().trim().max(PROFILE_BIO_MAX_LENGTH).nullish(),
   interests: z.array(z.string().trim().min(1).max(30)).max(PROFILE_INTERESTS_MAX).optional(),
   /** Riêng tư — lưu mã hoá, chỉ chính chủ (và chuyên viên có quyền) xem. */
@@ -57,6 +76,9 @@ export const profileResponseSchema = z.object({
   currentCity: z.string().nullable(),
   education: z.enum(EDUCATION_LEVELS).nullable(),
   occupation: z.string().nullable(),
+  /** `null` = chưa khai (hồ sơ tạo trước BE-S6-07). */
+  religion: z.enum(PROFILE_RELIGIONS).nullable(),
+  childrenPlan: z.enum(PROFILE_CHILDREN_PLANS).nullable(),
   bio: z.string().nullable(),
   interests: z.array(z.string()),
   incomeRange: z.enum(INCOME_RANGES).nullable(),

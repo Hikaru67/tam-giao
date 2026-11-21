@@ -11,7 +11,11 @@ import {
   type HousingType,
   INCOME_RANGES,
   type IncomeRange,
+  PROFILE_CHILDREN_PLANS,
+  PROFILE_RELIGIONS,
   PROFILE_STATUSES,
+  type ProfileChildrenPlan,
+  type ProfileReligion,
   type ProfileStatus,
   Profile,
   type ProfileId,
@@ -33,6 +37,12 @@ const isIncomeRangeOrNull = (v: string | null): v is IncomeRange | null =>
 
 const isHousingTypeOrNull = (v: string | null): v is HousingType | null =>
   v === null || (HOUSING_TYPES as readonly string[]).includes(v);
+
+const isReligionOrNull = (v: string | null): v is ProfileReligion | null =>
+  v === null || (PROFILE_RELIGIONS as readonly string[]).includes(v);
+
+const isChildrenPlanOrNull = (v: string | null): v is ProfileChildrenPlan | null =>
+  v === null || (PROFILE_CHILDREN_PLANS as readonly string[]).includes(v);
 
 const isProfileStatus = (v: string): v is ProfileStatus =>
   (PROFILE_STATUSES as readonly string[]).includes(v);
@@ -74,6 +84,8 @@ export class DrizzleProfileRepository implements ProfileRepository {
       currentCity: s.data.currentCity,
       education: s.data.education,
       occupation: s.data.occupation,
+      religion: s.data.religion,
+      childrenPlan: s.data.childrenPlan,
       bio: s.data.bio,
       interests: [...s.data.interests],
       incomeRangeEnc,
@@ -100,6 +112,8 @@ export class DrizzleProfileRepository implements ProfileRepository {
           currentCity: values.currentCity,
           education: values.education,
           occupation: values.occupation,
+          religion: values.religion,
+          childrenPlan: values.childrenPlan,
           bio: values.bio,
           interests: values.interests,
           incomeRangeEnc: values.incomeRangeEnc,
@@ -131,6 +145,8 @@ export class DrizzleProfileRepository implements ProfileRepository {
     if (
       !isGenderOrNull(row.gender) ||
       !isEducationLevelOrNull(row.education) ||
+      !isReligionOrNull(row.religion) ||
+      !isChildrenPlanOrNull(row.childrenPlan) ||
       !isIncomeRangeOrNull(incomeRange) ||
       !isHousingTypeOrNull(housing) ||
       !isProfileStatus(row.status)
@@ -148,6 +164,8 @@ export class DrizzleProfileRepository implements ProfileRepository {
         currentCity: row.currentCity,
         education: row.education,
         occupation: row.occupation,
+        religion: row.religion,
+        childrenPlan: row.childrenPlan,
         bio: row.bio,
         interests: row.interests,
         incomeRange,
