@@ -9,6 +9,11 @@ import { SetCandidateVerification, SyncCandidateProfile } from './application/ca
 import { FindCandidates } from './application/find-candidates.js';
 import { MATCH_EXPIRY_QUEUE } from './application/match-expiry.js';
 import { ProposeMatch } from './application/propose-match.js';
+import { AcceptOffer } from './application/responses/accept-offer.js';
+import { DeclineOffer } from './application/responses/decline-offer.js';
+import { ExpireMatch } from './application/responses/expire-match.js';
+import type { MatchResponseDeps } from './application/responses/respond-to-open-match.js';
+import { WithdrawIntro } from './application/responses/withdraw-intro.js';
 import { registerCandidateProfileConsumers } from './infrastructure/candidate-profile-consumers.js';
 import { DrizzleCandidateFinder } from './infrastructure/drizzle-candidate-finder.js';
 import { DrizzleCandidateProfileRepository } from './infrastructure/drizzle-candidate-profile-repository.js';
@@ -94,7 +99,13 @@ export interface MatchingModule {
   readonly name: 'matching';
   /** Chưa có route (route admin ở BE-S5-07). */
   readonly routes: Hono<AppEnv>;
-  readonly commands: { readonly proposeMatch: ProposeMatch };
+  readonly commands: {
+    readonly proposeMatch: ProposeMatch;
+    /** Phản hồi lời ngỏ của người dùng (BE-S5-05) — route `POST /me/match/accept|decline|withdraw` (BE-S5-07). */
+    readonly acceptOffer: AcceptOffer;
+    readonly declineOffer: DeclineOffer;
+    readonly withdrawIntro: WithdrawIntro;
+  };
 }
 
 /** Composition root phía API của module matching. */
@@ -111,5 +122,55 @@ export function createMatchingModule(deps: MatchingModuleDeps): MatchingModule {
     scheduler: deps.scheduler,
     auditLogger: deps.auditLogger,
   });
-  return { name: 'matching', routes: new Hono<AppEnv>(), commands: { proposeMatch } };
+  const responseDeps = matchResponseDeps(deps);
+  return {
+    name: 'matching',
+    routes: new Hono<AppEnv>(),
+    commands: {
+      proposeMatch,
+      acceptOffer: new AcceptOffer(responseDeps),
+      declineOffer: new DeclineOffer(responseDeps),
+      withdrawIntro: new WithdrawIntro(responseDeps),
+    },
+  };
+}
+
+// ── Đồng ý / Bỏ qua / Rút lời ngỏ / Hết hạn (BE-S5-05) ──────────────────────────────────────────────────
+export type { AcceptOffer, AcceptOfferCommand } from './application/responses/accept-offer.js';
+export type { DeclineOffer, DeclineOfferCommand } from './application/responses/decline-offer.js';
+export type { WithdrawIntro, WithdrawIntroCommand } from './application/responses/withdraw-intro.js';
+export type {
+  MatchResponseView,
+  RespondToMatchError,
+} from './application/responses/respond-to-open-match.js';
+export type { ExpireMatch, ExpireMatchOutcome } from './application/responses/expire-match.js';
+export { MATCH_RESPONSE_ERROR_CODES } from './application/responses/response-errors.js';
+
+function matchResponseDeps(deps: {
+  readonly uow: UnitOfWork;
+  readonly clock: Clock;
+  readonly scheduler: Scheduler;
+}): MatchResponseDeps {
+  return {
+    uow: deps.uow,
+    clock: deps.clock,
+    scheduler: deps.scheduler,
+    matches: new DrizzleMatchRepository(new OutboxWriter()),
+    activeSlots: new DrizzleActiveSlotRepository(),
+    pairHistory: new DrizzlePairHistoryRepository(),
+    cooldowns: new DrizzleCooldownRepository(),
+  };
+}
+
+/**
+ * Handler job hết hạn match (`MATCH_EXPIRY_QUEUE`) cho worker — `apps/worker/src/jobs/match-expiry.ts` đăng ký bằng
+ * `registerJob` và gọi `executeIn(tx, payload)`. `scheduler` theo port chung (job hết hạn hiện không hẹn job mới vì
+ * `expire` chỉ đóng match, nhưng hiệu ứng chuyển trạng thái dùng chung với các use case khác).
+ */
+export function createExpireMatchJob(deps: {
+  readonly uow: UnitOfWork;
+  readonly clock: Clock;
+  readonly scheduler: Scheduler;
+}): ExpireMatch {
+  return new ExpireMatch(matchResponseDeps(deps));
 }

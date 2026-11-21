@@ -5,6 +5,7 @@ import {
   HmacBlindIndexer,
   LocalKeyEncryptor,
   OutboxRelay,
+  PgBossScheduler,
   S3ObjectStorage,
   createDatabase,
   parseMasterKeyRing,
@@ -20,7 +21,7 @@ import {
   FakePaymentGateway,
 } from '@tamgiao/module-billing';
 import { ConsoleSmsSender, createIdentityModule } from '@tamgiao/module-identity';
-import { createMatchingWorker } from '@tamgiao/module-matching';
+import { createExpireMatchJob, createMatchingWorker } from '@tamgiao/module-matching';
 import { createMatchingProfileReader } from '@tamgiao/module-profile';
 import { createKycMediaRetention } from '@tamgiao/module-verification';
 import { PgBoss } from 'pg-boss';
@@ -28,6 +29,7 @@ import { loadWorkerConfig } from './config.js';
 import { registerBillingRefundJobs } from './jobs/billing-refund.js';
 import { registerKycMediaRetentionJob } from './jobs/kyc-media-retention.js';
 import { registerLedgerReconciliationJob } from './jobs/ledger-reconciliation.js';
+import { registerMatchExpiryJob } from './jobs/match-expiry.js';
 import { registerVoucherExpiryJob } from './jobs/voucher-expiry.js';
 import { registerWorkers } from './registry.js';
 
@@ -108,6 +110,14 @@ await registerLedgerReconciliationJob({
 
 // Hoàn tiền (BE-S4-04): job từng khoản (retry backoff) + điều phối REFUND_PENDING + cảnh báo SLA.
 await registerBillingRefundJobs({ boss, logger, billing: billingWorker });
+
+// Hết hạn match (BE-S5-05): job `matching.expire-match` do API hẹn lúc `expiresAt` → `ExpireMatch` (idempotent).
+await registerMatchExpiryJob({
+  boss,
+  uow,
+  logger,
+  expirer: createExpireMatchJob({ uow, clock, scheduler: new PgBossScheduler(boss) }),
+});
 
 const relay = new OutboxRelay({ uow, boss, bus, logger });
 relay.start(RELAY_INTERVAL_MS);
