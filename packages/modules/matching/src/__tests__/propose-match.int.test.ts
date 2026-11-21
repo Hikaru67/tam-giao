@@ -73,6 +73,7 @@ function proposeMatch(logger: AuditLogger = auditLogger): ProposeMatch {
     verification,
     auditLogger: logger,
     requireAdmin: () => async (_c, next) => next(),
+    requireUser: async (_c, next) => next(),
     scheduler: new PgBossScheduler(boss),
     profiles: { getMatchDisplayProfiles: async () => [], getApplicantSummaries: async () => [] },
   }).commands.proposeMatch;

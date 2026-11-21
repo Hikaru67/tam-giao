@@ -4,7 +4,7 @@ import type { Clock, Scheduler, UnitOfWork } from '@tamgiao/kernel';
 import type { AuditLogger } from '@tamgiao/module-identity/facade';
 import type { ProfileFacade } from '@tamgiao/module-profile/facade';
 import type { VerificationFacade } from '@tamgiao/module-verification/facade';
-import { Hono } from 'hono';
+import { Hono, type MiddlewareHandler } from 'hono';
 import { SetCandidateVerification, SyncCandidateProfile } from './application/candidate-profile-sync.js';
 import { FindCandidates } from './application/find-candidates.js';
 import { MATCH_EXPIRY_QUEUE } from './application/match-expiry.js';
@@ -27,6 +27,8 @@ import { GetMatchesBoard } from './application/queries/get-matches-board.js';
 import { ListCandidates } from './application/queries/list-candidates.js';
 import type { MatchDisplayDirectory } from './application/queries/match-query-support.js';
 import { DrizzleMatchBoardQuery } from './infrastructure/drizzle-match-queries.js';
+import { createMatchAdminRoutes } from './presentation/match-admin-routes.js';
+import { createMatchRoutes } from './presentation/match-routes.js';
 
 /**
  * Module matching (Sprint 5): đề xuất ghép đôi, máy trạng thái `Match`, độc quyền 1-1, cooldown, chấm điểm tương hợp.
@@ -97,6 +99,8 @@ export interface MatchingModuleDeps {
   readonly auditLogger: AuditLogger;
   /** Guard admin — route admin matching (BE-S5-07) dùng `requireAdmin('match:propose')`. */
   readonly requireAdmin: RequireAdmin;
+  /** Guard người dùng app — `requireUser(identity.facade.authenticateUser)` (route `/me/match*`, BE-S5-07). */
+  readonly requireUser: MiddlewareHandler<AppEnv>;
   /** Ghi job hẹn giờ cùng transaction (API: `PgBossScheduler`). */
   readonly scheduler: Scheduler;
   /** Facade profile — hồ sơ hiển thị + họ tên cho query màn ghép đôi (BE-S5-06). API truyền `profile.facade`. */
@@ -105,7 +109,10 @@ export interface MatchingModuleDeps {
 
 export interface MatchingModule {
   readonly name: 'matching';
-  /** Chưa có route (route admin ở BE-S5-07). */
+  /**
+   * Route BE-S5-07: người dùng `GET /me/match`, `GET /me/match/profile`, `POST /me/match/accept|decline|withdraw`;
+   * admin `GET /admin/users/:id/candidates`, `POST /admin/matches`, `GET /admin/matches`.
+   */
   readonly routes: Hono<AppEnv>;
   readonly commands: {
     readonly proposeMatch: ProposeMatch;
@@ -133,17 +140,37 @@ export function createMatchingModule(deps: MatchingModuleDeps): MatchingModule {
     auditLogger: deps.auditLogger,
   });
   const responseDeps = matchResponseDeps(deps);
-  return {
-    name: 'matching',
-    routes: new Hono<AppEnv>(),
-    commands: {
-      proposeMatch,
-      acceptOffer: new AcceptOffer(responseDeps),
-      declineOffer: new DeclineOffer(responseDeps),
-      withdrawIntro: new WithdrawIntro(responseDeps),
-    },
-    queries: createMatchingQueries(deps),
+  const commands = {
+    proposeMatch,
+    acceptOffer: new AcceptOffer(responseDeps),
+    declineOffer: new DeclineOffer(responseDeps),
+    withdrawIntro: new WithdrawIntro(responseDeps),
   };
+  const queries = createMatchingQueries(deps);
+
+  const routes = new Hono<AppEnv>();
+  routes.route(
+    '/',
+    createMatchRoutes({
+      getCurrentMatch: queries.getCurrentMatch,
+      getMatchProfile: queries.getMatchProfile,
+      acceptOffer: commands.acceptOffer,
+      declineOffer: commands.declineOffer,
+      withdrawIntro: commands.withdrawIntro,
+      requireUser: deps.requireUser,
+    }),
+  );
+  routes.route(
+    '/',
+    createMatchAdminRoutes({
+      proposeMatch: commands.proposeMatch,
+      listCandidates: queries.listCandidates,
+      getMatchesBoard: queries.getMatchesBoard,
+      requireAdmin: deps.requireAdmin,
+    }),
+  );
+
+  return { name: 'matching', routes, commands, queries };
 }
 
 // ── Đồng ý / Bỏ qua / Rút lời ngỏ / Hết hạn (BE-S5-05) ──────────────────────────────────────────────────
