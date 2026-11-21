@@ -93,7 +93,7 @@ báo cáo (màn 14) → match `LOCKED`, hội thoại đóng, admin thấy báo 
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| messaging | application, presentation | P1 | 1d | BE-S6-02 | — | IN_REVIEW |
+| messaging | application, presentation | P1 | 1d | BE-S6-02 | — | DONE |
 
 **Mục tiêu:** Phục vụ danh sách hộp thư (màn 10) và chip "Chủ đề sâu" (màn 11).
 
