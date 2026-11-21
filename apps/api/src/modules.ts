@@ -7,9 +7,10 @@ import {
   parseMasterKeyRing,
 } from '@tamgiao/db';
 import { requireUser, type AppEnv } from '@tamgiao/http';
-import type { Clock, UnitOfWork } from '@tamgiao/kernel';
+import type { Clock, Scheduler, UnitOfWork } from '@tamgiao/kernel';
 import { FakePaymentGateway, createBillingModule } from '@tamgiao/module-billing';
 import { ConsoleSmsSender, createIdentityModule } from '@tamgiao/module-identity';
+import { createMatchingModule } from '@tamgiao/module-matching';
 import { createProfileModule } from '@tamgiao/module-profile';
 import {
   FakeEkycProvider,
@@ -37,10 +38,12 @@ export interface ModuleDeps {
   readonly config: ApiConfig;
   readonly uow: UnitOfWork;
   readonly clock: Clock;
+  /** Ghi job hẹn giờ cùng transaction (`PgBossScheduler` — xem `job-scheduler.ts`). */
+  readonly scheduler: Scheduler;
 }
 
 /** Nối hạ tầng dùng chung vào từng module (thứ tự = thứ tự phụ thuộc giữa các module). */
-export function buildModules({ config, uow, clock }: ModuleDeps): readonly ApiModule[] {
+export function buildModules({ config, uow, clock, scheduler }: ModuleDeps): readonly ApiModule[] {
   const encryptor = new LocalKeyEncryptor(
     parseMasterKeyRing(config.crypto.masterKeys, config.crypto.masterKeyVersion),
   );
@@ -130,5 +133,17 @@ export function buildModules({ config, uow, clock }: ModuleDeps): readonly ApiMo
     requireUser: userGuard,
   });
 
-  return [identity, uploadModule, profile, verification, billing];
+  // Matching (Sprint 5): đề xuất ghép đôi, phản hồi lời ngỏ, màn ghép đôi user + admin (route BE-S5-07).
+  const matching = createMatchingModule({
+    uow,
+    clock,
+    verification: verification.facade,
+    auditLogger: identity.auditLogger,
+    requireAdmin: identity.requireAdmin,
+    requireUser: userGuard,
+    scheduler,
+    profiles: profile.facade,
+  });
+
+  return [identity, uploadModule, profile, verification, billing, matching];
 }

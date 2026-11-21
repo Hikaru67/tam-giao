@@ -14,7 +14,7 @@ Thử đề xuất người đang bận → `USER_BUSY`. Tua thời gian 24h →
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| matching | domain | P0 | 2d | Sprint 1 | BE-S5-02, BE-S5-03 | TODO |
+| matching | domain | P0 | 2d | Sprint 1 | BE-S5-02, BE-S5-03 | DONE |
 
 **Mục tiêu:** Mã hoá toàn bộ luật vòng đời ghép đôi (ARCHITECTURE mục 5) vào domain, test được không cần DB.
 
@@ -42,7 +42,7 @@ Thử đề xuất người đang bận → `USER_BUSY`. Tua thời gian 24h →
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| matching | application, infrastructure | P0 | 1.5d | Sprint 1 | BE-S5-01, BE-S5-03 | TODO |
+| matching | application, infrastructure | P0 | 1.5d | Sprint 1 | BE-S5-01, BE-S5-03 | DONE |
 
 **Mục tiêu:** Bảo đảm bằng DB: một người chỉ ở trong tối đa 1 match đang mở; tôn trọng cooldown.
 
@@ -69,7 +69,7 @@ Thử đề xuất người đang bận → `USER_BUSY`. Tua thời gian 24h →
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| matching | domain, application, infrastructure | P0 | 2d | BE-S2-06 | BE-S5-01, BE-S5-02 | TODO |
+| matching | domain, application, infrastructure | P0 | 2d | BE-S2-06 | BE-S5-01, BE-S5-02 | DONE |
 
 **Mục tiêu:** Tạo con số "94% tương hợp" và phân tích 3 trụ cột (màn 7) + danh sách top N cho chuyên viên.
 
@@ -96,7 +96,7 @@ Thử đề xuất người đang bận → `USER_BUSY`. Tua thời gian 24h →
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| matching | application, infrastructure | P0 | 1.5d | BE-S5-01, BE-S5-02, BE-S5-03, BE-S3-07 | — | TODO |
+| matching | application, infrastructure | P0 | 1.5d | BE-S5-01, BE-S5-02, BE-S5-03, BE-S3-07 | — | DONE |
 
 **Mục tiêu:** Phục vụ nút "Phê duyệt & Gửi đề xuất ghép đôi" (admin).
 
@@ -123,7 +123,7 @@ Thử đề xuất người đang bận → `USER_BUSY`. Tua thời gian 24h →
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| matching | application, infrastructure | P0 | 2d | BE-S5-04 | BE-S5-06 | TODO |
+| matching | application, infrastructure | P0 | 2d | BE-S5-04 | BE-S5-06 | DONE |
 
 **Mục tiêu:** Phục vụ nút "Đồng ý kết nối" / "Bỏ qua" (màn 7–8), "Rút lại lời ngỏ" (màn 9), tự hết hạn 24h.
 
@@ -151,7 +151,7 @@ Thử đề xuất người đang bận → `USER_BUSY`. Tua thời gian 24h →
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| matching | application, infrastructure | P0 | 1.5d | BE-S5-04 | BE-S5-05 | TODO |
+| matching | application, infrastructure | P0 | 1.5d | BE-S5-04 | BE-S5-05 | DONE |
 
 **Mục tiêu:** Cung cấp dữ liệu cho màn 7, 8, 9 và admin (đề xuất mai mối, bảng theo dõi cặp).
 
@@ -160,8 +160,8 @@ Thử đề xuất người đang bận → `USER_BUSY`. Tua thời gian 24h →
 - Ngoài: Route (BE-S5-07).
 
 **Tiêu chí nghiệm thu**
-- [ ] AC1: Người ngoài cặp gọi `GetMatchProfile` → `NOT_PARTICIPANT`.
-- [ ] AC2: Query trả `expiresAt` từ server để client đếm ngược.
+- [x] AC1: Người ngoài cặp gọi `GetMatchProfile` → `NOT_PARTICIPANT`.
+- [x] AC2: Query trả `expiresAt` từ server để client đếm ngược.
 
 **Test bắt buộc:** Integration query với dữ liệu mẫu.
 
@@ -177,7 +177,7 @@ Thử đề xuất người đang bận → `USER_BUSY`. Tua thời gian 24h →
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| matching | presentation | P0 | 1d | BE-S5-05, BE-S5-06 | — | TODO |
+| matching | presentation | P0 | 1d | BE-S5-05, BE-S5-06 | — | DONE |
 
 **Mục tiêu:** Mở API cho mobile và admin.
 
@@ -186,8 +186,8 @@ Thử đề xuất người đang bận → `USER_BUSY`. Tua thời gian 24h →
 - Ngoài: —
 
 **Tiêu chí nghiệm thu**
-- [ ] AC1: Luồng end-to-end qua HTTP: propose → A accept → B accept → `DATING`.
-- [ ] AC2: Tất cả mã lỗi matching có mapping status trong registry.
+- [x] AC1: Luồng end-to-end qua HTTP: propose → A accept → B accept → `DATING`.
+- [x] AC2: Tất cả mã lỗi matching có mapping status trong registry.
 
 **Test bắt buộc:** HTTP e2e (app.request + Postgres thật).
 

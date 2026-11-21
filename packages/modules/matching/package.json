@@ -1,0 +1,34 @@
+{
+  "name": "@tamgiao/module-matching",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./facade": "./src/application/facade.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@tamgiao/contracts": "workspace:*",
+    "@tamgiao/db": "workspace:*",
+    "@tamgiao/http": "workspace:*",
+    "@tamgiao/kernel": "workspace:*",
+    "@tamgiao/module-identity": "workspace:*",
+    "@tamgiao/module-profile": "workspace:*",
+    "@tamgiao/module-verification": "workspace:*",
+    "drizzle-orm": "0.45.4",
+    "hono": "4.13.18",
+    "zod": "4.6.7"
+  },
+  "devDependencies": {
+    "@tamgiao/config": "workspace:*",
+    "@tamgiao/testing": "workspace:*",
+    "@types/node": "22.20.5",
+    "pg-boss": "12.38.2",
+    "testcontainers": "12.2.1",
+    "typescript": "5.9.3",
+    "vitest": "3.2.7"
+  }
+}

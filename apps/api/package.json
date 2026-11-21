@@ -17,12 +17,15 @@
     "@tamgiao/kernel": "workspace:*",
     "@tamgiao/module-billing": "workspace:*",
     "@tamgiao/module-identity": "workspace:*",
+    "@tamgiao/module-matching": "workspace:*",
     "@tamgiao/module-profile": "workspace:*",
     "@tamgiao/module-verification": "workspace:*",
     "hono": "4.13.18",
+    "pg-boss": "12.38.2",
     "zod": "4.6.7"
   },
   "devDependencies": {
+    "@tamgiao/testing": "workspace:*",
     "@types/node": "22.20.5",
     "tsx": "4.23.15",
     "typescript": "5.9.3",

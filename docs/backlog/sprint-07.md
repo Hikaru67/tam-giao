@@ -242,3 +242,35 @@ hoặc `CLOSED_STOPPED` + cooldown; thông báo đẩy/SMS cho các mốc quan t
 **Contract / Event:** Không có.
 
 **Ghi chú:** —
+
+---
+
+### BE-S7-10 · Hồ sơ đối phương: phần riêng tư mở sau bước đồng ý (màn 8)
+
+| Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
+|---|---|---|---|---|---|---|
+| matching, profile | application, infrastructure, presentation | P1 | 1.5d | BE-S5-06, quyết định PO/pháp lý | BE-S7-01, BE-S7-05, BE-S7-06 | BLOCKED |
+
+**Lý do BLOCKED:** cần PO + tư vấn pháp lý chốt luật trước khi code (không tự bịa luật — AGENTS.md mục 1).
+
+**Mục tiêu:** Màn 8 thiết kế hiện dải thu nhập, bất động sản, CIC, lịch sử tình cảm, kế hoạch kết hôn của đối phương;
+contracts profile hiện ghi thu nhập/nhà ở/tài sản "chỉ chính chủ + chuyên viên". BE-S5-06 đã đóng với phần công khai
+(tên gọi, tuổi, thành phố, nghề, học vấn, tự bạch, sở thích, ảnh); PO chọn tách phần riêng tư thành task này (review BE-S5-06).
+
+**Phạm vi**
+- Trong: theo luật được chốt — trường riêng tư nào mở cho đối phương, mở ở bước nào (người xem đã đồng ý hay cả hai đã
+  đồng ý / `DATING`), dạng hiển thị (khoảng, không số chính xác), đồng ý của chủ hồ sơ + audit mỗi lần đối phương xem
+  (Nghị định 13/2023); bổ sung trường còn thiếu nếu được chốt (kế hoạch kết hôn, lịch sử tình cảm, CIC).
+- Ngoài: họ tên đầy đủ — PO đã chốt đối phương chỉ thấy tên gọi.
+
+**Tiêu chí nghiệm thu**
+- [ ] AC1: Trước bước mở → không trả trường riêng tư; sau bước mở → trả đúng các trường được chốt (dạng khoảng).
+- [ ] AC2: Mỗi lần đối phương đọc trường riêng tư có bản ghi audit; người ngoài cặp → `NOT_PARTICIPANT`.
+
+**Test bắt buộc:** Unit luật hiển thị; integration query + audit; HTTP `GET /me/match/profile`.
+
+**File dự kiến:** `packages/modules/matching/src/application/queries/**`, `packages/modules/profile/**`, `packages/contracts/src/matching/dto.ts`.
+
+**Contract / Event:** Mở rộng `matchProfileResponseSchema` (chỉ thêm trường tuỳ chọn).
+
+**Ghi chú:** Câu hỏi mở từ BE-S5-06: (1) trường nào mở; (2) mở khi người xem đã đồng ý hay cả hai; (3) có cần đồng ý/audit theo NĐ 13; (4) các trường chưa có trong hồ sơ.

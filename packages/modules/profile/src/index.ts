@@ -11,13 +11,24 @@ import { GetProfile } from './application/get-profile.js';
 import { GetPreferences, SavePreferences } from './application/preferences-use-cases.js';
 import { SaveProfile } from './application/save-profile.js';
 import { DrizzleApplicantDirectory } from './infrastructure/drizzle-applicant-directory.js';
+import { DrizzleMatchDisplayDirectory } from './infrastructure/drizzle-match-display-directory.js';
+import { DrizzleMatchingProfileReader } from './infrastructure/drizzle-matching-profile-reader.js';
 import { DrizzlePreferencesRepository } from './infrastructure/drizzle-preferences-repository.js';
 import { DrizzleProfileRepository } from './infrastructure/drizzle-profile-repository.js';
 import { createMeRoutes } from './presentation/me-routes.js';
 import { createPreferencesRoutes } from './presentation/preferences-routes.js';
 import { createProfileRoutes } from './presentation/profile-routes.js';
 
-export type { ApplicantIdentity, ApplicantSummary, ProfileFacade } from './application/facade.js';
+export type {
+  ApplicantIdentity,
+  ApplicantSummary,
+  DisplayPhoto,
+  MatchDisplayProfile,
+  MatchDisplayProfileOptions,
+  MatchingCriteria,
+  MatchingProfile,
+  ProfileFacade,
+} from './application/facade.js';
 
 export interface ProfileModuleDeps {
   readonly uow: UnitOfWork;
@@ -76,10 +87,25 @@ export function createProfileModule(deps: ProfileModuleDeps): ProfileModule {
   );
   const applicantIdentity = new GetApplicantIdentity({ uow, profiles });
   const applicantDirectory = new DrizzleApplicantDirectory(uow);
+  const matchingProfiles = new DrizzleMatchingProfileReader(uow);
+  const matchDisplay = new DrizzleMatchDisplayDirectory(uow, deps.storage);
   const facade: ProfileFacade = {
     getApplicantIdentity: (userId) => applicantIdentity.execute(userId),
     searchUserIds: (text, limit) => applicantDirectory.searchUserIds(text, limit),
     getApplicantSummaries: (userIds) => applicantDirectory.getApplicantSummaries(userIds),
+    getMatchingProfile: (userId) => matchingProfiles.getMatchingProfile(userId),
+    getMatchDisplayProfiles: (userIds, options) => matchDisplay.getMatchDisplayProfiles(userIds, options),
   };
   return { name: 'profile', routes, facade };
+}
+
+/**
+ * Chỉ phần `getMatchingProfile` của facade (BE-S5-03) cho worker — consumer read model của matching dùng mà không
+ * phải nối route/storage/`Encryptor` của cả module.
+ */
+export function createMatchingProfileReader(deps: {
+  readonly uow: UnitOfWork;
+}): Pick<ProfileFacade, 'getMatchingProfile'> {
+  const reader = new DrizzleMatchingProfileReader(deps.uow);
+  return { getMatchingProfile: (userId) => reader.getMatchingProfile(userId) };
 }

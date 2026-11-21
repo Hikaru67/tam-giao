@@ -10,6 +10,8 @@ export default defineConfig(
   {
     ignores: [
       '**/node_modules/**',
+      // Worktree tạm của agent (Claude Code) — bản sao repo, không lint.
+      '.claude/**',
       '**/dist/**',
       '**/.turbo/**',
       '**/coverage/**',
