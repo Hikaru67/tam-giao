@@ -12,6 +12,7 @@ import { FakePaymentGateway, createBillingModule } from '@tamgiao/module-billing
 import { ConsoleSmsSender, createIdentityModule } from '@tamgiao/module-identity';
 import { createMatchingModule } from '@tamgiao/module-matching';
 import { createProfileModule } from '@tamgiao/module-profile';
+import { createSafetyModule } from '@tamgiao/module-safety';
 import {
   FakeEkycProvider,
   ResilientEkycProvider,
@@ -145,5 +146,15 @@ export function buildModules({ config, uow, clock, scheduler }: ModuleDeps): rea
     profiles: profile.facade,
   });
 
-  return [identity, uploadModule, profile, verification, billing, matching];
+  // Safety (Sprint 6): báo cáo vi phạm `POST /me/reports` (BE-S6-05) — chỉ báo cáo người đang/đã từng ghép (facade
+  // matching), ảnh bằng chứng xác nhận qua `uploads`. Khoá match chạy ở worker (consumer `ReportFiled` của matching).
+  const safety = createSafetyModule({
+    uow,
+    clock,
+    uploads,
+    matching: matching.facade,
+    requireUser: userGuard,
+  });
+
+  return [identity, uploadModule, profile, verification, billing, matching, safety];
 }

@@ -15,6 +15,10 @@ import { ExpireMatch } from './application/responses/expire-match.js';
 import type { MatchResponseDeps } from './application/responses/respond-to-open-match.js';
 import { WithdrawIntro } from './application/responses/withdraw-intro.js';
 import { registerCandidateProfileConsumers } from './infrastructure/candidate-profile-consumers.js';
+import { registerReportFiledConsumer } from './infrastructure/report-filed-consumer.js';
+import { LockMatch } from './application/responses/lock-match.js';
+import type { MatchingFacade } from './application/facade.js';
+import { MatchPairLookup } from './application/match-pair-lookup.js';
 import { DrizzleCandidateFinder } from './infrastructure/drizzle-candidate-finder.js';
 import { DrizzleCandidateProfileRepository } from './infrastructure/drizzle-candidate-profile-repository.js';
 import { DrizzleActiveSlotRepository } from './infrastructure/drizzle-active-slot-repository.js';
@@ -48,25 +52,62 @@ export {
   CANDIDATE_ON_PROFILE_COMPLETED_CONSUMER,
 } from './infrastructure/candidate-profile-consumers.js';
 
+export { MATCH_LOCK_ON_REPORT_FILED_CONSUMER } from './infrastructure/report-filed-consumer.js';
+
 export interface MatchingWorkerDeps {
   readonly clock: Clock;
   /** Facade profile (chỉ cần `getMatchingProfile`) — `createMatchingProfileReader` của module profile. */
   readonly profiles: Pick<ProfileFacade, 'getMatchingProfile'>;
+  /**
+   * Ghi job hẹn giờ cùng transaction (worker: `PgBossScheduler`) — hiệu ứng chuyển trạng thái dùng chung của
+   * consumer khoá match (BE-S6-05; vào `LOCKED` không hẹn job nhưng port dùng chung với các use case khác).
+   */
+  readonly scheduler: Scheduler;
 }
 
 export interface MatchingWorker {
-  /** Đăng ký consumer read model `matching.candidate_profiles` (worker gọi trước `registerConsumers`). */
+  /**
+   * Đăng ký consumer của matching (worker gọi trước `registerConsumers`): read model `matching.candidate_profiles`
+   * (BE-S5-03) và `ReportFiled` → khoá match (BE-S6-05).
+   */
   registerConsumers(bus: EventBus): void;
 }
 
-/** Phần worker của module matching: consumer đồng bộ read model ứng viên (BE-S5-03). */
+/** Phần worker của module matching: consumer read model ứng viên (BE-S5-03) + khoá match khi có báo cáo (BE-S6-05). */
 export function createMatchingWorker(deps: MatchingWorkerDeps): MatchingWorker {
   const candidates = new DrizzleCandidateProfileRepository();
   const consumers = {
     syncProfile: new SyncCandidateProfile({ clock: deps.clock, profiles: deps.profiles, candidates }),
     setVerification: new SetCandidateVerification({ clock: deps.clock, candidates }),
   };
-  return { registerConsumers: (bus) => registerCandidateProfileConsumers(bus, consumers) };
+  const lockMatch = createLockMatch(deps);
+  return {
+    registerConsumers: (bus) => {
+      registerCandidateProfileConsumers(bus, consumers);
+      registerReportFiledConsumer(bus, lockMatch);
+    },
+  };
+}
+
+// ── Khoá match khi có báo cáo vi phạm + facade cho safety (BE-S6-05) ───────────────────────────────────
+export {
+  MATCH_LOCK_REASON_REPORT_FILED,
+  type LockMatch,
+  type LockMatchCommand,
+  type LockMatchOutcome,
+} from './application/responses/lock-match.js';
+export type { MatchBetweenSummary, MatchingFacade, MatchPairStatus } from './application/facade.js';
+
+/** Use case khoá match (BE-S6-05) — consumer `ReportFiled` gọi `executeIn(tx, …)`. */
+export function createLockMatch(deps: { readonly clock: Clock; readonly scheduler: Scheduler }): LockMatch {
+  return new LockMatch({
+    clock: deps.clock,
+    scheduler: deps.scheduler,
+    matches: new DrizzleMatchRepository(new OutboxWriter()),
+    activeSlots: new DrizzleActiveSlotRepository(),
+    pairHistory: new DrizzlePairHistoryRepository(),
+    cooldowns: new DrizzleCooldownRepository(),
+  });
 }
 
 /** Use case top N ứng viên (BE-S5-03) — route admin `GET /admin/users/:id/candidates` (BE-S5-07) dùng lại. */
@@ -123,6 +164,8 @@ export interface MatchingModule {
   };
   /** Query màn ghép đôi user + admin (BE-S5-06) — route ở BE-S5-07. */
   readonly queries: MatchingQueries;
+  /** Facade read-only cho module khác (BE-S6-05: safety kiểm tra cặp đang/đã từng ghép). */
+  readonly facade: MatchingFacade;
 }
 
 /** Composition root phía API của module matching. */
@@ -170,7 +213,12 @@ export function createMatchingModule(deps: MatchingModuleDeps): MatchingModule {
     }),
   );
 
-  return { name: 'matching', routes, commands, queries };
+  const facade: MatchingFacade = new MatchPairLookup({
+    uow: deps.uow,
+    matches: new DrizzleMatchRepository(new OutboxWriter()),
+  });
+
+  return { name: 'matching', routes, commands, queries, facade };
 }
 
 // ── Đồng ý / Bỏ qua / Rút lời ngỏ / Hết hạn (BE-S5-05) ──────────────────────────────────────────────────

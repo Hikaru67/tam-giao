@@ -259,6 +259,9 @@ importers:
       '@tamgiao/module-profile':
         specifier: workspace:*
         version: link:../../packages/modules/profile
+      '@tamgiao/module-safety':
+        specifier: workspace:*
+        version: link:../../packages/modules/safety
       '@tamgiao/module-verification':
         specifier: workspace:*
         version: link:../../packages/modules/verification
@@ -654,6 +657,55 @@ importers:
       '@types/node':
         specifier: 22.20.5
         version: 22.20.5
+      typescript:
+        specifier: 5.9.3
+        version: 5.9.3
+      vitest:
+        specifier: 3.2.7
+        version: 3.2.7(@types/node@22.20.5)(supports-color@7.2.0)(tsx@4.23.15)(yaml@2.9.1)
+
+  packages/modules/safety:
+    dependencies:
+      '@tamgiao/contracts':
+        specifier: workspace:*
+        version: link:../../contracts
+      '@tamgiao/db':
+        specifier: workspace:*
+        version: link:../../db
+      '@tamgiao/http':
+        specifier: workspace:*
+        version: link:../../http
+      '@tamgiao/kernel':
+        specifier: workspace:*
+        version: link:../../kernel
+      '@tamgiao/module-matching':
+        specifier: workspace:*
+        version: link:../matching
+      drizzle-orm:
+        specifier: 0.45.4
+        version: 0.45.4(@opentelemetry/api@1.10.0)(@types/pg@8.23.1)(pg@8.23.1)
+      hono:
+        specifier: 4.13.18
+        version: 4.13.18
+      zod:
+        specifier: 4.6.7
+        version: 4.6.7
+    devDependencies:
+      '@tamgiao/config':
+        specifier: workspace:*
+        version: link:../../config
+      '@tamgiao/module-identity':
+        specifier: workspace:*
+        version: link:../identity
+      '@tamgiao/testing':
+        specifier: workspace:*
+        version: link:../../testing
+      '@types/node':
+        specifier: 22.20.5
+        version: 22.20.5
+      testcontainers:
+        specifier: 12.2.1
+        version: 12.2.1(bare-buffer@3.7.2)(supports-color@7.2.0)
       typescript:
         specifier: 5.9.3
         version: 5.9.3

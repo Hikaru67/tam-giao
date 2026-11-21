@@ -61,10 +61,11 @@ const billingWorker = createBillingWorker({
 });
 billingWorker.registerConsumers(bus);
 // Matching (BE-S5-03): read model `matching.candidate_profiles` từ ProfileCompleted / PreferencesUpdated (đọc lại
-// facade profile) + KycApproved / KycRejected (cờ verified).
+// facade profile) + KycApproved / KycRejected (cờ verified). BE-S6-05: ReportFiled (safety) → khoá match (`LOCKED`).
 createMatchingWorker({
   clock: new SystemClock(),
   profiles: createMatchingProfileReader({ uow }),
+  scheduler: new PgBossScheduler(boss),
 }).registerConsumers(bus);
 await registerConsumers({ boss, uow, bus, logger });
 for (const job of jobs) {
