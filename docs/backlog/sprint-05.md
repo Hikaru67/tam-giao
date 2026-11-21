@@ -123,7 +123,7 @@ Thử đề xuất người đang bận → `USER_BUSY`. Tua thời gian 24h →
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| matching | application, infrastructure | P0 | 2d | BE-S5-04 | BE-S5-06 | TODO |
+| matching | application, infrastructure | P0 | 2d | BE-S5-04 | BE-S5-06 | IN_REVIEW |
 
 **Mục tiêu:** Phục vụ nút "Đồng ý kết nối" / "Bỏ qua" (màn 7–8), "Rút lại lời ngỏ" (màn 9), tự hết hạn 24h.
 
