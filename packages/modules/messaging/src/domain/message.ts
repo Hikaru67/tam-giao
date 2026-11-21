@@ -1,4 +1,4 @@
-import { AggregateRoot, err, ok, type Id, type Result } from '@tamgiao/kernel';
+import { AggregateRoot, err, fail, ok, type DomainError, type Id, type Result } from '@tamgiao/kernel';
 import type {
   Conversation,
   ConversationId,
@@ -27,6 +27,21 @@ export const SYSTEM_MESSAGE_TEXT: Readonly<Record<SystemMessageCode, string>> = 
     'Cảnh báo: tin nhắn vừa nhận có dấu hiệu lừa đảo tài chính. Đừng chuyển tiền, cho vay, đầu tư hay cung cấp mã OTP theo yêu cầu qua chat — hãy báo cáo nếu bạn thấy nghi ngờ.',
 };
 
+declare const ClientMessageIdBrand: unique symbol;
+
+/**
+ * Idempotency key phía client của tin người dùng (BE-S6-02): UUID bất kỳ phiên bản (client thường sinh v4), lưu chữ
+ * thường. Gửi lại cùng key → trả lại tin cũ, không tạo tin trùng (unique (`sender_id`, `client_message_id`) ở DB).
+ */
+export type ClientMessageId = string & { readonly [ClientMessageIdBrand]: true };
+
+const CLIENT_MESSAGE_ID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+export function parseClientMessageId(raw: string): Result<ClientMessageId, DomainError<'INVALID_ID'>> {
+  if (!CLIENT_MESSAGE_ID_PATTERN.test(raw)) return fail('INVALID_ID', { field: 'clientMessageId' });
+  return ok(raw.toLowerCase() as ClientMessageId);
+}
+
 export interface MessageState {
   readonly id: MessageId;
   readonly conversationId: ConversationId;
@@ -45,6 +60,8 @@ export interface MessageState {
   readonly flagReasons: readonly string[];
   /** Tin hệ thống chỉ một người thấy (vd `FRAUD_WARNING` cho người nhận); `null` = mọi người trong hội thoại. */
   readonly visibleTo: ConversationUserId | null;
+  /** Idempotency key phía client (BE-S6-02); `null` với tin hệ thống hoặc client không gửi key. */
+  readonly clientMessageId: ClientMessageId | null;
   readonly sentAt: Date;
   readonly version: number;
 }
@@ -79,6 +96,7 @@ export class Message extends AggregateRoot<MessageId> {
       readonly senderId: ConversationUserId;
       readonly body: MessageBody;
       readonly screening: MessageScreening;
+      readonly clientMessageId?: ClientMessageId | null;
     },
     now: Date,
   ): Result<Message, ConversationSendError> {
@@ -101,6 +119,7 @@ export class Message extends AggregateRoot<MessageId> {
         flagged: screening.flagged,
         flagReasons: screening.flagged ? [...screening.reasons] : [],
         visibleTo: null,
+        clientMessageId: input.clientMessageId ?? null,
         sentAt: new Date(now.getTime()),
       },
       0,
@@ -147,6 +166,7 @@ export class Message extends AggregateRoot<MessageId> {
         flagged: false,
         flagReasons: [],
         visibleTo,
+        clientMessageId: null,
         sentAt: new Date(now.getTime()),
       },
       0,

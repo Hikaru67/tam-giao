@@ -141,6 +141,13 @@
       "when": 1795248281706,
       "tag": "0019_messaging_fraud_warning",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1795249013579,
+      "tag": "0020_messaging_client_message_id",
+      "breakpoints": true
     }
   ]
 }

@@ -10,7 +10,14 @@ import {
   type UnitOfWork,
 } from '@tamgiao/kernel';
 import type { ConversationId, ConversationSendError } from '../domain/conversation.js';
-import { Message, type MessageId } from '../domain/message.js';
+import {
+  Message,
+  parseClientMessageId,
+  type ClientMessageId,
+  type MessageId,
+  type MessageState,
+  type SystemMessageCode,
+} from '../domain/message.js';
 import {
   PASS_THROUGH_SCREENER,
   checkMessageRateLimit,
@@ -28,6 +35,8 @@ export interface SendMessageCommand {
   /** Người dùng đã xác thực (presentation lấy từ token, không nhận từ client). */
   readonly senderId: string;
   readonly body: string;
+  /** Idempotency key phía client (UUID). Gửi lại cùng key → trả lại tin cũ (`replayed: true`), không tạo tin mới. */
+  readonly clientMessageId?: string;
 }
 
 /** Tin vừa gửi, nhìn từ phía người gửi (thấy nội dung gốc của chính mình + bản đã che nếu có). */
@@ -39,11 +48,32 @@ export interface SentMessageView {
   readonly body: string;
   readonly maskedBody: string | null;
   readonly flagged: boolean;
+  readonly clientMessageId: ClientMessageId | null;
+  readonly sentAt: Date;
+  /** `true` khi đây là tin đã gửi trước đó với cùng `clientMessageId` (client gửi lại). */
+  readonly replayed: boolean;
+  /**
+   * Tin hệ thống tạo kèm trong cùng transaction (BE-S6-03: `FRAUD_WARNING` chỉ người nhận thấy) để transport đẩy
+   * realtime. Rỗng khi `replayed` (gửi lại không tạo lại cảnh báo).
+   */
+  readonly systemMessages: readonly SentSystemMessageView[];
+}
+
+export interface SentSystemMessageView {
+  readonly messageId: MessageId;
+  readonly conversationId: ConversationId;
+  readonly systemCode: SystemMessageCode;
+  readonly body: string;
+  /** Chỉ người này thấy; `null` = cả hai. */
+  readonly visibleTo: string | null;
   readonly sentAt: Date;
 }
 
 export type SendMessageError =
-  DomainError<'INVALID_ID' | 'NOT_FOUND'> | MessageBodyError | ConversationSendError | MessageRateLimitError;
+  | DomainError<'INVALID_ID' | 'NOT_FOUND' | 'CLIENT_MESSAGE_ID_CONFLICT'>
+  | MessageBodyError
+  | ConversationSendError
+  | MessageRateLimitError;
 
 export interface SendMessageDeps {
   readonly uow: UnitOfWork;
@@ -64,8 +94,10 @@ export interface SendMessageDeps {
  *    tin trong 60 giây → `RATE_LIMITED` → sàng lọc nội dung → lưu tin + event (`MessageSent`, `MessageFlagged`).
  * 4. Tin bị gắn cờ lừa đảo (BE-S6-03) → thêm tin hệ thống `FRAUD_WARNING` chỉ người nhận thấy (`visibleTo`), cùng `tx`.
  *
- * BE-S6-02 thêm idempotency key phía client: tra tin cũ theo (người gửi, key) ngay sau khi khoá hội thoại và trả lại
- * tin đó (không đếm rate limit, không tạo tin mới); unique (sender_id, client_message_id) ở DB làm chốt chặn.
+ * Idempotency key phía client (BE-S6-02, `clientMessageId` sai dạng → `INVALID_ID` trước khi chạm DB): sau khi khoá
+ * hội thoại và kiểm tra người gửi thuộc cặp, tra tin cũ theo (người gửi, key) → có → trả lại tin đó (`replayed`, không
+ * kiểm tra trạng thái/rate limit, không tạo tin, không event); key đã dùng ở hội thoại khác → `CLIENT_MESSAGE_ID_CONFLICT`.
+ * Unique (`sender_id`, `client_message_id`) ở DB làm chốt chặn cuối.
  * Không log nội dung tin (PII).
  */
 export class SendMessage {
@@ -81,11 +113,24 @@ export class SendMessage {
     const conversationId = parseId<'Conversation'>(cmd.conversationId);
     if (conversationId.isErr()) return err(conversationId.error);
     const senderId = cmd.senderId.toLowerCase();
+    let clientMessageId: ClientMessageId | null = null;
+    if (cmd.clientMessageId !== undefined) {
+      const parsed = parseClientMessageId(cmd.clientMessageId);
+      if (parsed.isErr()) return err(parsed.error);
+      clientMessageId = parsed.value;
+    }
 
     return this.deps.uow.run(async (tx): Promise<Result<SentMessageView, SendMessageError>> => {
       const now = this.deps.clock.now();
       const conversation = await this.deps.conversations.findByIdForUpdate(tx, conversationId.value);
       if (!conversation) return fail('NOT_FOUND');
+      if (clientMessageId !== null && conversation.isParticipant(senderId)) {
+        const previous = await this.deps.messages.findByClientMessageId(tx, { senderId, clientMessageId });
+        if (previous) {
+          if (previous.conversationId !== conversation.id) return fail('CLIENT_MESSAGE_ID_CONFLICT');
+          return ok(toSentView(previous, senderId, true));
+        }
+      }
       const allowed = conversation.ensureCanSend(senderId, now);
       if (allowed.isErr()) return err(allowed.error);
 
@@ -99,29 +144,54 @@ export class SendMessage {
 
       const sent = Message.send(
         conversation,
-        { id: newId<'Message'>(), senderId, body: body.value, screening: this.screener(body.value) },
+        {
+          id: newId<'Message'>(),
+          senderId,
+          body: body.value,
+          screening: this.screener(body.value),
+          clientMessageId,
+        },
         now,
       );
       if (sent.isErr()) return err(sent.error);
       const message = sent.value;
       const state = message.toState();
       await this.deps.messages.save(tx, message);
+      const warnings: SentSystemMessageView[] = [];
       if (state.flagged) {
         for (const recipientId of conversation.recipientsOf(senderId)) {
           const warning = { id: newId<'Message'>(), code: 'FRAUD_WARNING', visibleTo: recipientId } as const;
-          await this.deps.messages.save(tx, Message.system(conversation, warning, now));
+          const system = Message.system(conversation, warning, now);
+          const s = system.toState();
+          warnings.push({
+            messageId: s.id,
+            conversationId: s.conversationId,
+            systemCode: warning.code,
+            body: s.body,
+            visibleTo: s.visibleTo,
+            sentAt: s.sentAt,
+          });
+          await this.deps.messages.save(tx, system);
         }
       }
-      return ok({
-        messageId: state.id,
-        conversationId: state.conversationId,
-        senderId,
-        kind: 'TEXT',
-        body: state.body,
-        maskedBody: state.maskedBody,
-        flagged: state.flagged,
-        sentAt: state.sentAt,
-      });
+      return ok({ ...toSentView(state, senderId, false), systemMessages: warnings });
     });
   }
+}
+
+/** Tin người dùng (`TEXT`) của `senderId` → view trả cho người gửi. */
+function toSentView(state: MessageState, senderId: string, replayed: boolean): SentMessageView {
+  return {
+    messageId: state.id,
+    conversationId: state.conversationId,
+    senderId,
+    kind: 'TEXT',
+    body: state.body,
+    maskedBody: state.maskedBody,
+    flagged: state.flagged,
+    clientMessageId: state.clientMessageId,
+    sentAt: state.sentAt,
+    replayed,
+    systemMessages: [],
+  };
 }

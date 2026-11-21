@@ -7,7 +7,12 @@ import {
   type ConversationState,
   type ConversationUserId,
 } from '../domain/conversation.js';
-import type { Message, MessageState } from '../domain/message.js';
+import type { ClientMessageId, Message, MessageId, MessageState } from '../domain/message.js';
+import type {
+  ConversationBroadcast,
+  ConversationBroadcastListener,
+  MessageBroadcaster,
+} from '../application/ports/message-broadcaster.js';
 
 /** UnitOfWork giả: chạy thẳng `work` (fake repository không có transaction thật). */
 export class PassThroughUnitOfWork implements UnitOfWork {
@@ -78,5 +83,59 @@ export class InMemoryMessageRepository implements MessageRepository {
         m.senderId === input.senderId.toLowerCase() &&
         m.sentAt.getTime() > input.since.getTime(),
     ).length;
+  }
+
+  async findByClientMessageId(
+    _tx: Tx,
+    input: { readonly senderId: ConversationUserId; readonly clientMessageId: ClientMessageId },
+  ): Promise<MessageState | null> {
+    return (
+      this.states.find(
+        (m) => m.senderId === input.senderId.toLowerCase() && m.clientMessageId === input.clientMessageId,
+      ) ?? null
+    );
+  }
+
+  async listAfter(
+    _tx: Tx,
+    input: {
+      readonly conversationId: ConversationId;
+      readonly viewerId: ConversationUserId;
+      readonly afterId: MessageId | null;
+      readonly limit: number;
+    },
+  ): Promise<readonly MessageState[]> {
+    return this.states
+      .filter(
+        (m) =>
+          m.conversationId === input.conversationId &&
+          (m.visibleTo === null || m.visibleTo === input.viewerId.toLowerCase()) &&
+          (input.afterId === null || m.id > input.afterId),
+      )
+      .sort((x, y) => (x.id < y.id ? -1 : x.id > y.id ? 1 : 0))
+      .slice(0, input.limit);
+  }
+}
+
+/** Fake in-memory của `MessageBroadcaster`: phát đồng bộ cho mọi listener (như mọi instance cùng nhận). */
+export class InMemoryMessageBroadcaster implements MessageBroadcaster {
+  readonly published: ConversationBroadcast[] = [];
+  private readonly listeners = new Set<ConversationBroadcastListener>();
+  failNextPublish = false;
+
+  async publish(event: ConversationBroadcast): Promise<void> {
+    if (this.failNextPublish) {
+      this.failNextPublish = false;
+      throw new Error('broadcaster down');
+    }
+    this.published.push(event);
+    for (const listener of this.listeners) listener(event);
+  }
+
+  async subscribe(listener: ConversationBroadcastListener): Promise<() => Promise<void>> {
+    this.listeners.add(listener);
+    return async () => {
+      this.listeners.delete(listener);
+    };
   }
 }

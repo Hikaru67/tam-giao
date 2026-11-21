@@ -7,7 +7,12 @@
  *
  * Test `messaging-contracts.test.ts` kiểm tra mọi mã đều có trong registry với đúng owner + HTTP status.
  */
-export const MESSAGING_DOMAIN_ERRORS = ['CONVERSATION_CLOSED', 'MESSAGE_EMPTY', 'MESSAGE_TOO_LONG'] as const;
+export const MESSAGING_DOMAIN_ERRORS = [
+  'CONVERSATION_CLOSED',
+  'MESSAGE_EMPTY',
+  'MESSAGE_TOO_LONG',
+  'CLIENT_MESSAGE_ID_CONFLICT',
+] as const;
 export type MessagingDomainErrorCode = (typeof MESSAGING_DOMAIN_ERRORS)[number];
 
 export const MESSAGING_REUSED_ERRORS = [
@@ -16,3 +21,9 @@ export const MESSAGING_REUSED_ERRORS = [
   'NOT_FOUND',
   'INVALID_ID',
 ] as const;
+
+/**
+ * Mã lỗi của WS gateway (BE-S6-02, không phải luật domain nhưng vẫn đăng ký trong contracts để FE tra cứu):
+ * `CONVERSATION_NOT_JOINED` — gửi `typing`/`message.read` cho hội thoại chưa `conversation.join`.
+ */
+export const MESSAGING_GATEWAY_ERRORS = ['CONVERSATION_NOT_JOINED'] as const;

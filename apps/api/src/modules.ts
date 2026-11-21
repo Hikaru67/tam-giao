@@ -11,7 +11,11 @@ import type { Clock, Scheduler, UnitOfWork } from '@tamgiao/kernel';
 import { FakePaymentGateway, createBillingModule } from '@tamgiao/module-billing';
 import { ConsoleSmsSender, createIdentityModule } from '@tamgiao/module-identity';
 import { createMatchingModule } from '@tamgiao/module-matching';
-import { createMessagingModule } from '@tamgiao/module-messaging';
+import {
+  RedisMessageBroadcaster,
+  createMessagingModule,
+  type UpgradableServer,
+} from '@tamgiao/module-messaging';
 import { createProfileModule } from '@tamgiao/module-profile';
 import { createSafetyModule } from '@tamgiao/module-safety';
 import {
@@ -22,6 +26,7 @@ import {
   type ApplicantProfileReader,
   type PaymentStatusReader,
 } from '@tamgiao/module-verification';
+import type { Logger } from '@tamgiao/config';
 import type { Hono } from 'hono';
 import type { ApiConfig } from './config.js';
 import { createUploadRoutes } from './http/uploads.js';
@@ -34,6 +39,13 @@ import { createUploadRoutes } from './http/uploads.js';
 export interface ApiModule {
   readonly name: string;
   readonly routes: Hono<AppEnv>;
+  /** Endpoint realtime (WS) gắn thẳng vào HTTP server — `main.ts` gọi `attach` sau `serve`, `close` khi tắt. */
+  readonly realtime?: RealtimeEndpoint;
+}
+
+export interface RealtimeEndpoint {
+  attach(server: UpgradableServer): Promise<void>;
+  close(): Promise<void>;
 }
 
 export interface ModuleDeps {
@@ -42,10 +54,11 @@ export interface ModuleDeps {
   readonly clock: Clock;
   /** Ghi job hẹn giờ cùng transaction (`PgBossScheduler` — xem `job-scheduler.ts`). */
   readonly scheduler: Scheduler;
+  readonly logger: Logger;
 }
 
 /** Nối hạ tầng dùng chung vào từng module (thứ tự = thứ tự phụ thuộc giữa các module). */
-export function buildModules({ config, uow, clock, scheduler }: ModuleDeps): readonly ApiModule[] {
+export function buildModules({ config, uow, clock, scheduler, logger }: ModuleDeps): readonly ApiModule[] {
   const encryptor = new LocalKeyEncryptor(
     parseMasterKeyRing(config.crypto.masterKeys, config.crypto.masterKeyVersion),
   );
@@ -147,9 +160,32 @@ export function buildModules({ config, uow, clock, scheduler }: ModuleDeps): rea
     profiles: profile.facade,
   });
 
-  // Messaging (Sprint 6): use case gửi tin (BE-S6-01); hội thoại mở/đóng ở worker theo event matching.
-  // Route/WS bổ sung ở BE-S6-02/BE-S6-04, bộ lọc nội dung (`screener`) ở BE-S6-03.
-  const messaging = createMessagingModule({ uow, clock });
+  // Messaging (Sprint 6): hội thoại mở/đóng ở worker theo event matching (BE-S6-01). WS `/ws` + Redis pub/sub đa
+  // instance, `GET /me/conversations/:id/messages?after=` (BE-S6-02); bộ lọc nội dung (`screener`) ở BE-S6-03.
+  // Handshake WS xác thực bằng cùng `authenticateUser` với guard REST.
+  const broadcaster = new RedisMessageBroadcaster({
+    url: config.redis.url,
+    onError: (error) => logger.warn({ err: error }, 'messaging redis error'),
+  });
+  const messagingModule = createMessagingModule({
+    uow,
+    clock,
+    requireUser: userGuard,
+    authenticateUser: identity.facade.authenticateUser,
+    broadcaster,
+    logger,
+  });
+  const messaging: ApiModule = {
+    name: messagingModule.name,
+    routes: messagingModule.routes,
+    realtime: {
+      attach: (server) => messagingModule.realtime.attach(server),
+      close: async () => {
+        await messagingModule.realtime.close();
+        await broadcaster.close();
+      },
+    },
+  };
 
   // Safety (Sprint 6): báo cáo vi phạm `POST /me/reports` (BE-S6-05) — chỉ báo cáo người đang/đã từng ghép (facade
   // matching), ảnh bằng chứng xác nhận qua `uploads`. Khoá match chạy ở worker (consumer `ReportFiled` của matching).

@@ -29,6 +29,8 @@ const apiEnvSchema = z
     /** Chỉ bật khi API đứng sau reverse proxy tin cậy (lấy IP client từ `x-forwarded-for`). */
     TRUST_PROXY: envBoolean.default(false),
     DATABASE_URL: envPostgresUrl,
+    /** Redis cho pub/sub chat realtime giữa các instance API (BE-S6-02): `redis://` hoặc `rediss://` (TLS). */
+    REDIS_URL: z.url({ protocol: /^rediss?$/ }),
     S3_ENDPOINT: envHttpUrl,
     S3_REGION: z.string().default('us-east-1'),
     S3_ACCESS_KEY_ID: z.string(),
@@ -85,6 +87,7 @@ const apiEnvSchema = z
       trustProxy: e.TRUST_PROXY,
     },
     database: { url: e.DATABASE_URL },
+    redis: { url: e.REDIS_URL },
     storage: {
       endpoint: e.S3_ENDPOINT,
       region: e.S3_REGION,

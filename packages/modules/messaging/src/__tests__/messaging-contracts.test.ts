@@ -11,21 +11,30 @@ import {
 } from '@tamgiao/contracts';
 import { describe, expect, it } from 'vitest';
 import { CONVERSATION_CLOSE_REASONS, CONVERSATION_STATUSES } from '../domain/conversation.js';
-import { MESSAGING_DOMAIN_ERRORS, MESSAGING_REUSED_ERRORS } from '../domain/errors.js';
+import {
+  MESSAGING_DOMAIN_ERRORS,
+  MESSAGING_GATEWAY_ERRORS,
+  MESSAGING_REUSED_ERRORS,
+} from '../domain/errors.js';
 import { MESSAGE_KINDS, SYSTEM_MESSAGE_CODES } from '../domain/message.js';
 import { MESSAGING_EVENT_TYPES } from '../domain/messaging-events.js';
 
 describe('mã lỗi messaging', () => {
-  it.each(MESSAGING_DOMAIN_ERRORS)('%s đã đăng ký trong contracts bởi messaging', (code) => {
-    expect(errorRegistry.get(code)?.owner).toBe('messaging');
-  });
+  it.each([...MESSAGING_DOMAIN_ERRORS, ...MESSAGING_GATEWAY_ERRORS])(
+    '%s đã đăng ký trong contracts bởi messaging',
+    (code) => {
+      expect(errorRegistry.get(code)?.owner).toBe('messaging');
+    },
+  );
 
   it('HTTP status theo hợp đồng (kể cả mã dùng lại của module khác)', () => {
-    const all = [...MESSAGING_DOMAIN_ERRORS, ...MESSAGING_REUSED_ERRORS];
+    const all = [...MESSAGING_DOMAIN_ERRORS, ...MESSAGING_GATEWAY_ERRORS, ...MESSAGING_REUSED_ERRORS];
     expect(all.map((c) => [c, errorRegistry.get(c)?.owner, errorRegistry.statusOf(c)])).toEqual([
       ['CONVERSATION_CLOSED', 'messaging', 409],
       ['MESSAGE_EMPTY', 'messaging', 422],
       ['MESSAGE_TOO_LONG', 'messaging', 422],
+      ['CLIENT_MESSAGE_ID_CONFLICT', 'messaging', 409],
+      ['CONVERSATION_NOT_JOINED', 'messaging', 409],
       ['NOT_PARTICIPANT', 'matching', 403],
       ['RATE_LIMITED', 'common', 429],
       ['NOT_FOUND', 'common', 404],
