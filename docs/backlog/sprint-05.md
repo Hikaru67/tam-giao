@@ -14,7 +14,7 @@ Thử đề xuất người đang bận → `USER_BUSY`. Tua thời gian 24h →
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| matching | domain | P0 | 2d | Sprint 1 | BE-S5-02, BE-S5-03 | IN_REVIEW |
+| matching | domain | P0 | 2d | Sprint 1 | BE-S5-02, BE-S5-03 | DONE |
 
 **Mục tiêu:** Mã hoá toàn bộ luật vòng đời ghép đôi (ARCHITECTURE mục 5) vào domain, test được không cần DB.
 
