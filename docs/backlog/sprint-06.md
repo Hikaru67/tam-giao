@@ -67,7 +67,7 @@ báo cáo (màn 14) → match `LOCKED`, hội thoại đóng, admin thấy báo 
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| messaging | domain, application | P0 | 2d | Sprint 5 | BE-S6-01, BE-S6-05 | IN_REVIEW |
+| messaging | domain, application | P0 | 2d | Sprint 5 | BE-S6-01, BE-S6-05 | DONE |
 
 **Mục tiêu:** Thực hiện cam kết "phát hiện & chặn lừa đảo tài chính" trên màn chat.
 
