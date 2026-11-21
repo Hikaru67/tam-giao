@@ -14,7 +14,7 @@ báo cáo (màn 14) → match `LOCKED`, hội thoại đóng, admin thấy báo 
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| messaging | domain, application, infrastructure | P0 | 1.5d | Sprint 5 | BE-S6-03, BE-S6-05 | IN_REVIEW |
+| messaging | domain, application, infrastructure | P0 | 1.5d | Sprint 5 | BE-S6-03, BE-S6-05 | DONE |
 
 **Mục tiêu:** Chat chỉ tồn tại khi match đang DATING (nguyên tắc "một người thật, một lúc").
 
@@ -119,7 +119,7 @@ báo cáo (màn 14) → match `LOCKED`, hội thoại đóng, admin thấy báo 
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| safety | domain, application, infrastructure, presentation | P0 | 2d | Sprint 5 | BE-S6-01, BE-S6-03 | IN_REVIEW |
+| safety | domain, application, infrastructure, presentation | P0 | 2d | Sprint 5 | BE-S6-01, BE-S6-03 | DONE |
 
 **Mục tiêu:** Phục vụ màn "Báo cáo Vi phạm & Trung tâm An toàn Khẩn cấp".
 
@@ -172,7 +172,7 @@ báo cáo (màn 14) → match `LOCKED`, hội thoại đóng, admin thấy báo 
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| profile, matching | domain, application, infrastructure, presentation | P1 | 1.5d | BE-S5-03 | BE-S6-01, BE-S6-03, BE-S6-05 | IN_REVIEW |
+| profile, matching | domain, application, infrastructure, presentation | P1 | 1.5d | BE-S5-03 | BE-S6-01, BE-S6-03, BE-S6-05 | DONE |
 
 **Mục tiêu:** Lọc cứng tôn giáo / con cái đúng nghĩa (người kia *là* gì so với điều mình *muốn*). Hiện hồ sơ chưa có hai
 trường này nên BE-S5-03 so khớp đối xứng hai giá trị tiêu chí — PO đã chốt bổ sung trường vào hồ sơ (review BE-S5-03).
