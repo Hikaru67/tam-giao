@@ -70,6 +70,7 @@ function matching(clock: FakeClock): MatchingModule {
     verification,
     auditLogger,
     requireAdmin: () => async (_c, next) => next(),
+    profiles: { getMatchDisplayProfiles: async () => [], getApplicantSummaries: async () => [] },
     scheduler: new PgBossScheduler(boss),
   });
 }

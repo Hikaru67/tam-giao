@@ -21,6 +21,12 @@ import { DrizzleActiveSlotRepository } from './infrastructure/drizzle-active-slo
 import { DrizzleCooldownRepository } from './infrastructure/drizzle-cooldown-repository.js';
 import { DrizzleMatchRepository } from './infrastructure/drizzle-match-repository.js';
 import { DrizzlePairHistoryRepository } from './infrastructure/drizzle-pair-history-repository.js';
+import { GetCurrentMatchForUser } from './application/queries/get-current-match-for-user.js';
+import { GetMatchProfile } from './application/queries/get-match-profile.js';
+import { GetMatchesBoard } from './application/queries/get-matches-board.js';
+import { ListCandidates } from './application/queries/list-candidates.js';
+import type { MatchDisplayDirectory } from './application/queries/match-query-support.js';
+import { DrizzleMatchBoardQuery } from './infrastructure/drizzle-match-queries.js';
 
 /**
  * Module matching (Sprint 5): đề xuất ghép đôi, máy trạng thái `Match`, độc quyền 1-1, cooldown, chấm điểm tương hợp.
@@ -93,6 +99,8 @@ export interface MatchingModuleDeps {
   readonly requireAdmin: RequireAdmin;
   /** Ghi job hẹn giờ cùng transaction (API: `PgBossScheduler`). */
   readonly scheduler: Scheduler;
+  /** Facade profile — hồ sơ hiển thị + họ tên cho query màn ghép đôi (BE-S5-06). API truyền `profile.facade`. */
+  readonly profiles: MatchDisplayDirectory;
 }
 
 export interface MatchingModule {
@@ -106,6 +114,8 @@ export interface MatchingModule {
     readonly declineOffer: DeclineOffer;
     readonly withdrawIntro: WithdrawIntro;
   };
+  /** Query màn ghép đôi user + admin (BE-S5-06) — route ở BE-S5-07. */
+  readonly queries: MatchingQueries;
 }
 
 /** Composition root phía API của module matching. */
@@ -132,6 +142,7 @@ export function createMatchingModule(deps: MatchingModuleDeps): MatchingModule {
       declineOffer: new DeclineOffer(responseDeps),
       withdrawIntro: new WithdrawIntro(responseDeps),
     },
+    queries: createMatchingQueries(deps),
   };
 }
 
@@ -173,4 +184,78 @@ export function createExpireMatchJob(deps: {
   readonly scheduler: Scheduler;
 }): ExpireMatch {
   return new ExpireMatch(matchResponseDeps(deps));
+}
+
+// ── Query màn hình user & admin (BE-S5-06) ──────────────────────────────────────────────────────────────
+export {
+  CANDIDATE_LIST_DEFAULT,
+  type AdminCandidateProfileView,
+  type AdminCandidateView,
+  type ListCandidates,
+  type ListCandidatesError,
+} from './application/queries/list-candidates.js';
+export type {
+  CurrentMatchView,
+  GetCurrentMatchForUser,
+} from './application/queries/get-current-match-for-user.js';
+export type {
+  GetMatchProfile,
+  GetMatchProfileError,
+  MatchProfileView,
+} from './application/queries/get-match-profile.js';
+export {
+  MATCHES_BOARD_DEFAULT_STATUSES,
+  MATCHES_BOARD_PAGE_DEFAULT,
+  MATCHES_BOARD_PAGE_MAX,
+  type GetMatchesBoard,
+  type MatchesBoardItemView,
+  type MatchesBoardPage,
+  type MatchesBoardParticipantView,
+  type MatchesBoardQueryInput,
+} from './application/queries/get-matches-board.js';
+export {
+  USER_MATCH_PHASES,
+  type CounterpartProfileView,
+  type CounterpartSummaryView,
+  type MatchScoreView,
+  type UserMatchPhase,
+} from './application/queries/match-display-rules.js';
+export type { MatchDisplayDirectory } from './application/queries/match-query-support.js';
+export type { MatchBoardCursor } from './application/ports/match-board-query.js';
+
+export interface MatchingQueries {
+  /** `GET /me/match`. */
+  readonly getCurrentMatch: GetCurrentMatchForUser;
+  /** `GET /me/match/profile`. */
+  readonly getMatchProfile: GetMatchProfile;
+  /** `GET /admin/users/:id/candidates`. */
+  readonly listCandidates: ListCandidates;
+  /** `GET /admin/matches`. */
+  readonly getMatchesBoard: GetMatchesBoard;
+}
+
+function createMatchingQueries(
+  deps: Pick<MatchingModuleDeps, 'uow' | 'clock' | 'profiles'>,
+): MatchingQueries {
+  const userDeps = {
+    uow: deps.uow,
+    clock: deps.clock,
+    matches: new DrizzleMatchRepository(new OutboxWriter()),
+    candidates: new DrizzleCandidateProfileRepository(),
+    profiles: deps.profiles,
+  };
+  return {
+    getCurrentMatch: new GetCurrentMatchForUser(userDeps),
+    getMatchProfile: new GetMatchProfile(userDeps),
+    listCandidates: new ListCandidates({
+      clock: deps.clock,
+      findCandidates: createFindCandidates(deps),
+      profiles: deps.profiles,
+    }),
+    getMatchesBoard: new GetMatchesBoard({
+      uow: deps.uow,
+      board: new DrizzleMatchBoardQuery(),
+      profiles: deps.profiles,
+    }),
+  };
 }

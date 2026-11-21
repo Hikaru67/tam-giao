@@ -151,7 +151,7 @@ Thử đề xuất người đang bận → `USER_BUSY`. Tua thời gian 24h →
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| matching | application, infrastructure | P0 | 1.5d | BE-S5-04 | BE-S5-05 | TODO |
+| matching | application, infrastructure | P0 | 1.5d | BE-S5-04 | BE-S5-05 | IN_REVIEW |
 
 **Mục tiêu:** Cung cấp dữ liệu cho màn 7, 8, 9 và admin (đề xuất mai mối, bảng theo dõi cặp).
 
@@ -160,8 +160,8 @@ Thử đề xuất người đang bận → `USER_BUSY`. Tua thời gian 24h →
 - Ngoài: Route (BE-S5-07).
 
 **Tiêu chí nghiệm thu**
-- [ ] AC1: Người ngoài cặp gọi `GetMatchProfile` → `NOT_PARTICIPANT`.
-- [ ] AC2: Query trả `expiresAt` từ server để client đếm ngược.
+- [x] AC1: Người ngoài cặp gọi `GetMatchProfile` → `NOT_PARTICIPANT`.
+- [x] AC2: Query trả `expiresAt` từ server để client đếm ngược.
 
 **Test bắt buộc:** Integration query với dữ liệu mẫu.
 
