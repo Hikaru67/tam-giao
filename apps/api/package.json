@@ -18,6 +18,7 @@
     "@tamgiao/module-billing": "workspace:*",
     "@tamgiao/module-identity": "workspace:*",
     "@tamgiao/module-matching": "workspace:*",
+    "@tamgiao/module-messaging": "workspace:*",
     "@tamgiao/module-profile": "workspace:*",
     "@tamgiao/module-verification": "workspace:*",
     "hono": "4.13.18",

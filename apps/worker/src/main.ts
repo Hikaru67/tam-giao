@@ -22,6 +22,7 @@ import {
 } from '@tamgiao/module-billing';
 import { ConsoleSmsSender, createIdentityModule } from '@tamgiao/module-identity';
 import { createExpireMatchJob, createMatchingWorker } from '@tamgiao/module-matching';
+import { createMessagingWorker } from '@tamgiao/module-messaging';
 import { createMatchingProfileReader } from '@tamgiao/module-profile';
 import { createKycMediaRetention } from '@tamgiao/module-verification';
 import { PgBoss } from 'pg-boss';
@@ -66,6 +67,8 @@ createMatchingWorker({
   clock: new SystemClock(),
   profiles: createMatchingProfileReader({ uow }),
 }).registerConsumers(bus);
+// Messaging (BE-S6-01): MatchStartedDating → mở hội thoại; MatchClosed / MatchLocked → đóng.
+createMessagingWorker({ clock: new SystemClock() }).registerConsumers(bus);
 await registerConsumers({ boss, uow, bus, logger });
 for (const job of jobs) {
   await registerJob({ boss, uow, logger, ...job });
