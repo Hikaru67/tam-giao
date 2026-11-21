@@ -133,13 +133,14 @@ export function buildModules({ config, uow, clock, scheduler }: ModuleDeps): rea
     requireUser: userGuard,
   });
 
-  // Matching (Sprint 5): chuyên viên đề xuất ghép đôi (BE-S5-04) — route admin ở BE-S5-07.
+  // Matching (Sprint 5): đề xuất ghép đôi, phản hồi lời ngỏ, màn ghép đôi user + admin (route BE-S5-07).
   const matching = createMatchingModule({
     uow,
     clock,
     verification: verification.facade,
     auditLogger: identity.auditLogger,
     requireAdmin: identity.requireAdmin,
+    requireUser: userGuard,
     scheduler,
     profiles: profile.facade,
   });

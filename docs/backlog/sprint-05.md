@@ -177,7 +177,7 @@ Thử đề xuất người đang bận → `USER_BUSY`. Tua thời gian 24h →
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| matching | presentation | P0 | 1d | BE-S5-05, BE-S5-06 | — | TODO |
+| matching | presentation | P0 | 1d | BE-S5-05, BE-S5-06 | — | IN_REVIEW |
 
 **Mục tiêu:** Mở API cho mobile và admin.
 
@@ -186,8 +186,8 @@ Thử đề xuất người đang bận → `USER_BUSY`. Tua thời gian 24h →
 - Ngoài: —
 
 **Tiêu chí nghiệm thu**
-- [ ] AC1: Luồng end-to-end qua HTTP: propose → A accept → B accept → `DATING`.
-- [ ] AC2: Tất cả mã lỗi matching có mapping status trong registry.
+- [x] AC1: Luồng end-to-end qua HTTP: propose → A accept → B accept → `DATING`.
+- [x] AC2: Tất cả mã lỗi matching có mapping status trong registry.
 
 **Test bắt buộc:** HTTP e2e (app.request + Postgres thật).
 

@@ -30,6 +30,7 @@ beforeAll(() => {
     verification: new FakeVerification(),
     auditLogger: new RecordingAuditLogger(),
     requireAdmin: () => async (_c, next) => next(),
+    requireUser: async (_c, next) => next(),
     scheduler: new RecordingScheduler(),
     profiles,
   }).queries;
