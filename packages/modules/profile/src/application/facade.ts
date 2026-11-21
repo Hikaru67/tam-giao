@@ -56,6 +56,38 @@ export interface MatchingProfile {
   readonly preferencesVersion: number;
 }
 
+/** Ảnh hồ sơ qua presigned GET (bucket `publicProfile`), hết hạn sau `PRESIGNED_URL_TTL_SECONDS`. */
+export interface DisplayPhoto {
+  readonly url: string;
+  readonly expiresAt: Date;
+}
+
+/**
+ * Hồ sơ hiển thị cho màn ghép đôi (BE-S5-06): đối phương trong cặp (màn 7, 8, 9) và danh sách ứng viên của
+ * chuyên viên. Chỉ phần **công khai** của hồ sơ đã hoàn tất — KHÔNG có thu nhập / nhà ở / tài sản (riêng tư, chỉ
+ * chính chủ + chuyên viên có quyền, xem `@tamgiao/contracts` profile DTO), không có SĐT/CCCD/ảnh eKYC (không thuộc
+ * module profile). Họ tên, ngày sinh, ảnh vẫn là dữ liệu cá nhân — nơi nhận không được log.
+ */
+export interface MatchDisplayProfile {
+  readonly userId: string;
+  readonly fullName: string;
+  readonly gender: Gender;
+  /** `YYYY-MM-DD`. */
+  readonly birthDate: string;
+  readonly currentCity: string;
+  readonly education: EducationLevel;
+  readonly occupation: string;
+  readonly bio: string | null;
+  readonly interests: readonly string[];
+  /** Cùng thứ tự ảnh hồ sơ (phần tử đầu là ảnh đại diện); `photos: 'primary'` → tối đa 1 ảnh. */
+  readonly photos: readonly DisplayPhoto[];
+}
+
+export interface MatchDisplayProfileOptions {
+  /** `all` (mặc định): mọi ảnh hồ sơ; `primary`: chỉ ảnh đại diện (danh sách nhiều người). */
+  readonly photos?: 'all' | 'primary';
+}
+
 export interface ProfileFacade {
   /**
    * Thông tin định danh đã khai ở hồ sơ — verification dùng đối chiếu với OCR CCCD (BE-S3-03).
@@ -73,4 +105,12 @@ export interface ProfileFacade {
    * Hồ sơ + tiêu chí cho matching (BE-S5-03). `null` khi hồ sơ chưa hoàn tất (`COMPLETED`) hoặc chưa có tiêu chí.
    */
   getMatchingProfile(userId: string): Promise<MatchingProfile | null>;
+  /**
+   * Hồ sơ hiển thị (phần công khai) của các người dùng có hồ sơ `COMPLETED` — matching dùng cho màn ghép đôi
+   * (BE-S5-06). Người chưa có / chưa hoàn tất hồ sơ bị bỏ qua; id trùng chỉ trả một lần.
+   */
+  getMatchDisplayProfiles(
+    userIds: readonly string[],
+    options?: MatchDisplayProfileOptions,
+  ): Promise<readonly MatchDisplayProfile[]>;
 }

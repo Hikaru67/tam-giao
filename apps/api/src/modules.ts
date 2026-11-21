@@ -141,6 +141,7 @@ export function buildModules({ config, uow, clock, scheduler }: ModuleDeps): rea
     auditLogger: identity.auditLogger,
     requireAdmin: identity.requireAdmin,
     scheduler,
+    profiles: profile.facade,
   });
 
   return [identity, uploadModule, profile, verification, billing, matching];
