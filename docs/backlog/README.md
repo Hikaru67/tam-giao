@@ -2,7 +2,7 @@
 
 - Sprint dài **2 tuần**, team giả định 1–2 dev BE (hoặc nhiều subagent song song theo cột "Song song với").
 - Mọi task theo format `docs/backlog/_TASK_TEMPLATE.md`; agent làm task theo luật `AGENTS.md`.
-- Tổng: **7 sprint ≈ 14 tuần**, 53 task.
+- Tổng: **7 sprint ≈ 14 tuần**, 54 task.
 
 ## Lộ trình sprint
 
@@ -13,7 +13,7 @@
 | S3 | Verification (eKYC) | Nộp eKYC (provider giả), admin duyệt/từ chối, phát `KycApproved` | 7 | [sprint-03.md](sprint-03.md) |
 | S4 | Billing & Voucher | Thanh toán 299k (gateway giả), webhook, ledger, hoàn tiền khi bị từ chối, voucher QR | 7 | [sprint-04.md](sprint-04.md) |
 | S5 | Matching (lõi) | Chuyên viên đề xuất ghép, user đồng ý/từ chối, hết hạn 24h tự động, độc quyền 1-1 | 7 | [sprint-05.md](sprint-05.md) |
-| S6 | Messaging & Safety | Chat realtime 14 ngày, lọc lừa đảo, báo cáo → khoá 2 chiều | 6 | [sprint-06.md](sprint-06.md) |
+| S6 | Messaging & Safety | Chat realtime 14 ngày, lọc lừa đảo, báo cáo → khoá 2 chiều | 7 | [sprint-06.md](sprint-06.md) |
 | S7 | Dating, Notification, Hardening | Đặt hẹn quán đối tác, đổi voucher, đánh giá sau gặp → CLOSED_*, push, sẵn sàng staging | 9 | [sprint-07.md](sprint-07.md) |
 
 ## Sơ đồ phụ thuộc giữa sprint
@@ -46,8 +46,8 @@ Cập nhật cột Trạng thái tại đây và trong file sprint khi task đ�
 | S2 | 0 | 0 | 0 | 8 | 0 |
 | S3 | 0 | 0 | 0 | 7 | 0 |
 | S4 | 0 | 0 | 0 | 7 | 0 |
-| S5 | 5 | 0 | 0 | 2 | 0 |
-| S6 | 6 | 0 | 0 | 0 | 0 |
+| S5 | 4 | 0 | 0 | 3 | 0 |
+| S6 | 7 | 0 | 0 | 0 | 0 |
 | S7 | 9 | 0 | 0 | 0 | 0 |
 
 ## Cách giao task cho subagent

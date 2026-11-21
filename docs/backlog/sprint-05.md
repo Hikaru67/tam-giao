@@ -69,7 +69,7 @@ Thử đề xuất người đang bận → `USER_BUSY`. Tua thời gian 24h →
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| matching | domain, application, infrastructure | P0 | 2d | BE-S2-06 | BE-S5-01, BE-S5-02 | TODO |
+| matching | domain, application, infrastructure | P0 | 2d | BE-S2-06 | BE-S5-01, BE-S5-02 | DONE |
 
 **Mục tiêu:** Tạo con số "94% tương hợp" và phân tích 3 trụ cột (màn 7) + danh sách top N cho chuyên viên.
 

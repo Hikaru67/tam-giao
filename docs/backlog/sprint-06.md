@@ -6,7 +6,7 @@ che SĐT/link; người dùng báo cáo vi phạm → khoá tương tác 2 chi�
 **Demo cuối sprint:** Hai user ở DATING chat realtime (màn 10–11); gửi "chuyển khoản cho mình nhé" → bị gắn cờ + cảnh báo;
 báo cáo (màn 14) → match `LOCKED`, hội thoại đóng, admin thấy báo cáo trong hàng chờ.
 
-**Nhóm chạy song song:** (01, 03, 05) → (02, 06) → (04)
+**Nhóm chạy song song:** (01, 03, 05, 07) → (02, 06) → (04)
 
 ---
 
@@ -165,3 +165,34 @@ báo cáo (màn 14) → match `LOCKED`, hội thoại đóng, admin thấy báo 
 **Contract / Event:** Event `UserBanned`.
 
 **Ghi chú:** —
+
+---
+
+### BE-S6-07 · Hồ sơ: tôn giáo & kế hoạch con cái của chính người dùng; lọc ứng viên hồ sơ ↔ tiêu chí
+
+| Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
+|---|---|---|---|---|---|---|
+| profile, matching | domain, application, infrastructure, presentation | P1 | 1.5d | BE-S5-03 | BE-S6-01, BE-S6-03, BE-S6-05 | TODO |
+
+**Mục tiêu:** Lọc cứng tôn giáo / con cái đúng nghĩa (người kia *là* gì so với điều mình *muốn*). Hiện hồ sơ chưa có hai
+trường này nên BE-S5-03 so khớp đối xứng hai giá trị tiêu chí — PO đã chốt bổ sung trường vào hồ sơ (review BE-S5-03).
+
+**Phạm vi**
+- Trong: thêm `religion` (tôn giáo của bản thân) và `childrenPlan` (kế hoạch con cái của bản thân) vào hồ sơ — domain,
+  `PUT /me/profile` DTO, migration `profile.profiles`, bắt buộc khi `submit: true` (hồ sơ cũ: cho phép null tới khi người
+  dùng cập nhật — ghi quyết định); `ProfileFacade.getMatchingProfile` trả thêm hai trường; read model
+  `matching.candidate_profiles` thêm cột tương ứng; `passesHardFilters` + `DrizzleCandidateFinder` đổi sang so **hồ sơ của
+  người kia ↔ tiêu chí của mình** theo hai chiều (`not_important` ở tiêu chí = bỏ qua; con cái `open` — chốt lại với PO).
+- Ngoài: đổi trọng số chấm điểm (giữ nguyên trừ khi PO yêu cầu).
+
+**Tiêu chí nghiệm thu**
+- [ ] AC1: A muốn bạn đời theo Phật giáo, B là Công giáo → B bị loại khỏi danh sách của A và A khỏi danh sách của B.
+- [ ] AC2: Hồ sơ cũ chưa có hai trường → hành vi lọc được định nghĩa rõ (ghi trong ARCHITECTURE) và có test.
+
+**Test bắt buộc:** Unit `passesHardFilters` dạng bảng; integration finder đối chiếu SQL ↔ domain trên lưới mẫu; HTTP profile.
+
+**File dự kiến:** `packages/modules/profile/**`, `packages/modules/matching/**`, `packages/contracts/src/profile/**`, migration profile + matching.
+
+**Contract / Event:** Migration thêm cột `profile.profiles` + `matching.candidate_profiles`; DTO profile.
+
+**Ghi chú:** Phát sinh từ review BE-S5-03 (PO chọn "thêm trường vào hồ sơ").

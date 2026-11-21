@@ -305,6 +305,9 @@ importers:
       '@tamgiao/module-matching':
         specifier: workspace:*
         version: link:../../packages/modules/matching
+      '@tamgiao/module-profile':
+        specifier: workspace:*
+        version: link:../../packages/modules/profile
       '@tamgiao/module-verification':
         specifier: workspace:*
         version: link:../../packages/modules/verification

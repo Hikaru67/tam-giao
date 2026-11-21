@@ -20,6 +20,8 @@ import {
   FakePaymentGateway,
 } from '@tamgiao/module-billing';
 import { ConsoleSmsSender, createIdentityModule } from '@tamgiao/module-identity';
+import { createMatchingWorker } from '@tamgiao/module-matching';
+import { createMatchingProfileReader } from '@tamgiao/module-profile';
 import { createKycMediaRetention } from '@tamgiao/module-verification';
 import { PgBoss } from 'pg-boss';
 import { loadWorkerConfig } from './config.js';
@@ -56,6 +58,12 @@ const billingWorker = createBillingWorker({
   }),
 });
 billingWorker.registerConsumers(bus);
+// Matching (BE-S5-03): read model `matching.candidate_profiles` từ ProfileCompleted / PreferencesUpdated (đọc lại
+// facade profile) + KycApproved / KycRejected (cờ verified).
+createMatchingWorker({
+  clock: new SystemClock(),
+  profiles: createMatchingProfileReader({ uow }),
+}).registerConsumers(bus);
 await registerConsumers({ boss, uow, bus, logger });
 for (const job of jobs) {
   await registerJob({ boss, uow, logger, ...job });
