@@ -2,7 +2,12 @@ import { OutboxWriter, type EventBus } from '@tamgiao/db';
 import type { AppEnv, UserAuthenticator } from '@tamgiao/http';
 import type { Clock, UnitOfWork } from '@tamgiao/kernel';
 import type { Hono, MiddlewareHandler } from 'hono';
-import { JoinConversation, ListMessagesAfter } from './application/conversation-access.js';
+import { JoinConversation, ListMessages } from './application/conversation-access.js';
+import {
+  GetIcebreakers,
+  ListMyConversations,
+  MarkConversationRead,
+} from './application/conversation-inbox.js';
 import type { MessageBroadcaster } from './application/ports/message-broadcaster.js';
 import {
   CloseConversationForMatch,
@@ -13,6 +18,7 @@ import { SendMessage } from './application/send-message.js';
 import type { MessageScreener } from './domain/message-policy.js';
 import { createContentScreener } from './domain/message-screener.js';
 import { registerConversationConsumers } from './infrastructure/conversation-consumers.js';
+import { DrizzleConversationReadRepository } from './infrastructure/drizzle-conversation-read-repository.js';
 import { DrizzleConversationRepository } from './infrastructure/drizzle-conversation-repository.js';
 import { DrizzleMessageRepository } from './infrastructure/drizzle-message-repository.js';
 import { ChatGateway, type ChatGatewayLogger } from './presentation/chat-gateway.js';
@@ -21,7 +27,7 @@ import { createMessageRoutes } from './presentation/message-routes.js';
 /**
  * Module messaging (Sprint 6): chat chỉ mở trong giai đoạn `DATING` của match. BE-S6-01: domain hội thoại/tin nhắn,
  * mở/đóng hội thoại theo event matching, use case `SendMessage`. BE-S6-02: WS gateway `/ws` + Redis pub/sub đa instance,
- * idempotency key phía client, `GET /me/conversations/:id/messages?after=` (BE-S6-04 mở rộng lịch sử).
+ * idempotency key phía client. BE-S6-04: hộp thư, lịch sử phân trang theo con trỏ, đánh dấu đã đọc, gợi ý phá băng.
  * Bộ lọc lừa đảo/che liên hệ ở BE-S6-03 (`createContentScreener`, mặc định của `createMessagingModule`).
  */
 
@@ -88,7 +94,7 @@ export interface MessagingModuleDeps {
   readonly clock: Clock;
   /** Sàng lọc nội dung tin. Bỏ trống = bộ lọc lừa đảo + che liên hệ (`createContentScreener`, BE-S6-03). */
   readonly screener?: MessageScreener;
-  /** Guard REST người dùng app (`GET /me/conversations/:id/messages`). */
+  /** Guard REST người dùng app (`/me/conversations…`). */
   readonly requireUser: MiddlewareHandler<AppEnv>;
   /** Xác thực access token ở handshake WS (`identity.facade.authenticateUser`). */
   readonly authenticateUser: UserAuthenticator;
@@ -101,7 +107,7 @@ export interface MessagingModuleDeps {
 
 export interface MessagingModule {
   readonly name: 'messaging';
-  /** `GET /me/conversations/:id/messages?after=` (BE-S6-02; BE-S6-04 mở rộng). */
+  /** `GET /me/conversations`, `GET …/:id/messages`, `POST …/:id/read`, `GET …/:id/icebreakers` (BE-S6-02/04). */
   readonly routes: Hono<AppEnv>;
   /** WebSocket gateway `/ws` — composition root gắn vào HTTP server (`attach`) và đóng khi tắt (`close`). */
   readonly realtime: ChatGateway;
@@ -122,20 +128,27 @@ export function createMessagingModule(deps: MessagingModuleDeps): MessagingModul
     screener: deps.screener ?? createContentScreener(),
   });
   const access = { uow: deps.uow, conversations: lifecycle.conversations, messages: lifecycle.messages };
+  const inbox = { ...access, clock: deps.clock, reads: new DrizzleConversationReadRepository() };
+  const markConversationRead = new MarkConversationRead(inbox);
   const realtime = new ChatGateway({
     authenticate: deps.authenticateUser,
     joinConversation: new JoinConversation(access),
     sendMessage,
+    markConversationRead,
     broadcaster: deps.broadcaster,
-    clock: deps.clock,
     ...(deps.logger === undefined ? {} : { logger: deps.logger }),
     ...(deps.heartbeat === undefined
       ? {}
       : { heartbeatIntervalMs: deps.heartbeat.intervalMs, heartbeatTimeoutMs: deps.heartbeat.timeoutMs }),
   });
   const routes = createMessageRoutes({
-    listMessagesAfter: new ListMessagesAfter(access),
+    listMessages: new ListMessages(access),
+    listMyConversations: new ListMyConversations(inbox),
+    markConversationRead,
+    getIcebreakers: new GetIcebreakers(inbox),
+    broadcaster: deps.broadcaster,
     requireUser: deps.requireUser,
+    onPublishError: (error) => deps.logger?.warn({ err: error }, 'realtime publish failed'),
   });
   return { name: 'messaging', routes, realtime, commands: { sendMessage } };
 }

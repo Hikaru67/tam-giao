@@ -148,6 +148,13 @@
       "when": 1795249013579,
       "tag": "0020_messaging_client_message_id",
       "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1795259083305,
+      "tag": "0021_messaging_conversation_reads",
+      "breakpoints": true
     }
   ]
 }

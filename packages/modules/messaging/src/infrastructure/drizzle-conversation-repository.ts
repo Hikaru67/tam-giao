@@ -1,6 +1,6 @@
 import { asDbTx, type OutboxWriter } from '@tamgiao/db';
 import type { Tx } from '@tamgiao/kernel';
-import { and, eq } from 'drizzle-orm';
+import { and, eq, or } from 'drizzle-orm';
 import type { ConversationRepository } from '../application/ports/conversation-repository.js';
 import {
   CONVERSATION_CLOSE_REASONS,
@@ -10,6 +10,7 @@ import {
   type ConversationId,
   type ConversationMatchId,
   type ConversationStatus,
+  type ConversationUserId,
 } from '../domain/conversation.js';
 import { conversations } from './schema.js';
 
@@ -103,5 +104,14 @@ export class DrizzleConversationRepository implements ConversationRepository {
       .where(eq(conversations.matchId, matchId.toLowerCase()))
       .for('update');
     return row ? toConversation(row) : null;
+  }
+
+  async listByParticipant(tx: Tx, userId: ConversationUserId): Promise<readonly Conversation[]> {
+    const id = userId.toLowerCase();
+    const rows = await asDbTx(tx)
+      .select()
+      .from(conversations)
+      .where(or(eq(conversations.userA, id), eq(conversations.userB, id)));
+    return rows.map(toConversation);
   }
 }

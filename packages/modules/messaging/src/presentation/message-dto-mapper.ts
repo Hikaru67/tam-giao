@@ -1,6 +1,7 @@
-import type { ConversationMessageDto } from '@tamgiao/contracts';
+import type { ConversationMessageDto, ConversationSummaryDto } from '@tamgiao/contracts';
 import type { ConversationMessageView } from '../application/conversation-access.js';
-import type { RealtimeMessage } from '../application/ports/message-broadcaster.js';
+import type { ConversationReadView, ConversationSummaryView } from '../application/conversation-inbox.js';
+import type { ConversationBroadcast, RealtimeMessage } from '../application/ports/message-broadcaster.js';
 import type { SentMessageView, SentSystemMessageView } from '../application/send-message.js';
 
 /** Tin vừa gửi (view của `SendMessage`) → bản đẩy realtime (mang cả `body` và `maskedBody`). */
@@ -42,6 +43,33 @@ export const historyToDto = (v: ConversationMessageView): ConversationMessageDto
   masked: v.masked,
   clientMessageId: v.clientMessageId,
   sentAt: v.sentAt.toISOString(),
+});
+
+/** Hộp thư (view application) → DTO. */
+export const summaryToDto = (v: ConversationSummaryView): ConversationSummaryDto => ({
+  conversationId: v.conversationId,
+  peerUserId: v.peerUserId,
+  status: v.status,
+  openedAt: v.openedAt.toISOString(),
+  closesAt: v.closesAt.toISOString(),
+  datingDay: v.datingDay,
+  datingDays: v.datingDays,
+  lastMessage: v.lastMessage ? historyToDto(v.lastMessage) : null,
+  unreadCount: v.unreadCount,
+  lastReadMessageId: v.lastReadMessageId,
+});
+
+/** Con trỏ đã đọc vừa tiến → sự kiện realtime `message.read` cho phòng (REST: `originConnectionId = null`). */
+export const readBroadcast = (
+  v: ConversationReadView,
+  originConnectionId: string | null,
+): ConversationBroadcast => ({
+  type: 'message.read',
+  conversationId: v.conversationId,
+  originConnectionId,
+  readerId: v.readerId,
+  messageId: v.lastReadMessageId,
+  readAt: v.readAt.toISOString(),
 });
 
 /**

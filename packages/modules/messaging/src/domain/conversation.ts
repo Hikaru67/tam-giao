@@ -1,3 +1,4 @@
+import { DATING_DAYS } from '@tamgiao/contracts/constants';
 import { AggregateRoot, fail, ok, type DomainError, type Id, type Result } from '@tamgiao/kernel';
 import { CONVERSATION_CLOSED, CONVERSATION_OPENED } from './messaging-events.js';
 
@@ -6,6 +7,8 @@ export type ConversationId = Id<'Conversation'>;
 export type ConversationUserId = string;
 /** Id match (module matching) — messaging chỉ giữ tham chiếu, nhận qua event. */
 export type ConversationMatchId = string;
+
+const DAY_MS = 24 * 60 * 60 * 1000;
 
 export const CONVERSATION_STATUSES = ['OPEN', 'CLOSED'] as const;
 export type ConversationStatus = (typeof CONVERSATION_STATUSES)[number];
@@ -159,6 +162,30 @@ export class Conversation extends AggregateRoot<ConversationId> {
 
   get closesAt(): Date {
     return new Date(this.state.closesAt.getTime());
+  }
+
+  get openedAt(): Date {
+    return new Date(this.state.openedAt.getTime());
+  }
+
+  /** Người còn lại trong cặp của `userId`; `null` khi `userId` không phải participant. */
+  peerOf(userId: ConversationUserId): ConversationUserId | null {
+    if (!this.isParticipant(userId)) return null;
+    const id = userId.toLowerCase();
+    return this.state.participants.find((p) => p !== id) ?? null;
+  }
+
+  /**
+   * Ngày thứ mấy của giai đoạn tìm hiểu lúc `now` (BE-S6-04, "ngày X/`DATING_DAYS`"): ngày 1 = 24 giờ đầu kể từ
+   * `openedAt`. Mốc tính dừng ở `closesAt` hoặc `closedAt` (hội thoại đã đóng không tăng ngày nữa); kết quả kẹp trong
+   * 1…`DATING_DAYS`.
+   */
+  datingDay(now: Date): number {
+    const stops = [now.getTime(), this.state.closesAt.getTime()];
+    if (this.state.closedAt !== null) stops.push(this.state.closedAt.getTime());
+    const elapsed = Math.min(...stops) - this.state.openedAt.getTime();
+    const day = Math.floor(elapsed / DAY_MS) + 1;
+    return Math.min(Math.max(day, 1), DATING_DAYS);
   }
 
   isParticipant(userId: ConversationUserId): boolean {

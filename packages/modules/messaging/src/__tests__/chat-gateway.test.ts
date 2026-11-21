@@ -7,11 +7,13 @@ import { FakeClock, addDuration, fail, newId, ok, type Tx } from '@tamgiao/kerne
 import { WebSocket } from 'ws';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { JoinConversation } from '../application/conversation-access.js';
+import { MarkConversationRead } from '../application/conversation-inbox.js';
 import { OpenConversationForMatch } from '../application/conversation-lifecycle.js';
 import { SendMessage } from '../application/send-message.js';
 import type { MessageScreener } from '../domain/message-policy.js';
 import { ChatGateway } from '../presentation/chat-gateway.js';
 import {
+  InMemoryConversationReadRepository,
   InMemoryConversationRepository,
   InMemoryMessageBroadcaster,
   InMemoryMessageRepository,
@@ -46,6 +48,7 @@ let clock: FakeClock;
 let conversations: InMemoryConversationRepository;
 let messages: InMemoryMessageRepository;
 let broadcaster: InMemoryMessageBroadcaster;
+let reads: InMemoryConversationReadRepository;
 let conversationId: string;
 const running: { gateway: ChatGateway; server: Server }[] = [];
 
@@ -55,8 +58,8 @@ async function startInstance(heartbeat?: { intervalMs: number; timeoutMs: number
     authenticate,
     joinConversation: new JoinConversation({ uow, conversations, messages }),
     sendMessage: new SendMessage({ uow, clock, conversations, messages, screener: maskingScreener }),
+    markConversationRead: new MarkConversationRead({ uow, clock, conversations, messages, reads }),
     broadcaster,
-    clock,
     ...(heartbeat
       ? { heartbeatIntervalMs: heartbeat.intervalMs, heartbeatTimeoutMs: heartbeat.timeoutMs }
       : {}),
@@ -73,6 +76,7 @@ beforeEach(async () => {
   conversations = new InMemoryConversationRepository();
   messages = new InMemoryMessageRepository();
   broadcaster = new InMemoryMessageBroadcaster();
+  reads = new InMemoryConversationReadRepository();
   tokens.clear();
   tokens.set('tok-a', A);
   tokens.set('tok-a2', A);
@@ -306,7 +310,8 @@ describe('ChatGateway — typing / đã đọc', () => {
       userId: A,
       isTyping: true,
     });
-    const messageId = newId();
+    a.send({ type: 'message.send', conversationId, clientMessageId: randomUUID(), body: 'chào' });
+    const { messageId } = (await b.next<'message.new'>((f) => f.type === 'message.new')).message;
     b.send({ type: 'message.read', conversationId, messageId });
     expect(await a.next((f) => f.type === 'message.read')).toEqual({
       type: 'message.read',
@@ -315,6 +320,16 @@ describe('ChatGateway — typing / đã đọc', () => {
       messageId,
       readAt: T0.toISOString(),
     });
+    // BE-S6-04: con trỏ được lưu; đọc lại tin cũ hơn → không phát nữa; tin lạ → error NOT_FOUND, giữ kết nối.
+    expect([...reads.states.values()]).toMatchObject([{ userId: B, lastReadMessageId: messageId }]);
+    b.send({ type: 'message.read', conversationId, messageId });
+    b.send({ type: 'message.read', conversationId, messageId: newId() });
+    expect(await b.next((f) => f.type === 'error')).toMatchObject({
+      type: 'error',
+      code: 'NOT_FOUND',
+      conversationId,
+    });
+    expect(a.ofType('message.read')).toHaveLength(1);
     // Rời phòng → không nhận nữa.
     b.send({ type: 'conversation.leave', conversationId });
     b.send({ type: 'ping' });

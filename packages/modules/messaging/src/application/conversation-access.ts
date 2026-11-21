@@ -56,15 +56,19 @@ export class JoinConversation {
   }
 }
 
-/** Số tin tối đa một lần lấy (client nối lại lấy tin bị lỡ). */
-export const MESSAGES_AFTER_MAX_LIMIT = 100;
+/** Số tin tối đa một lần lấy (lấy bù khi nối lại / một trang lịch sử). */
+export const MESSAGES_MAX_LIMIT = 100;
 
-export interface ListMessagesAfterQuery {
+export type ListMessagesError = ConversationAccessError | DomainError<'VALIDATION_FAILED'>;
+
+export interface ListMessagesQuery {
   readonly conversationId: string;
   readonly userId: string;
-  /** Id tin (UUID v7) cuối cùng client đã có; bỏ trống = từ tin đầu tiên. */
+  /** Lấy **tới**: các tin có id (UUID v7) > `after` — client nối lại lấy tin bị lỡ. */
   readonly after?: string;
-  /** 1…`MESSAGES_AFTER_MAX_LIMIT` (ngoài khoảng bị kẹp lại). */
+  /** Lấy **lùi**: các tin có id < `before` — cuộn lên xem lịch sử cũ hơn. Không dùng chung với `after`. */
+  readonly before?: string;
+  /** 1…`MESSAGES_MAX_LIMIT` (ngoài khoảng bị kẹp lại). */
   readonly limit: number;
 }
 
@@ -84,9 +88,10 @@ export interface ConversationMessageView {
   readonly sentAt: Date;
 }
 
-export interface MessagesAfterView {
+export interface MessagesPageView {
+  /** Luôn **tăng dần** theo id (cũ → mới), ở cả ba chế độ. */
   readonly items: readonly ConversationMessageView[];
-  /** Còn tin sau tin cuối của trang này. */
+  /** Chế độ `after`: còn tin mới hơn tin cuối trang. Chế độ `before`/mặc định: còn tin cũ hơn tin đầu trang. */
   readonly hasMore: boolean;
 }
 
@@ -107,37 +112,47 @@ export function toConversationMessageView(s: MessageState, viewerId: string): Co
 }
 
 /**
- * Tin của hội thoại sau một tin (BE-S6-02, bản tối thiểu cho client nối lại WS lấy tin bị lỡ; BE-S6-04 mở rộng):
- * chỉ người trong cặp (`NOT_FOUND`/`NOT_PARTICIPANT` như `JoinConversation`), `after` phải là UUID v7
- * (`INVALID_ID`), tăng dần theo id, tối đa `limit` tin + cờ `hasMore`. Chỉ tin người xem được thấy (`visible_to` null
- * hoặc = người xem — lọc ở DB, kiểm lại bằng `Message.isVisibleTo`), nội dung theo `Message.bodyFor(viewer)`.
+ * Trang tin nhắn của hội thoại (BE-S6-02 tạo bản `after`, BE-S6-04 thêm phân trang lùi). Chỉ người trong cặp
+ * (`NOT_FOUND`/`NOT_PARTICIPANT` như `JoinConversation`); con trỏ phải là UUID v7 (`INVALID_ID`); `after` và `before`
+ * cùng lúc → `VALIDATION_FAILED`. Ba chế độ, trang luôn trả tăng dần + cờ `hasMore`:
+ * - `after`: các tin id > `after` (tối đa `limit`, cũ nhất trước) — lấy bù khi nối lại WS.
+ * - `before`: `limit` tin ngay trước `before` — cuộn lên; trang kế tiếp dùng `before` = `messageId` đầu trang.
+ * - không con trỏ: `limit` tin mới nhất (mở màn chat).
+ *
+ * Con trỏ là id tin (UUID v7, tăng theo thời gian) chứ không phải offset → tin mới chen vào giữa hai lần gọi không làm
+ * trùng/sót tin ở các trang cũ (AC1). Chỉ tin người xem được thấy (`visible_to` null hoặc = người xem — lọc ở DB, kiểm
+ * lại bằng `Message.isVisibleTo`), nội dung theo `Message.bodyFor(viewer)`.
  */
-export class ListMessagesAfter {
+export class ListMessages {
   constructor(private readonly deps: ConversationAccessDeps) {}
 
-  async execute(query: ListMessagesAfterQuery): Promise<Result<MessagesAfterView, ConversationAccessError>> {
+  async execute(query: ListMessagesQuery): Promise<Result<MessagesPageView, ListMessagesError>> {
     const id = parseId<'Conversation'>(query.conversationId);
     if (id.isErr()) return err(id.error);
-    let afterId: MessageId | null = null;
-    if (query.after !== undefined) {
-      const after = parseId<'Message'>(query.after);
-      if (after.isErr()) return err(after.error);
-      afterId = after.value;
+    if (query.after !== undefined && query.before !== undefined) {
+      return fail('VALIDATION_FAILED', { fields: ['after', 'before'] });
     }
-    const limit = Math.min(Math.max(Math.trunc(query.limit), 1), MESSAGES_AFTER_MAX_LIMIT);
+    const cursorRaw = query.after ?? query.before;
+    let cursor: MessageId | null = null;
+    if (cursorRaw !== undefined) {
+      const parsed = parseId<'Message'>(cursorRaw);
+      if (parsed.isErr()) return err(parsed.error);
+      cursor = parsed.value;
+    }
+    const limit = Math.min(Math.max(Math.trunc(query.limit), 1), MESSAGES_MAX_LIMIT);
+    const forward = query.after !== undefined;
 
-    return this.deps.uow.run(async (tx): Promise<Result<MessagesAfterView, ConversationAccessError>> => {
+    return this.deps.uow.run(async (tx): Promise<Result<MessagesPageView, ListMessagesError>> => {
       const conversation = await this.deps.conversations.findById(tx, id.value);
       if (!conversation) return fail('NOT_FOUND');
       if (!conversation.isParticipant(query.userId)) return fail('NOT_PARTICIPANT');
-      const rows = await this.deps.messages.listAfter(tx, {
-        conversationId: conversation.id,
-        viewerId: query.userId,
-        afterId,
-        limit: limit + 1,
-      });
-      const items = rows
-        .slice(0, limit)
+      const window = { conversationId: conversation.id, viewerId: query.userId, limit: limit + 1 };
+      const rows = forward
+        ? await this.deps.messages.listAfter(tx, { ...window, afterId: cursor })
+        : await this.deps.messages.listBefore(tx, { ...window, beforeId: cursor });
+      const page = rows.slice(0, limit);
+      if (!forward) page.reverse();
+      const items = page
         .filter((s) => Message.restore(s).isVisibleTo(query.userId))
         .map((s) => toConversationMessageView(s, query.userId));
       return ok({ items, hasMore: rows.length > limit });

@@ -72,7 +72,11 @@ export const wsClientEventSchema = z.discriminatedUnion('type', [
   z.object({
     type: z.literal('message.read'),
     conversationId: conversationIdField,
-    /** Tin mới nhất người dùng đã đọc. */
+    /**
+     * Tin mới nhất người dùng đã đọc. BE-S6-04: được **lưu** như `POST /me/conversations/:id/read` (con trỏ chỉ tiến);
+     * tin không thuộc hội thoại → frame `error` `NOT_FOUND` (giữ kết nối). Chỉ phát `message.read` cho phòng khi con trỏ
+     * thật sự tiến.
+     */
     messageId: z.uuid(),
   }),
   z.object({ type: z.literal('typing'), conversationId: conversationIdField, isTyping: z.boolean() }),

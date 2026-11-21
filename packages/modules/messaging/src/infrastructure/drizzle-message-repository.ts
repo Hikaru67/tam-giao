@@ -1,6 +1,6 @@
 import { asDbTx, type OutboxWriter } from '@tamgiao/db';
 import type { Tx } from '@tamgiao/kernel';
-import { and, asc, count, eq, gt, isNull, or, type InferSelectModel } from 'drizzle-orm';
+import { and, asc, count, desc, eq, gt, isNull, lt, ne, or, type InferSelectModel } from 'drizzle-orm';
 import type { MessageRepository } from '../application/ports/message-repository.js';
 import type { ConversationId, ConversationUserId } from '../domain/conversation.js';
 import type {
@@ -125,5 +125,57 @@ export class DrizzleMessageRepository implements MessageRepository {
       .orderBy(asc(messages.id))
       .limit(input.limit);
     return rows.map(toState);
+  }
+
+  async findById(tx: Tx, id: MessageId): Promise<MessageState | null> {
+    const [row] = await asDbTx(tx).select().from(messages).where(eq(messages.id, id)).limit(1);
+    return row ? toState(row) : null;
+  }
+
+  async listBefore(
+    tx: Tx,
+    input: {
+      readonly conversationId: ConversationId;
+      readonly viewerId: ConversationUserId;
+      readonly beforeId: MessageId | null;
+      readonly limit: number;
+    },
+  ): Promise<readonly MessageState[]> {
+    const rows = await asDbTx(tx)
+      .select()
+      .from(messages)
+      .where(
+        and(
+          eq(messages.conversationId, input.conversationId),
+          or(isNull(messages.visibleTo), eq(messages.visibleTo, input.viewerId.toLowerCase())),
+          input.beforeId === null ? undefined : lt(messages.id, input.beforeId),
+        ),
+      )
+      .orderBy(desc(messages.id))
+      .limit(input.limit);
+    return rows.map(toState);
+  }
+
+  async countUnread(
+    tx: Tx,
+    input: {
+      readonly conversationId: ConversationId;
+      readonly viewerId: ConversationUserId;
+      readonly afterId: MessageId | null;
+    },
+  ): Promise<number> {
+    const viewerId = input.viewerId.toLowerCase();
+    const [row] = await asDbTx(tx)
+      .select({ n: count() })
+      .from(messages)
+      .where(
+        and(
+          eq(messages.conversationId, input.conversationId),
+          or(isNull(messages.visibleTo), eq(messages.visibleTo, viewerId)),
+          or(isNull(messages.senderId), ne(messages.senderId, viewerId)),
+          input.afterId === null ? undefined : gt(messages.id, input.afterId),
+        ),
+      );
+    return row?.n ?? 0;
   }
 }
