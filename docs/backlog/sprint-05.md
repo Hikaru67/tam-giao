@@ -151,7 +151,7 @@ Thử đề xuất người đang bận → `USER_BUSY`. Tua thời gian 24h →
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| matching | application, infrastructure | P0 | 1.5d | BE-S5-04 | BE-S5-05 | IN_REVIEW |
+| matching | application, infrastructure | P0 | 1.5d | BE-S5-04 | BE-S5-05 | DONE |
 
 **Mục tiêu:** Cung cấp dữ liệu cho màn 7, 8, 9 và admin (đề xuất mai mối, bảng theo dõi cặp).
 
@@ -177,7 +177,7 @@ Thử đề xuất người đang bận → `USER_BUSY`. Tua thời gian 24h →
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| matching | presentation | P0 | 1d | BE-S5-05, BE-S5-06 | — | IN_REVIEW |
+| matching | presentation | P0 | 1d | BE-S5-05, BE-S5-06 | — | DONE |
 
 **Mục tiêu:** Mở API cho mobile và admin.
 
