@@ -14,7 +14,7 @@ import { Hono } from 'hono';
 import { createMiddleware } from 'hono/factory';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { createProfileModule } from '../index.js';
-import { FakeVerificationFacade } from './fakes.js';
+import { FakeBillingFacade, FakeVerificationFacade } from './fakes.js';
 
 let database: Database;
 let app: Hono<AppEnv>;
@@ -57,6 +57,7 @@ beforeAll(() => {
     uploads,
     storage,
     verification: new FakeVerificationFacade(),
+    billing: new FakeBillingFacade(),
     requireUser,
   });
   const logger = createLogger({ service: 'api', level: 'silent', destination: { write: () => undefined } });

@@ -21,7 +21,12 @@ import { RejectionReason } from '../domain/rejection-reason.js';
 import { DrizzleKycSubmissionRepository } from '../infrastructure/drizzle-kyc-submission-repository.js';
 import { FAKE_EKYC_ID_CARD, FakeEkycProvider } from '../infrastructure/ekyc/fake-ekyc-provider.js';
 import { createVerificationModule } from '../index.js';
-import { FakeApplicantDirectory, FakeApplicantProfileReader, RecordingAuditLogger } from './fakes.js';
+import {
+  FakeApplicantDirectory,
+  FakeApplicantProfileReader,
+  FakePaymentStatusReader,
+  RecordingAuditLogger,
+} from './fakes.js';
 
 /** Mọi lời gọi eKYC trả CÙNG một số CCCD (mặc định của fake) → dùng để test trùng CCCD giữa 2 tài khoản. */
 const CCCD = FAKE_EKYC_ID_CARD.cccdNumber;
@@ -34,6 +39,7 @@ let repo: DrizzleKycSubmissionRepository;
 const logLines: string[] = [];
 const clock = new FakeClock(new Date('2026-11-18T01:00:00.000Z'));
 const applicants = new FakeApplicantProfileReader();
+const paymentStatus = new FakePaymentStatusReader();
 const encryptor = new LocalKeyEncryptor({ currentVersion: 1, keys: new Map([[1, Buffer.alloc(32, 7)]]) });
 const blindIndexer = new HmacBlindIndexer(Buffer.alloc(32, 9));
 
@@ -73,6 +79,7 @@ beforeAll(() => {
     uploads,
     ekyc: new FakeEkycProvider(),
     applicants,
+    payments: paymentStatus,
     requireUser,
     applicantDirectory: new FakeApplicantDirectory(),
     storage,
@@ -143,6 +150,19 @@ describe('POST /me/kyc, GET /me/kyc', () => {
     const again = await get(user);
     expect(again.status).toBe(200);
     expect(kycProgressResponseSchema.parse(await again.json())).toEqual(body);
+  });
+
+  it('not paid for verification → 403 PAYMENT_REQUIRED, nothing stored (BE-S4-03 AC4)', async () => {
+    const user = newId<'User'>();
+    paymentStatus.unpaid.add(user);
+    const res = await post(user, await docsFor(user));
+    expect(res.status).toBe(403);
+    expect(await code(res)).toBe('PAYMENT_REQUIRED');
+    const { rows } = await database.pool.query(
+      'select count(*)::int as n from verification.kyc_submissions where user_id = $1',
+      [user],
+    );
+    expect(rows[0]).toEqual({ n: 0 });
   });
 
   it('GET before submitting → 200 NOT_SUBMITTED with 4 pending steps', async () => {

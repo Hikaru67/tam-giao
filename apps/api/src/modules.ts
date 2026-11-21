@@ -8,6 +8,7 @@ import {
 } from '@tamgiao/db';
 import { requireUser, type AppEnv } from '@tamgiao/http';
 import type { Clock, UnitOfWork } from '@tamgiao/kernel';
+import { FakePaymentGateway, createBillingModule } from '@tamgiao/module-billing';
 import { ConsoleSmsSender, createIdentityModule } from '@tamgiao/module-identity';
 import { createProfileModule } from '@tamgiao/module-profile';
 import {
@@ -16,6 +17,7 @@ import {
   createVerificationModule,
   type ApplicantDirectory,
   type ApplicantProfileReader,
+  type PaymentStatusReader,
 } from '@tamgiao/module-verification';
 import type { Hono } from 'hono';
 import type { ApiConfig } from './config.js';
@@ -63,6 +65,28 @@ export function buildModules({ config, uow, clock }: ModuleDeps): readonly ApiMo
     routes: createUploadRoutes({ uploads, requireUser: userGuard }),
   };
 
+  // Billing (Sprint 4): quán đối tác + nhân viên quán (BE-S4-06), thanh toán xác thực + webhook (BE-S4-03).
+  // Khoá partner dẫn xuất từ AUTH_SECRET (HKDF, tách miền). Billing không phụ thuộc module nào khác nên tạo trước
+  // verification/profile — hai module này đọc `billing.facade` (chặn nộp eKYC khi chưa thanh toán, `GET /me`).
+  // `PAYMENT_GATEWAY` hiện chỉ có `fake` (D3) — config đã chặn ở production; endpoint giả lập chỉ mount ngoài production.
+  const paymentGateway = new FakePaymentGateway({ secret: config.payment.webhookSecret, clock });
+  const billing = createBillingModule({
+    uow,
+    clock,
+    secret: config.auth.secret,
+    requireUser: userGuard,
+    requireAdmin: identity.requireAdmin,
+    auditLogger: identity.auditLogger,
+    paymentGateway,
+    paymentGatewayName: config.payment.gateway,
+    paymentReturnUrl: config.payment.returnUrl,
+    devPaymentSimulator:
+      config.payment.gateway === 'fake' && config.nodeEnv !== 'production' ? paymentGateway : undefined,
+  });
+  const paymentStatus: PaymentStatusReader = {
+    hasPaidVerification: (userId) => billing.facade.hasPaidVerification(userId),
+  };
+
   // Profile ↔ verification cần facade của nhau ở runtime (không phụ thuộc vòng ở package): verification đọc họ tên
   // để đối chiếu OCR, profile đọc trạng thái xác thực cho `GET /me`. Tạo verification trước; `applicants` chuyển
   // tiếp sang `profile.facade` lúc xử lý request (khi đó `profile` đã được khởi tạo).
@@ -88,6 +112,7 @@ export function buildModules({ config, uow, clock }: ModuleDeps): readonly ApiMo
     uploads,
     ekyc,
     applicants,
+    payments: paymentStatus,
     applicantDirectory,
     storage,
     requireUser: userGuard,
@@ -101,8 +126,9 @@ export function buildModules({ config, uow, clock }: ModuleDeps): readonly ApiMo
     uploads,
     storage,
     verification: verification.facade,
+    billing: billing.facade,
     requireUser: userGuard,
   });
 
-  return [identity, uploadModule, profile, verification];
+  return [identity, uploadModule, profile, verification, billing];
 }

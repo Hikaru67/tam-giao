@@ -15,6 +15,7 @@
     "@tamgiao/db": "workspace:*",
     "@tamgiao/http": "workspace:*",
     "@tamgiao/kernel": "workspace:*",
+    "@tamgiao/module-billing": "workspace:*",
     "@tamgiao/module-identity": "workspace:*",
     "@tamgiao/module-profile": "workspace:*",
     "@tamgiao/module-verification": "workspace:*",

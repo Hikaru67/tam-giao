@@ -32,6 +32,7 @@ import { RecordInterviewResult } from './application/interview/record-interview-
 import { RescheduleInterview } from './application/interview/reschedule-interview.js';
 import type { ApplicantProfileReader } from './application/ports/applicant-profile-reader.js';
 import type { EkycProvider } from './application/ports/ekyc-provider.js';
+import type { PaymentStatusReader } from './application/ports/payment-status-reader.js';
 import { GetVerificationSummary } from './application/get-verification-summary.js';
 import { SubmitKyc } from './application/submit-kyc.js';
 import { PurgeExpiredKycMedia } from './application/purge-expired-kyc-media.js';
@@ -51,6 +52,7 @@ export type {
   VerificationSummary,
 } from './application/facade.js';
 export type { ApplicantProfileReader } from './application/ports/applicant-profile-reader.js';
+export type { PaymentStatusReader } from './application/ports/payment-status-reader.js';
 export type {
   KycMediaPurgeSummary,
   PurgeExpiredKycMedia,
@@ -78,6 +80,8 @@ export interface VerificationModuleDeps {
   readonly ekyc: EkycProvider;
   /** Họ tên + ngày sinh từ hồ sơ (facade profile) để đối chiếu với OCR. */
   readonly applicants: ApplicantProfileReader;
+  /** Trạng thái thanh toán xác thực (facade billing, BE-S4-03) — chặn `SubmitKyc` khi chưa thanh toán. */
+  readonly payments: PaymentStatusReader;
   /** Guard người dùng app — `requireUser(identity.facade.authenticateUser)`. */
   readonly requireUser: MiddlewareHandler<AppEnv>;
   /** Họ tên / nghề nghiệp người nộp cho hàng chờ duyệt (facade profile, BE-S3-04). */
@@ -114,6 +118,7 @@ export function createVerificationModule(deps: VerificationModuleDeps): Verifica
       uploads: deps.uploads,
       ekyc: deps.ekyc,
       applicants: deps.applicants,
+      payments: deps.payments,
     }),
     getMyKyc: new GetMyKyc({ uow, submissions }),
     requireUser: deps.requireUser,

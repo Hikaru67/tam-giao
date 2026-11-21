@@ -71,6 +71,27 @@
       "when": 1794977465327,
       "tag": "0009_verification_interview_slots",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1794989025226,
+      "tag": "0010_billing_partners",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1795011073923,
+      "tag": "0011_billing_payments_ledger_vouchers",
+      "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1795013582620,
+      "tag": "0012_billing_reconciliation_reports",
+      "breakpoints": true
     }
   ]
 }

@@ -13,11 +13,20 @@ import {
 } from '@tamgiao/db';
 import { PRESIGNED_URL_TTL_SECONDS } from '@tamgiao/contracts';
 import { SystemClock } from '@tamgiao/kernel';
+import {
+  createBillingWorker,
+  createLedgerReconciliationJob,
+  createVoucherExpiryJob,
+  FakePaymentGateway,
+} from '@tamgiao/module-billing';
 import { ConsoleSmsSender, createIdentityModule } from '@tamgiao/module-identity';
 import { createKycMediaRetention } from '@tamgiao/module-verification';
 import { PgBoss } from 'pg-boss';
 import { loadWorkerConfig } from './config.js';
+import { registerBillingRefundJobs } from './jobs/billing-refund.js';
 import { registerKycMediaRetentionJob } from './jobs/kyc-media-retention.js';
+import { registerLedgerReconciliationJob } from './jobs/ledger-reconciliation.js';
+import { registerVoucherExpiryJob } from './jobs/voucher-expiry.js';
 import { registerWorkers } from './registry.js';
 
 /** Composition root của worker: relay outbox → hàng đợi consumer, và chạy job hẹn giờ. */
@@ -35,6 +44,18 @@ await boss.start();
 
 const bus = new EventBus();
 const jobs = registerWorkers(bus);
+// Billing (BE-S4-04): consumer KycRejected (hoàn tiền) + KycApproved (đặt hạn voucher), job hoàn tiền bên dưới.
+// Fake trong worker là instance khác với API → không biết giao dịch do API tạo; `acceptUnknownRefunds` để hoàn
+// được ở dev. Config đã cấm `fake` ở production.
+const billingWorker = createBillingWorker({
+  uow,
+  clock: new SystemClock(),
+  paymentGateway: new FakePaymentGateway({
+    secret: config.payment.webhookSecret,
+    acceptUnknownRefunds: true,
+  }),
+});
+billingWorker.registerConsumers(bus);
 await registerConsumers({ boss, uow, bus, logger });
 for (const job of jobs) {
   await registerJob({ boss, uow, logger, ...job });
@@ -60,6 +81,25 @@ await registerKycMediaRetentionJob({
   purge: createKycMediaRetention({ uow, clock, storage, auditLogger: identity.auditLogger }),
   ...config.jobs.kycMediaRetention,
 });
+
+// Job chuyển voucher quá hạn sang EXPIRED (BE-S4-05).
+await registerVoucherExpiryJob({
+  boss,
+  logger,
+  expirer: createVoucherExpiryJob({ uow, clock }),
+  ...config.jobs.voucherExpiry,
+});
+
+// Đối soát ledger hằng ngày (BE-S4-07): lệch → log error + báo cáo MISMATCH.
+await registerLedgerReconciliationJob({
+  boss,
+  logger,
+  reconciler: createLedgerReconciliationJob({ uow, clock }),
+  ...config.jobs.ledgerReconciliation,
+});
+
+// Hoàn tiền (BE-S4-04): job từng khoản (retry backoff) + điều phối REFUND_PENDING + cảnh báo SLA.
+await registerBillingRefundJobs({ boss, logger, billing: billingWorker });
 
 const relay = new OutboxRelay({ uow, boss, bus, logger });
 relay.start(RELAY_INTERVAL_MS);

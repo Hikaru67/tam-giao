@@ -43,6 +43,11 @@ describe('api config', () => {
       auth: { secret: Buffer.from('tamgiao-local-dev-auth-secret-01') },
       sms: { provider: 'console' },
       ekyc: { provider: 'fake', timeoutMs: 10_000, maxAttempts: 2, backoffMs: 500 },
+      payment: {
+        gateway: 'fake',
+        webhookSecret: 'tamgiao-local-payment-webhook-secret',
+        returnUrl: 'tamgiao://payments/return',
+      },
     });
   });
 
@@ -60,15 +65,17 @@ describe('api config', () => {
         'DATA_MASTER_KEYS',
         'BLIND_INDEX_KEY',
         'AUTH_SECRET',
+        'PAYMENT_WEBHOOK_SECRET',
       ]);
     }
   });
 
-  it('khoá quá ngắn hoặc SMS console / eKYC fake ở production → ConfigError, không in giá trị', () => {
+  it('khoá quá ngắn hoặc SMS console / eKYC fake / cổng thanh toán fake ở production → ConfigError, không in giá trị', () => {
     const base = envExample();
     for (const [override, variables] of [
       [{ AUTH_SECRET: Buffer.from('short').toString('base64') }, ['AUTH_SECRET']],
-      [{ NODE_ENV: 'production' }, ['SMS_PROVIDER', 'EKYC_PROVIDER']],
+      [{ NODE_ENV: 'production' }, ['SMS_PROVIDER', 'EKYC_PROVIDER', 'PAYMENT_GATEWAY']],
+      [{ PAYMENT_WEBHOOK_SECRET: 'short' }, ['PAYMENT_WEBHOOK_SECRET']],
       [{ EKYC_MAX_ATTEMPTS: '0' }, ['EKYC_MAX_ATTEMPTS']],
     ] as const) {
       try {
@@ -78,6 +85,7 @@ describe('api config', () => {
         expect(error).toBeInstanceOf(ConfigError);
         expect((error as ConfigError).problems.map((p) => p.split(':')[0])).toEqual(variables);
         expect((error as ConfigError).message).not.toContain(base.AUTH_SECRET);
+        expect((error as ConfigError).message).not.toContain(base.PAYMENT_WEBHOOK_SECRET);
       }
     }
   });

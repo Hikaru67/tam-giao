@@ -15,7 +15,7 @@ voucher `ACTIVE` → quán quét QR → `REDEEMED` (quét lần 2 bị từ ch�
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| billing | domain | P0 | 2d | Sprint 1 | BE-S4-02, BE-S4-06 | TODO |
+| billing | domain | P0 | 2d | Sprint 1 | BE-S4-02, BE-S4-06 | DONE |
 
 **Mục tiêu:** Mô hình hoá tiền và voucher chính xác, không thể sai lệch.
 
@@ -42,7 +42,7 @@ voucher `ACTIVE` → quán quét QR → `REDEEMED` (quét lần 2 bị từ ch�
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| billing | application, infrastructure | P0 | 2d | Sprint 1 | BE-S4-01 | TODO |
+| billing | application, infrastructure | P0 | 2d | Sprint 1 | BE-S4-01 | DONE |
 
 **Mục tiêu:** Tách cổng thanh toán khỏi nghiệp vụ (chưa chốt D3).
 
@@ -68,7 +68,7 @@ voucher `ACTIVE` → quán quét QR → `REDEEMED` (quét lần 2 bị từ ch�
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| billing | application, infrastructure, presentation | P0 | 2d | BE-S4-01, BE-S4-02 | — | TODO |
+| billing | application, infrastructure, presentation | P0 | 2d | BE-S4-01, BE-S4-02 | — | DONE |
 
 **Mục tiêu:** Phục vụ CTA "Ký quỹ 299.000đ & Nhận Voucher 300k" (màn 5) và thẻ "Đã ghi nhận" (màn 6).
 
@@ -96,7 +96,7 @@ voucher `ACTIVE` → quán quét QR → `REDEEMED` (quét lần 2 bị từ ch�
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| billing | application, infrastructure, presentation | P0 | 1.5d | BE-S4-03, BE-S3-01 | BE-S4-05 | TODO |
+| billing | application, infrastructure, presentation | P0 | 1.5d | BE-S4-03, BE-S3-01 | BE-S4-05 | DONE |
 
 **Mục tiêu:** Thực hiện cam kết "Hoàn 100% nếu hồ sơ không được duyệt trong `REFUND_SLA_HOURS`".
 
@@ -123,7 +123,7 @@ voucher `ACTIVE` → quán quét QR → `REDEEMED` (quét lần 2 bị từ ch�
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| billing | application, infrastructure, presentation | P0 | 2d | BE-S4-03, BE-S4-06 | BE-S4-04 | TODO |
+| billing | application, infrastructure, presentation | P0 | 2d | BE-S4-03, BE-S4-06 | BE-S4-04 | DONE |
 
 **Mục tiêu:** Phục vụ thẻ voucher (màn 6, 11, 12) và trang quét QR cho quán đối tác.
 
@@ -150,7 +150,7 @@ voucher `ACTIVE` → quán quét QR → `REDEEMED` (quét lần 2 bị từ ch�
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| billing | application, infrastructure, presentation | P1 | 1d | Sprint 2 | BE-S4-01 | TODO |
+| billing | application, infrastructure, presentation | P1 | 1d | Sprint 2 | BE-S4-01 | DONE |
 
 **Mục tiêu:** Danh sách quán an toàn (The Running Bean, RuNam…) cho màn đặt hẹn và quyền quét QR.
 
@@ -175,7 +175,7 @@ voucher `ACTIVE` → quán quét QR → `REDEEMED` (quét lần 2 bị từ ch�
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| billing | application, infrastructure | P2 | 1d | BE-S4-04, BE-S4-05 | — | TODO |
+| billing | application, infrastructure | P2 | 1d | BE-S4-04, BE-S4-05 | — | DONE |
 
 **Mục tiêu:** Phát hiện sớm lệch tiền.
 

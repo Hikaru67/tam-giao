@@ -12,6 +12,7 @@ const ENV = {
   DATA_MASTER_KEYS: `1:${KEY}`,
   BLIND_INDEX_KEY: KEY,
   AUTH_SECRET: KEY,
+  PAYMENT_WEBHOOK_SECRET: 'worker-test-payment-secret',
 };
 
 describe('worker config', () => {
@@ -44,6 +45,15 @@ describe('worker config', () => {
 
   it('cron sai số trường → ConfigError', () => {
     expect(() => parseWorkerConfig({ ...ENV, KYC_MEDIA_RETENTION_CRON: '0 3 *' })).toThrow(ConfigError);
+  });
+
+  it('cổng thanh toán cho job hoàn tiền (BE-S4-04): mặc định fake; fake bị cấm ở production', () => {
+    expect(parseWorkerConfig(ENV).payment).toEqual({
+      gateway: 'fake',
+      webhookSecret: 'worker-test-payment-secret',
+    });
+    expect(() => parseWorkerConfig({ ...ENV, NODE_ENV: 'production' })).toThrow(ConfigError);
+    expect(() => parseWorkerConfig({ ...ENV, PAYMENT_WEBHOOK_SECRET: 'short' })).toThrow(ConfigError);
   });
 
   it('thiếu DATABASE_URL → ConfigError', () => {

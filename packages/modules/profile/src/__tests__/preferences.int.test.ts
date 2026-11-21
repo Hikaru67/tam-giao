@@ -14,7 +14,7 @@ import { Hono } from 'hono';
 import { createMiddleware } from 'hono/factory';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { createProfileModule } from '../index.js';
-import { FakeVerificationFacade } from './fakes.js';
+import { FakeBillingFacade, FakeVerificationFacade } from './fakes.js';
 
 let database: Database;
 let app: Hono<AppEnv>;
@@ -50,6 +50,7 @@ beforeAll(() => {
     uploads: new UploadService({ uow, clock, storage, putTtlSeconds: 300 }),
     storage,
     verification: new FakeVerificationFacade(),
+    billing: new FakeBillingFacade(),
     requireUser,
   });
   app = new Hono<AppEnv>();
