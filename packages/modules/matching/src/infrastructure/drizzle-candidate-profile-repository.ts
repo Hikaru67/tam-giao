@@ -1,14 +1,20 @@
 import { asDbTx } from '@tamgiao/db';
 import type { Tx } from '@tamgiao/kernel';
-import { sql } from 'drizzle-orm';
+import { and, inArray, isNotNull, sql } from 'drizzle-orm';
+import type { CandidateProfileReader } from '../application/ports/candidate-profile-reader.js';
 import type {
   CandidateProfileRepository,
   CandidateProfileSnapshot,
 } from '../application/ports/candidate-profile-repository.js';
+import type { CandidateProfile } from '../domain/candidate-profile.js';
+import { toCandidateProfileFromRow } from './drizzle-candidate-finder.js';
 import { candidateProfiles } from './schema-candidates.js';
 
-/** Hiện thực ghi read model `matching.candidate_profiles` bằng một câu upsert (idempotent, A9). */
-export class DrizzleCandidateProfileRepository implements CandidateProfileRepository {
+/**
+ * Hiện thực read model `matching.candidate_profiles`: ghi bằng một câu upsert (idempotent, A9) và đọc hồ sơ đã đồng bộ
+ * cho `ProposeMatch` (BE-S5-04).
+ */
+export class DrizzleCandidateProfileRepository implements CandidateProfileRepository, CandidateProfileReader {
   async upsertProfile(tx: Tx, snapshot: CandidateProfileSnapshot, now: Date): Promise<void> {
     const p = snapshot.profile;
     const c = p.criteria;
@@ -52,5 +58,15 @@ export class DrizzleCandidateProfileRepository implements CandidateProfileReposi
       .insert(candidateProfiles)
       .values({ userId, verified, updatedAt: now })
       .onConflictDoUpdate({ target: candidateProfiles.userId, set: { verified, updatedAt: now } });
+  }
+
+  async findSynced(tx: Tx, userIds: readonly string[]): Promise<ReadonlyMap<string, CandidateProfile>> {
+    const ids = [...new Set(userIds.map((id) => id.toLowerCase()))];
+    if (ids.length === 0) return new Map();
+    const rows = await asDbTx(tx)
+      .select()
+      .from(candidateProfiles)
+      .where(and(inArray(candidateProfiles.userId, ids), isNotNull(candidateProfiles.profileSyncedAt)));
+    return new Map(rows.map((row) => [row.userId, toCandidateProfileFromRow(row)]));
   }
 }

@@ -265,10 +265,16 @@ importers:
       hono:
         specifier: 4.13.18
         version: 4.13.18
+      pg-boss:
+        specifier: 12.38.2
+        version: 12.38.2(@opentelemetry/api@1.10.0)
       zod:
         specifier: 4.6.7
         version: 4.6.7
     devDependencies:
+      '@tamgiao/testing':
+        specifier: workspace:*
+        version: link:../../packages/testing
       '@types/node':
         specifier: 22.20.5
         version: 22.20.5
@@ -596,6 +602,9 @@ importers:
       '@types/node':
         specifier: 22.20.5
         version: 22.20.5
+      pg-boss:
+        specifier: 12.38.2
+        version: 12.38.2(@opentelemetry/api@1.10.0)
       testcontainers:
         specifier: 12.2.1
         version: 12.2.1(bare-buffer@3.7.2)(supports-color@7.2.0)
