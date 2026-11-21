@@ -4,6 +4,8 @@ import { SystemClock } from '@tamgiao/kernel';
 import { createApp } from './app.js';
 import { loadApiConfig } from './config.js';
 import { createLogger } from '@tamgiao/config';
+import { MATCHING_SCHEDULED_QUEUES } from '@tamgiao/module-matching';
+import { startApiJobScheduler } from './job-scheduler.js';
 import { buildModules } from './modules.js';
 
 /** Composition root: nối config → hạ tầng → module → HTTP server. Không chứa logic nghiệp vụ. */
@@ -12,10 +14,21 @@ const SHUTDOWN_TIMEOUT_MS = 10_000;
 const config = loadApiConfig();
 const logger = createLogger({ service: 'api', level: config.logLevel });
 const database = createDatabase(config.database.url);
+// pg-boss chỉ để gửi job hẹn giờ cùng transaction (vd hết hạn match); worker mới chạy job.
+const jobs = await startApiJobScheduler({
+  connectionString: config.database.url,
+  queues: MATCHING_SCHEDULED_QUEUES,
+  onError: (error) => logger.error({ err: error }, 'pg-boss error'),
+});
 
 const app = createApp({
   logger,
-  modules: buildModules({ config, uow: new DrizzleUnitOfWork(database.pool), clock: new SystemClock() }),
+  modules: buildModules({
+    config,
+    uow: new DrizzleUnitOfWork(database.pool),
+    clock: new SystemClock(),
+    scheduler: jobs.scheduler,
+  }),
   readinessChecks: [{ name: 'database', check: async () => void (await database.pool.query('select 1')) }],
   corsOrigins: config.http.corsOrigins,
   bodyLimitBytes: config.http.bodyLimitBytes,
@@ -38,6 +51,7 @@ async function shutdown(signal: string): Promise<void> {
   force.unref();
 
   await new Promise<void>((resolve) => server.close(() => resolve()));
+  await jobs.stop();
   await database.close();
   logger.info('shutdown complete');
   process.exit(0);

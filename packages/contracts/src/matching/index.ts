@@ -4,3 +4,4 @@ export * from './dto.js';
 export * from './slot-errors.js';
 export * from './candidate-dto.js';
 export * from './admin-dto.js';
+export * from './propose-errors.js';
