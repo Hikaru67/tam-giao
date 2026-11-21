@@ -1,7 +1,7 @@
 import { MATCH_CLOSED, MATCH_LOCKED, MATCH_STARTED_DATING } from '@tamgiao/contracts';
 import { MESSAGE_RATE_LIMIT_PER_MINUTE } from '@tamgiao/contracts/constants';
 import { createDatabase, deliverOnce, DrizzleUnitOfWork, EventBus, type Database } from '@tamgiao/db';
-import { FakeClock, addDuration, newId, type DomainEvent } from '@tamgiao/kernel';
+import { FakeClock, addDuration, fail, newId, type DomainEvent } from '@tamgiao/kernel';
 import { resetDatabase, runConcurrently, testDatabaseUrl } from '@tamgiao/testing';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import {
@@ -11,6 +11,7 @@ import {
   createMessagingModule,
   createMessagingWorker,
 } from '../index.js';
+import { InMemoryMessageBroadcaster } from './messaging-fakes.js';
 
 const T0 = new Date('2026-06-01T08:00:00.000Z');
 const CLOSES = addDuration(T0, { days: 14 });
@@ -221,7 +222,14 @@ describe('consumer mở/đóng hội thoại theo event matching', () => {
 });
 
 describe('SendMessage trên Postgres', () => {
-  const messaging = () => createMessagingModule({ uow, clock }).commands.sendMessage;
+  const messaging = () =>
+    createMessagingModule({
+      uow,
+      clock,
+      requireUser: async () => undefined,
+      authenticateUser: async () => fail('UNAUTHENTICATED'),
+      broadcaster: new InMemoryMessageBroadcaster(),
+    }).commands.sendMessage;
 
   it('lưu tin; outbox MessageSent không chứa nội dung (PII)', async () => {
     const pair = newPair();

@@ -12,4 +12,8 @@ export const MESSAGING_ERROR_CODES = registerErrors('messaging', {
   MESSAGE_EMPTY: { status: 422, title: 'Tin nhắn không được để trống' },
   /** `meta.maxLength`, `meta.length`: tin dài quá `MESSAGE_MAX_LENGTH` ký tự. */
   MESSAGE_TOO_LONG: { status: 422, title: 'Tin nhắn quá dài' },
+  /** Idempotency key `clientMessageId` đã được người gửi dùng cho tin ở hội thoại khác (BE-S6-02). */
+  CLIENT_MESSAGE_ID_CONFLICT: { status: 409, title: 'Mã tin phía client đã dùng cho cuộc trò chuyện khác' },
+  /** WS: gửi `typing`/`message.read` khi chưa `conversation.join` hội thoại đó (BE-S6-02). */
+  CONVERSATION_NOT_JOINED: { status: 409, title: 'Chưa tham gia cuộc trò chuyện trên kết nối này' },
 });

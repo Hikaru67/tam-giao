@@ -44,7 +44,8 @@ export const conversations = messaging.table(
  * Tin nhắn (BE-S6-01). `body` là nội dung gốc — PII: không log, không đưa vào event/audit. `masked_body` = bản hiển
  * thị khi bị che liên hệ (BE-S6-03), `flagged` + `flag_reasons` (mã luật) từ bộ lọc lừa đảo. Tin hệ thống: không có
  * người gửi, có `system_code`. Index (`conversation_id`, `id`) cho phân trang theo thời gian (id UUID v7);
- * (`conversation_id`, `sender_id`, `sent_at`) cho đếm rate limit.
+ * (`conversation_id`, `sender_id`, `sent_at`) cho đếm rate limit. `client_message_id` = idempotency key phía client
+ * (BE-S6-02): unique (`sender_id`, `client_message_id`) — gửi lại cùng key không tạo tin trùng (NULL không đụng nhau).
  */
 export const messages = messaging.table(
   'messages',
@@ -63,11 +64,13 @@ export const messages = messaging.table(
       .array()
       .notNull()
       .default(sql`'{}'::text[]`),
+    clientMessageId: uuid('client_message_id'),
     sentAt: timestamptz('sent_at').notNull(),
     /** BE-S6-03: tin hệ thống chỉ một participant thấy (cảnh báo lừa đảo cho người nhận); null = cả hai. */
     visibleTo: uuid('visible_to'),
   },
   (t) => [
+    unique('messages_sender_client_message_id_uq').on(t.senderId, t.clientMessageId),
     check('messages_kind_ck', sql`${t.kind} in ('TEXT', 'IMAGE', 'SYSTEM')`),
     check(
       'messages_system_code_ck',

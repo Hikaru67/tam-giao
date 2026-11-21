@@ -1,7 +1,9 @@
 import { OutboxWriter, type EventBus } from '@tamgiao/db';
-import type { AppEnv } from '@tamgiao/http';
+import type { AppEnv, UserAuthenticator } from '@tamgiao/http';
 import type { Clock, UnitOfWork } from '@tamgiao/kernel';
-import { Hono } from 'hono';
+import type { Hono, MiddlewareHandler } from 'hono';
+import { JoinConversation, ListMessagesAfter } from './application/conversation-access.js';
+import type { MessageBroadcaster } from './application/ports/message-broadcaster.js';
 import {
   CloseConversationForMatch,
   OpenConversationForMatch,
@@ -13,11 +15,14 @@ import { createContentScreener } from './domain/message-screener.js';
 import { registerConversationConsumers } from './infrastructure/conversation-consumers.js';
 import { DrizzleConversationRepository } from './infrastructure/drizzle-conversation-repository.js';
 import { DrizzleMessageRepository } from './infrastructure/drizzle-message-repository.js';
+import { ChatGateway, type ChatGatewayLogger } from './presentation/chat-gateway.js';
+import { createMessageRoutes } from './presentation/message-routes.js';
 
 /**
  * Module messaging (Sprint 6): chat chỉ mở trong giai đoạn `DATING` của match. BE-S6-01: domain hội thoại/tin nhắn,
- * mở/đóng hội thoại theo event matching, use case `SendMessage`. Transport realtime + route ở BE-S6-02/BE-S6-04,
- * bộ lọc lừa đảo/che liên hệ ở BE-S6-03 (`createContentScreener`, mặc định của `createMessagingModule`).
+ * mở/đóng hội thoại theo event matching, use case `SendMessage`. BE-S6-02: WS gateway `/ws` + Redis pub/sub đa instance,
+ * idempotency key phía client, `GET /me/conversations/:id/messages?after=` (BE-S6-04 mở rộng lịch sử).
+ * Bộ lọc lừa đảo/che liên hệ ở BE-S6-03 (`createContentScreener`, mặc định của `createMessagingModule`).
  */
 
 export type { ConversationCloseReason, ConversationId, ConversationStatus } from './domain/conversation.js';
@@ -33,6 +38,17 @@ export type {
   CloseConversationOutcome,
   OpenConversationOutcome,
 } from './application/conversation-lifecycle.js';
+export type {
+  ConversationBroadcast,
+  MessageBroadcaster,
+  RealtimeMessage,
+} from './application/ports/message-broadcaster.js';
+export type { ChatGateway, ChatGatewayLogger, UpgradableServer } from './presentation/chat-gateway.js';
+export {
+  DEFAULT_MESSAGING_REDIS_CHANNEL,
+  RedisMessageBroadcaster,
+  type RedisMessageBroadcasterOptions,
+} from './infrastructure/redis-message-broadcaster.js';
 export {
   CLOSE_CONVERSATION_ON_MATCH_CLOSED_CONSUMER,
   CLOSE_CONVERSATION_ON_MATCH_LOCKED_CONSUMER,
@@ -72,12 +88,23 @@ export interface MessagingModuleDeps {
   readonly clock: Clock;
   /** Sàng lọc nội dung tin. Bỏ trống = bộ lọc lừa đảo + che liên hệ (`createContentScreener`, BE-S6-03). */
   readonly screener?: MessageScreener;
+  /** Guard REST người dùng app (`GET /me/conversations/:id/messages`). */
+  readonly requireUser: MiddlewareHandler<AppEnv>;
+  /** Xác thực access token ở handshake WS (`identity.facade.authenticateUser`). */
+  readonly authenticateUser: UserAuthenticator;
+  /** Pub/sub realtime giữa các instance (`RedisMessageBroadcaster`). */
+  readonly broadcaster: MessageBroadcaster;
+  readonly logger?: ChatGatewayLogger;
+  /** Ghi đè nhịp heartbeat WS (test). */
+  readonly heartbeat?: { readonly intervalMs: number; readonly timeoutMs: number };
 }
 
 export interface MessagingModule {
   readonly name: 'messaging';
-  /** Chưa có route ở BE-S6-01 (WS ở BE-S6-02, REST lịch sử ở BE-S6-04). */
+  /** `GET /me/conversations/:id/messages?after=` (BE-S6-02; BE-S6-04 mở rộng). */
   readonly routes: Hono<AppEnv>;
+  /** WebSocket gateway `/ws` — composition root gắn vào HTTP server (`attach`) và đóng khi tắt (`close`). */
+  readonly realtime: ChatGateway;
   readonly commands: {
     /** Gửi tin — WS `message.send` (BE-S6-02) gọi use case này. */
     readonly sendMessage: SendMessage;
@@ -94,5 +121,21 @@ export function createMessagingModule(deps: MessagingModuleDeps): MessagingModul
     messages: lifecycle.messages,
     screener: deps.screener ?? createContentScreener(),
   });
-  return { name: 'messaging', routes: new Hono<AppEnv>(), commands: { sendMessage } };
+  const access = { uow: deps.uow, conversations: lifecycle.conversations, messages: lifecycle.messages };
+  const realtime = new ChatGateway({
+    authenticate: deps.authenticateUser,
+    joinConversation: new JoinConversation(access),
+    sendMessage,
+    broadcaster: deps.broadcaster,
+    clock: deps.clock,
+    ...(deps.logger === undefined ? {} : { logger: deps.logger }),
+    ...(deps.heartbeat === undefined
+      ? {}
+      : { heartbeatIntervalMs: deps.heartbeat.intervalMs, heartbeatTimeoutMs: deps.heartbeat.timeoutMs }),
+  });
+  const routes = createMessageRoutes({
+    listMessagesAfter: new ListMessagesAfter(access),
+    requireUser: deps.requireUser,
+  });
+  return { name: 'messaging', routes, realtime, commands: { sendMessage } };
 }
