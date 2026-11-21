@@ -13,8 +13,21 @@ const complete: ProfileData = {
   currentCity: 'Hà Nội',
   education: 'bachelor',
   occupation: 'Kỹ sư',
+  religion: 'buddhism',
+  childrenPlan: 'open',
   photos: ['profile_photo/u/1.jpg'],
 };
+/** Hồ sơ đã hoàn tất trước BE-S6-07 (chưa có tôn giáo / kế hoạch con cái). */
+const legacyCompleted = () =>
+  Profile.restore({
+    userId: newId<'User'>(),
+    data: { ...complete, religion: null, childrenPlan: null },
+    status: 'COMPLETED',
+    completedAt: NOW,
+    createdAt: NOW,
+    updatedAt: NOW,
+    version: 1,
+  });
 const fresh = () => Profile.start(newId<'User'>(), NOW);
 
 describe('ageAt', () => {
@@ -77,10 +90,51 @@ describe('Profile.update', () => {
   });
 
   it('submit with missing fields → PROFILE_INCOMPLETE listing them', () => {
-    const r = fresh().update({ ...complete, gender: null, photos: [] }, { submit: true }, NOW);
+    const r = fresh().update(
+      { ...complete, gender: null, photos: [], religion: null, childrenPlan: null },
+      { submit: true },
+      NOW,
+    );
     expect(r.isErr() && r.error).toEqual({
       code: 'PROFILE_INCOMPLETE',
-      details: { missing: ['gender', 'photos'] },
+      details: { missing: ['gender', 'photos', 'religion', 'childrenPlan'] },
+    });
+  });
+
+  it.each(['religion', 'childrenPlan'] as const)(
+    'submit without %s → PROFILE_INCOMPLETE (BE-S6-07); draft save allows it',
+    (field) => {
+      const r = fresh().update({ ...complete, [field]: null }, { submit: true }, NOW);
+      expect(r.isErr() && r.error).toEqual({ code: 'PROFILE_INCOMPLETE', details: { missing: [field] } });
+      expect(
+        fresh()
+          .update({ ...complete, [field]: null }, { submit: false }, NOW)
+          .isOk(),
+      ).toBe(true);
+    },
+  );
+
+  it('legacy completed profile (religion/childrenPlan null) may keep them null on draft save, emits ProfileUpdated', () => {
+    const p = legacyCompleted();
+    const r = p.update({ ...complete, religion: null, childrenPlan: null, bio: 'x' }, { submit: false }, NOW);
+    expect(r.isOk()).toBe(true);
+    expect(p.toState().data.religion).toBeNull();
+    expect(p.pullEvents()).toMatchObject([{ type: 'ProfileUpdated', payload: { userId: p.id } }]);
+  });
+
+  it('legacy completed profile must fill both on submit; once filled they cannot be cleared', () => {
+    const p = legacyCompleted();
+    const r = p.update({ ...complete, religion: null, childrenPlan: null }, { submit: true }, NOW);
+    expect(r.isErr() && r.error).toEqual({
+      code: 'PROFILE_INCOMPLETE',
+      details: { missing: ['religion', 'childrenPlan'] },
+    });
+    expect(p.update(complete, { submit: false }, NOW).isOk()).toBe(true);
+    expect(p.toState().data).toMatchObject({ religion: 'buddhism', childrenPlan: 'open' });
+    const cleared = p.update({ ...complete, religion: null }, { submit: false }, NOW);
+    expect(cleared.isErr() && cleared.error).toEqual({
+      code: 'PROFILE_INCOMPLETE',
+      details: { missing: ['religion'] },
     });
   });
 
@@ -98,7 +152,8 @@ describe('Profile.update', () => {
 
     expect(p.update({ ...complete, occupation: 'Bác sĩ' }, { submit: true }, NOW).isOk()).toBe(true);
     expect(p.update({ ...complete, bio: 'x' }, { submit: false }, NOW).isOk()).toBe(true);
-    expect(p.pullEvents()).toEqual([]);
+    // Lưu lại hồ sơ đã hoàn tất → ProfileUpdated (matching đồng bộ lại read model, BE-S6-07), không ProfileCompleted.
+    expect(p.pullEvents().map((e) => e.type)).toEqual(['ProfileUpdated', 'ProfileUpdated']);
     expect(p.status).toBe('COMPLETED');
   });
 

@@ -12,6 +12,8 @@ export function toCandidateProfile(p: MatchingProfile): CandidateProfile {
     birthDate: p.birthDate,
     cityKey: cityKey(p.currentCity),
     education: p.education,
+    religion: p.religion,
+    childrenPlan: p.childrenPlan,
     criteria: {
       ageMin: c.ageMin,
       ageMax: c.ageMax,
@@ -27,7 +29,8 @@ export function toCandidateProfile(p: MatchingProfile): CandidateProfile {
 }
 
 /**
- * Đồng bộ phần hồ sơ/tiêu chí của read model khi nhận `ProfileCompleted` / `PreferencesUpdated` (BE-S5-03).
+ * Đồng bộ phần hồ sơ/tiêu chí của read model khi nhận `ProfileCompleted` / `ProfileUpdated` /
+ * `PreferencesUpdated` (BE-S5-03, BE-S6-07).
  * Luôn đọc lại trạng thái **hiện tại** qua facade profile (payload event chỉ có `userId`) → chạy lại / sai thứ tự
  * không đổi kết quả (A9). Chưa đủ hồ sơ + tiêu chí → bỏ qua (event còn lại sẽ đồng bộ sau).
  */

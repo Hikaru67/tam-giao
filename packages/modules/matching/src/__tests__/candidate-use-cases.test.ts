@@ -115,6 +115,8 @@ const matchingProfile = (userId: string, over: Partial<MatchingProfile> = {}): M
   birthDate: '1996-03-02',
   currentCity: '  Hà Nội ',
   education: 'master',
+  religion: 'catholicism',
+  childrenPlan: 'open',
   criteria: {
     ageMin: 28,
     ageMax: 36,
@@ -161,6 +163,8 @@ describe('SyncCandidateProfile / SetCandidateVerification', () => {
         birthDate: '1996-03-02',
         cityKey: 'hà nội',
         education: 'master',
+        religion: 'catholicism',
+        childrenPlan: 'open',
         criteria: {
           ageMin: 28,
           ageMax: 36,
@@ -176,6 +180,14 @@ describe('SyncCandidateProfile / SetCandidateVerification', () => {
       profileVersion: 2,
       preferencesVersion: 1,
     });
+  });
+
+  it('hồ sơ cũ chưa khai tôn giáo / con cái (null) → snapshot giữ null (BE-S6-07)', async () => {
+    source.set('u4', matchingProfile('u4', { religion: null, childrenPlan: null }));
+    await sync.handle(tx, { userId: 'u4' });
+    const profile = repo.rows.get('u4')?.snapshot?.profile;
+    expect(profile?.religion).toBeNull();
+    expect(profile?.childrenPlan).toBeNull();
   });
 
   it('chưa đủ hồ sơ + tiêu chí (facade trả null) → không ghi gì', async () => {

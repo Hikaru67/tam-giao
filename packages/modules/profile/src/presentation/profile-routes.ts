@@ -45,6 +45,8 @@ export function createProfileRoutes(deps: ProfileRoutesDeps): Hono<AppEnv> {
         currentCity: fields.currentCity ?? null,
         education: fields.education ?? null,
         occupation: fields.occupation ?? null,
+        religion: fields.religion ?? null,
+        childrenPlan: fields.childrenPlan ?? null,
         bio: fields.bio || null,
         interests: interests ?? [],
         incomeRange: fields.incomeRange ?? null,

@@ -5,7 +5,7 @@ import { matching } from './schema-base.js';
 
 /**
  * Read model hồ sơ ứng viên (BE-S5-03) — bản sao những gì matching cần từ module profile (A3: không đọc bảng
- * `profile.*`), đồng bộ qua event `ProfileCompleted` / `PreferencesUpdated` (đọc lại facade profile) và
+ * `profile.*`), đồng bộ qua event `ProfileCompleted` / `ProfileUpdated` / `PreferencesUpdated` (đọc lại facade profile) và
  * `KycApproved` / `KycRejected` (cờ `verified`). Không chứa họ tên, ảnh, tự bạch hay dữ liệu mã hoá (thu nhập, nhà ở,
  * tài sản). Phần hồ sơ `null` khi mới có cờ `verified` mà chưa đồng bộ hồ sơ — `CandidateFinder` bỏ qua dòng đó.
  *
@@ -22,10 +22,17 @@ export const candidateProfiles = matching.table(
     birthDate: date('birth_date', { mode: 'string' }),
     cityKey: text('city_key'),
     education: text('education'),
-    /** Quan điểm/tiêu chí kế hoạch con cái (so khớp đối xứng). */
+    /** **Tiêu chí** kế hoạch con cái (lọc cứng so với `own_children_plan` của người kia; chấm điểm đối xứng). */
     childrenPlan: text('children_plan'),
-    /** Quan điểm/tiêu chí tôn giáo (so khớp đối xứng). */
+    /** **Tiêu chí** tôn giáo (lọc cứng so với `own_religion` của người kia; chấm điểm đối xứng). */
     religion: text('religion'),
+    /**
+     * Tôn giáo / kế hoạch con cái **của chính người đó** (hồ sơ, BE-S6-07). `null` = hồ sơ hoàn tất trước BE-S6-07,
+     * chưa khai → không bị loại vì tiêu chí tương ứng của người khác. Nằm ngoài CHECK `num_nulls` (được phép null khi
+     * phần hồ sơ đã đồng bộ).
+     */
+    ownReligion: text('own_religion'),
+    ownChildrenPlan: text('own_children_plan'),
     prefAgeMin: integer('pref_age_min'),
     prefAgeMax: integer('pref_age_max'),
     /** `null` = không giới hạn khu vực. */
@@ -62,6 +69,14 @@ export const candidateProfiles = matching.table(
     check(
       'candidate_profiles_religion_ck',
       sql`${t.religion} in ('none', 'buddhism', 'catholicism', 'protestantism', 'caodaism', 'hoa_hao', 'other', 'not_important')`,
+    ),
+    check(
+      'candidate_profiles_own_religion_ck',
+      sql`${t.ownReligion} in ('none', 'buddhism', 'catholicism', 'protestantism', 'caodaism', 'hoa_hao', 'other')`,
+    ),
+    check(
+      'candidate_profiles_own_children_plan_ck',
+      sql`${t.ownChildrenPlan} in ('want_children', 'no_children', 'open')`,
     ),
     check('candidate_profiles_pref_age_ck', sql`${t.prefAgeMin} <= ${t.prefAgeMax}`),
     // Lọc nhanh ứng viên đã xác thực, đủ hồ sơ.

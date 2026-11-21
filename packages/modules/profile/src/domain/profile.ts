@@ -14,6 +14,20 @@ export const INCOME_RANGES = ['under_10m', '10m_20m', '20m_40m', '40m_70m', 'ove
 export type IncomeRange = (typeof INCOME_RANGES)[number];
 export const HOUSING_TYPES = ['own_home', 'renting', 'with_family', 'other'] as const;
 export type HousingType = (typeof HOUSING_TYPES)[number];
+/** Tôn giáo của chính người dùng (BE-S6-07) — mã trùng tiêu chí `RELIGIONS` nhưng không có `not_important`. */
+export const PROFILE_RELIGIONS = [
+  'none',
+  'buddhism',
+  'catholicism',
+  'protestantism',
+  'caodaism',
+  'hoa_hao',
+  'other',
+] as const;
+export type ProfileReligion = (typeof PROFILE_RELIGIONS)[number];
+/** Kế hoạch con cái của chính người dùng (BE-S6-07); `open` = còn để ngỏ / chưa quyết định. */
+export const PROFILE_CHILDREN_PLANS = ['want_children', 'no_children', 'open'] as const;
+export type ProfileChildrenPlan = (typeof PROFILE_CHILDREN_PLANS)[number];
 
 export const PROFILE_STATUSES = ['DRAFT', 'COMPLETED'] as const;
 export type ProfileStatus = (typeof PROFILE_STATUSES)[number];
@@ -28,6 +42,10 @@ export interface ProfileData {
   readonly currentCity: string | null;
   readonly education: EducationLevel | null;
   readonly occupation: string | null;
+  /** Tôn giáo của bản thân (BE-S6-07) — dữ liệu nhạy cảm (NĐ 13), không log, không hiển thị cho người khác. */
+  readonly religion: ProfileReligion | null;
+  /** Kế hoạch con cái của bản thân (BE-S6-07). */
+  readonly childrenPlan: ProfileChildrenPlan | null;
   readonly bio: string | null;
   readonly interests: readonly string[];
   /** Riêng tư — repository mã hoá qua `Encryptor`. */
@@ -46,6 +64,8 @@ export const EMPTY_PROFILE_DATA: ProfileData = {
   currentCity: null,
   education: null,
   occupation: null,
+  religion: null,
+  childrenPlan: null,
   bio: null,
   interests: [],
   incomeRange: null,
@@ -63,6 +83,16 @@ export const REQUIRED_FIELDS = [
   'education',
   'occupation',
   'photos',
+] as const satisfies readonly (keyof ProfileData)[];
+
+/**
+ * Trường bắt buộc bổ sung ở BE-S6-07 (lọc cứng tôn giáo / con cái ở matching). Bắt buộc khi bấm "Tiếp tục"
+ * (`submit: true`). Hồ sơ đã hoàn tất **trước** BE-S6-07 được giữ `null` khi "Lưu tạm" tới khi người dùng khai; đã khai
+ * rồi thì không xoá lại được.
+ */
+export const LATER_REQUIRED_FIELDS = [
+  'religion',
+  'childrenPlan',
 ] as const satisfies readonly (keyof ProfileData)[];
 
 export interface ProfileState {
@@ -139,7 +169,8 @@ export class Profile extends AggregateRoot<ProfileId> {
   /**
    * Ghi đè toàn bộ form. `submit = false` ("Lưu tạm") chấp nhận form dở dang, nhưng trường đã điền vẫn phải
    * hợp lệ (tuổi, số ảnh). `submit = true` ("Tiếp tục") còn đòi đủ `REQUIRED_FIELDS`; lần đầu hoàn tất phát
-   * `ProfileCompleted`. Hồ sơ đã hoàn tất thì luôn phải giữ đủ trường bắt buộc (không quay lại nháp).
+   * `ProfileCompleted`. Hồ sơ đã hoàn tất thì luôn phải giữ đủ trường bắt buộc (không quay lại nháp) — riêng
+   * `LATER_REQUIRED_FIELDS` xem chú thích ở đó; mỗi lần lưu hồ sơ đã hoàn tất phát `ProfileUpdated` (matching đồng bộ lại).
    */
   update(data: ProfileData, options: { readonly submit: boolean }, now: Date): Result<void, ProfileError> {
     if (data.birthDate !== null) {
@@ -154,10 +185,17 @@ export class Profile extends AggregateRoot<ProfileId> {
       return fail('VALIDATION_FAILED', { field: 'photos' });
 
     const mustBeComplete = options.submit || this.state.status === 'COMPLETED';
-    const missing = REQUIRED_FIELDS.filter((f) => isMissing(data, f));
-    if (mustBeComplete && missing.length > 0) return fail('PROFILE_INCOMPLETE', { missing });
+    const wasCompleted = this.state.status === 'COMPLETED';
+    const missing: (keyof ProfileData)[] = mustBeComplete
+      ? REQUIRED_FIELDS.filter((f) => isMissing(data, f))
+      : [];
+    for (const f of LATER_REQUIRED_FIELDS) {
+      const required = options.submit || (wasCompleted && this.state.data[f] !== null);
+      if (required && data[f] === null) missing.push(f);
+    }
+    if (missing.length > 0) return fail('PROFILE_INCOMPLETE', { missing });
 
-    const completing = options.submit && this.state.status === 'DRAFT';
+    const completing = options.submit && !wasCompleted;
     this.state = {
       ...this.state,
       data: { ...data, interests: [...new Set(data.interests)] },
@@ -166,6 +204,7 @@ export class Profile extends AggregateRoot<ProfileId> {
       updatedAt: now,
     };
     if (completing) this.record('ProfileCompleted', { userId: this.id }, now);
+    else if (wasCompleted) this.record('ProfileUpdated', { userId: this.id }, now);
     return ok();
   }
 

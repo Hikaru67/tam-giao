@@ -16,6 +16,10 @@ export const profiles = profile.table(
     currentCity: text('current_city'),
     education: text('education'),
     occupation: text('occupation'),
+    /** Tôn giáo của bản thân (BE-S6-07); `null` = chưa khai (hồ sơ cũ). Dữ liệu nhạy cảm — không log. */
+    religion: text('religion'),
+    /** Kế hoạch con cái của bản thân (BE-S6-07); `null` = chưa khai (hồ sơ cũ). */
+    childrenPlan: text('children_plan'),
     bio: text('bio'),
     interests: text('interests').array().notNull(),
     /** Mức thu nhập, mã hoá qua `Encryptor` (context `profile.profiles.income_range:<userId>`). */
@@ -38,6 +42,11 @@ export const profiles = profile.table(
       sql`${t.education} in ('high_school', 'college', 'bachelor', 'master', 'doctorate')`,
     ),
     check('profiles_status_ck', sql`${t.status} in ('DRAFT', 'COMPLETED')`),
+    check(
+      'profiles_religion_ck',
+      sql`${t.religion} in ('none', 'buddhism', 'catholicism', 'protestantism', 'caodaism', 'hoa_hao', 'other')`,
+    ),
+    check('profiles_children_plan_ck', sql`${t.childrenPlan} in ('want_children', 'no_children', 'open')`),
     check('profiles_photo_keys_ck', sql`cardinality(${t.photoKeys}) <= 5`),
     check('profiles_bio_ck', sql`char_length(${t.bio}) <= 800`),
   ],

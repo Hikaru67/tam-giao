@@ -24,6 +24,20 @@ export const RELIGIONS = [
   NOT_IMPORTANT,
 ] as const;
 export type Religion = (typeof RELIGIONS)[number];
+/** Tôn giáo / kế hoạch con cái **của chính người đó** (hồ sơ, BE-S6-07) — như tiêu chí nhưng không có `not_important`. */
+export const PROFILE_RELIGIONS = [
+  'none',
+  'buddhism',
+  'catholicism',
+  'protestantism',
+  'caodaism',
+  'hoa_hao',
+  'other',
+] as const;
+export type ProfileReligion = (typeof PROFILE_RELIGIONS)[number];
+/** `open` = còn để ngỏ / chưa quyết định. */
+export const PROFILE_CHILDREN_PLANS = ['want_children', 'no_children', 'open'] as const;
+export type ProfileChildrenPlan = (typeof PROFILE_CHILDREN_PLANS)[number];
 export const SMOKING_HABITS = ['never', 'occasionally', 'regularly', NOT_IMPORTANT] as const;
 export const DRINKING_HABITS = ['never', 'occasionally', 'regularly', NOT_IMPORTANT] as const;
 export const DAILY_RHYTHMS = ['early_bird', 'night_owl', 'flexible', NOT_IMPORTANT] as const;
@@ -54,9 +68,9 @@ export interface Lifestyle {
 }
 
 /**
- * Tiêu chí bạn đời của một người. Hồ sơ không có trường tôn giáo / kế hoạch con cái riêng, nên `religion`,
- * `childrenPlan` (và lối sống, độc lập tài chính) vừa là tiêu chí vừa là quan điểm của chính người đó — luật lọc
- * và chấm điểm so khớp **đối xứng** hai giá trị này.
+ * Tiêu chí bạn đời của một người. Lọc cứng tôn giáo / con cái so tiêu chí này với **hồ sơ** của người kia
+ * (`CandidateProfile.religion|childrenPlan`, BE-S6-07). `CompatibilityScorer` vẫn chấm điểm đối xứng trên tiêu chí
+ * hai bên như BE-S5-03 (lối sống, độc lập tài chính cũng là quan điểm của chính người đó).
  */
 export interface PartnerCriteria {
   readonly ageMin: number;
@@ -79,6 +93,10 @@ export interface CandidateProfile {
   /** Khoá thành phố nơi sống đã chuẩn hoá (`cityKey`). */
   readonly cityKey: string;
   readonly education: EducationLevel;
+  /** Tôn giáo của bản thân; `null` = hồ sơ cũ chưa khai (không bị loại vì tiêu chí tôn giáo — BE-S6-07). */
+  readonly religion: ProfileReligion | null;
+  /** Kế hoạch con cái của bản thân; `null` = hồ sơ cũ chưa khai (không bị loại vì tiêu chí con cái — BE-S6-07). */
+  readonly childrenPlan: ProfileChildrenPlan | null;
   readonly criteria: PartnerCriteria;
 }
 
