@@ -11,6 +11,7 @@ import type { Clock, Scheduler, UnitOfWork } from '@tamgiao/kernel';
 import { FakePaymentGateway, createBillingModule } from '@tamgiao/module-billing';
 import { ConsoleSmsSender, createIdentityModule } from '@tamgiao/module-identity';
 import { createMatchingModule } from '@tamgiao/module-matching';
+import { createMessagingModule } from '@tamgiao/module-messaging';
 import { createProfileModule } from '@tamgiao/module-profile';
 import {
   FakeEkycProvider,
@@ -145,5 +146,9 @@ export function buildModules({ config, uow, clock, scheduler }: ModuleDeps): rea
     profiles: profile.facade,
   });
 
-  return [identity, uploadModule, profile, verification, billing, matching];
+  // Messaging (Sprint 6): use case gửi tin (BE-S6-01); hội thoại mở/đóng ở worker theo event matching.
+  // Route/WS bổ sung ở BE-S6-02/BE-S6-04, bộ lọc nội dung (`screener`) ở BE-S6-03.
+  const messaging = createMessagingModule({ uow, clock });
+
+  return [identity, uploadModule, profile, verification, billing, matching, messaging];
 }

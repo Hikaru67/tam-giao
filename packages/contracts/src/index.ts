@@ -7,3 +7,4 @@ export * from './profile/index.js';
 export * from './verification/index.js';
 export * from './billing/index.js';
 export * from './matching/index.js';
+export * from './messaging/index.js';

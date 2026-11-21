@@ -14,7 +14,7 @@ báo cáo (màn 14) → match `LOCKED`, hội thoại đóng, admin thấy báo 
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| messaging | domain, application, infrastructure | P0 | 1.5d | Sprint 5 | BE-S6-03, BE-S6-05 | TODO |
+| messaging | domain, application, infrastructure | P0 | 1.5d | Sprint 5 | BE-S6-03, BE-S6-05 | IN_REVIEW |
 
 **Mục tiêu:** Chat chỉ tồn tại khi match đang DATING (nguyên tắc "một người thật, một lúc").
 
