@@ -175,7 +175,7 @@ voucher `ACTIVE` → quán quét QR → `REDEEMED` (quét lần 2 bị từ ch�
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| billing | application, infrastructure | P2 | 1d | BE-S4-04, BE-S4-05 | — | IN_REVIEW |
+| billing | application, infrastructure | P2 | 1d | BE-S4-04, BE-S4-05 | — | DONE |
 
 **Mục tiêu:** Phát hiện sớm lệch tiền.
 
