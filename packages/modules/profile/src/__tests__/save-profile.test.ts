@@ -14,6 +14,8 @@ const complete: ProfileData = {
   currentCity: 'Đà Nẵng',
   education: 'master',
   occupation: 'Giáo viên',
+  religion: 'catholicism',
+  childrenPlan: 'want_children',
   incomeRange: '20m_40m',
   photos: ['a1.jpg', 'a2.jpg'],
 };

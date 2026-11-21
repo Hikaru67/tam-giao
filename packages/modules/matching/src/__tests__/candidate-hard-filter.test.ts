@@ -8,7 +8,7 @@ const man = (...args: Parameters<typeof candidate>): CandidateProfile =>
   candidate(args[0], { gender: 'male', ...args[1] });
 const A = man('a');
 
-describe('passesHardFilters — hai chiều (AC1)', () => {
+describe('passesHardFilters — hai chiều, hồ sơ ↔ tiêu chí (BE-S5-03 AC1, BE-S6-07 AC1/AC2)', () => {
   it.each<[string, CandidateProfile, CandidateProfile, boolean]>([
     ['cả hai thoả nhau', A, candidate('b'), true],
     // Giới tính — chỉ ghép khác giới
@@ -33,45 +33,91 @@ describe('passesHardFilters — hai chiều (AC1)', () => {
       candidate('b', { criteria: { cityKey: 'hà nội' } }),
       true,
     ],
-    // Tôn giáo (đối xứng)
+    // Tôn giáo — hồ sơ người kia ↔ tiêu chí của mình (BE-S6-07). Fixture: hồ sơ Phật giáo, tiêu chí "không quan trọng".
     [
-      'tôn giáo khác nhau',
+      'AC1: A muốn Phật giáo, B là Công giáo',
       man('a', { criteria: { religion: 'buddhism' } }),
+      candidate('b', { religion: 'catholicism' }),
+      false,
+    ],
+    [
+      'A muốn Phật giáo, B là Phật giáo',
+      man('a', { criteria: { religion: 'buddhism' } }),
+      candidate('b', { religion: 'buddhism' }),
+      true,
+    ],
+    [
+      'B muốn Công giáo, A là Phật giáo (chiều B→A)',
+      A,
       candidate('b', { criteria: { religion: 'catholicism' } }),
       false,
     ],
     [
-      'tôn giáo khác nhau (đảo chiều)',
-      man('a', { criteria: { religion: 'catholicism' } }),
-      candidate('b', { criteria: { religion: 'buddhism' } }),
-      false,
-    ],
-    [
-      'một bên "không quan trọng" tôn giáo',
-      man('a', { criteria: { religion: 'buddhism' } }),
-      candidate('b'),
+      'tiêu chí hai bên khác nhau nhưng mỗi hồ sơ thoả tiêu chí bên kia',
+      man('a', { religion: 'catholicism', criteria: { religion: 'buddhism' } }),
+      candidate('b', { religion: 'buddhism', criteria: { religion: 'catholicism' } }),
       true,
     ],
+    ['tiêu chí "không quan trọng" → nhận mọi tôn giáo', A, candidate('b', { religion: 'other' }), true],
     [
-      'cùng tôn giáo',
+      'A muốn "không tôn giáo", B không tôn giáo',
       man('a', { criteria: { religion: 'none' } }),
-      candidate('b', { criteria: { religion: 'none' } }),
+      candidate('b', { religion: 'none' }),
       true,
     ],
-    // Kế hoạch con cái (đối xứng)
-    ['muốn con vs không muốn con', A, candidate('b', { criteria: { childrenPlan: 'no_children' } }), false],
     [
-      'không muốn con vs muốn con',
-      man('a', { criteria: { childrenPlan: 'no_children' } }),
+      'A muốn "không tôn giáo", B là Phật giáo',
+      man('a', { criteria: { religion: 'none' } }),
       candidate('b'),
       false,
     ],
-    ['một bên để ngỏ', A, candidate('b', { criteria: { childrenPlan: 'open' } }), true],
+    // Kế hoạch con cái — hồ sơ người kia ↔ tiêu chí. Fixture: hồ sơ muốn con, tiêu chí muốn con.
+    ['hồ sơ trùng tiêu chí', A, candidate('b'), true],
+    ['A muốn bạn đời muốn con, B không muốn con', A, candidate('b', { childrenPlan: 'no_children' }), false],
     [
-      'một bên không quan trọng',
-      man('a', { criteria: { childrenPlan: 'no_children' } }),
-      candidate('b', { criteria: { childrenPlan: 'not_important' } }),
+      'B muốn bạn đời không con, A muốn con (chiều B→A)',
+      A,
+      candidate('b', { criteria: { childrenPlan: 'no_children' } }),
+      false,
+    ],
+    [
+      'cả hai không muốn con, tiêu chí không con',
+      man('a', { childrenPlan: 'no_children', criteria: { childrenPlan: 'no_children' } }),
+      candidate('b', { childrenPlan: 'no_children', criteria: { childrenPlan: 'no_children' } }),
       true,
+    ],
+    ['hồ sơ B "để ngỏ" hợp mọi tiêu chí', A, candidate('b', { childrenPlan: 'open' }), true],
+    [
+      'tiêu chí A "để ngỏ" nhận mọi hồ sơ',
+      man('a', { criteria: { childrenPlan: 'open' } }),
+      candidate('b', { childrenPlan: 'no_children', criteria: { childrenPlan: 'not_important' } }),
+      true,
+    ],
+    [
+      'tiêu chí A "không quan trọng" nhận mọi hồ sơ',
+      man('a', { criteria: { childrenPlan: 'not_important' } }),
+      candidate('b', { childrenPlan: 'no_children', criteria: { childrenPlan: 'open' } }),
+      true,
+    ],
+    // AC2 — hồ sơ cũ chưa khai (null) → không bị loại vì tiêu chí tôn giáo / con cái.
+    [
+      'hồ sơ B chưa khai tôn giáo (null), A muốn Phật giáo',
+      man('a', { criteria: { religion: 'buddhism' } }),
+      candidate('b', { religion: null }),
+      true,
+    ],
+    ['hồ sơ B chưa khai con cái (null), A muốn con', A, candidate('b', { childrenPlan: null }), true],
+    [
+      'hồ sơ B null nhưng tuổi vẫn bị loại',
+      A,
+      candidate('b', { religion: null, childrenPlan: null, birthDate: bornAged(40) }),
+      false,
+    ],
+    [
+      'hồ sơ A null không cứu được hồ sơ B vi phạm tiêu chí của A',
+      man('a', { religion: null, childrenPlan: null, criteria: { religion: 'buddhism' } }),
+      candidate('b', { religion: 'catholicism' }),
+      false,
     ],
   ])('%s → %s', (_name, a, b, expected) => {
     expect(passesHardFilters(a, b, NOW)).toBe(expected);

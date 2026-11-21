@@ -98,6 +98,8 @@ const form = (photos: string[]) => ({
   currentCity: 'Hà Nội',
   education: 'bachelor',
   occupation: 'Kế toán',
+  religion: 'buddhism',
+  childrenPlan: 'want_children',
   bio: 'Thích đọc sách và nấu ăn.',
   interests: ['đọc sách', 'nấu ăn'],
   incomeRange: '20m_40m',
@@ -114,6 +116,8 @@ describe('PUT/GET /me/profile', () => {
     const body = profileResponseSchema.parse(await res.json());
     expect(body).toMatchObject({
       status: 'COMPLETED',
+      religion: 'buddhism',
+      childrenPlan: 'want_children',
       incomeRange: '20m_40m',
       housing: 'own_home',
       assets: 'Căn hộ 2 phòng ngủ tại Cầu Giấy',
@@ -189,8 +193,60 @@ describe('PUT/GET /me/profile', () => {
     const problem = problemSchema.parse(await res.json());
     expect(problem.code).toBe('PROFILE_INCOMPLETE');
     expect(problem.meta).toMatchObject({
-      missing: ['birthDate', 'gender', 'currentCity', 'education', 'occupation', 'photos'],
+      missing: [
+        'birthDate',
+        'gender',
+        'currentCity',
+        'education',
+        'occupation',
+        'photos',
+        'religion',
+        'childrenPlan',
+      ],
     });
+  });
+
+  it('submit without religion / childrenPlan → 422 PROFILE_INCOMPLETE (BE-S6-07); draft keeps them null', async () => {
+    const key = await photoKey(userA);
+    const { religion: _r, childrenPlan: _c, ...rest } = form([key]);
+    const res = await put(userA, { ...rest, submit: true });
+    expect(res.status).toBe(422);
+    expect(problemSchema.parse(await res.json()).meta).toMatchObject({
+      missing: ['religion', 'childrenPlan'],
+    });
+
+    const draft = await put(userA, rest);
+    expect(draft.status).toBe(200);
+    expect(profileResponseSchema.parse(await draft.json())).toMatchObject({
+      status: 'DRAFT',
+      religion: null,
+      childrenPlan: null,
+    });
+  });
+
+  it('legacy completed profile (religion/childrenPlan null) can draft-save, then fill them → ProfileUpdated (BE-S6-07)', async () => {
+    const key = await photoKey(userA);
+    expect((await put(userA, { ...form([key]), submit: true })).status).toBe(200);
+    // Giả lập hồ sơ hoàn tất trước BE-S6-07.
+    await database.pool.query(
+      'update profile.profiles set religion = null, children_plan = null where user_id = $1',
+      [userA],
+    );
+    const { religion: _r, childrenPlan: _c, ...rest } = form([key]);
+    expect((await put(userA, { ...rest, bio: 'Mới' })).status).toBe(200);
+    expect((await put(userA, { ...rest, submit: true })).status).toBe(422);
+    const filled = await put(userA, { ...form([key]), religion: 'catholicism', childrenPlan: 'open' });
+    expect(filled.status).toBe(200);
+    expect(profileResponseSchema.parse(await filled.json())).toMatchObject({
+      status: 'COMPLETED',
+      religion: 'catholicism',
+      childrenPlan: 'open',
+    });
+    const { rows } = await database.pool.query(
+      `select count(*)::int as n from platform.outbox where event_type = 'ProfileUpdated' and aggregate_id = $1`,
+      [userA],
+    );
+    expect(rows[0]).toEqual({ n: 2 });
   });
 
   it.each([
@@ -198,6 +254,8 @@ describe('PUT/GET /me/profile', () => {
     { gender: 'other' },
     { birthDate: '20-08-1994' },
     { incomeRange: 'a lot' },
+    { religion: 'not_important' },
+    { childrenPlan: 'not_important' },
     { interests: Array.from({ length: 21 }, (_, i) => `tag${i}`) },
   ])('malformed body → 422 VALIDATION_FAILED %#', async (body) => {
     const res = await put(userA, body);

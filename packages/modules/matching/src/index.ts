@@ -46,6 +46,7 @@ export {
   CANDIDATE_ON_KYC_REJECTED_CONSUMER,
   CANDIDATE_ON_PREFERENCES_UPDATED_CONSUMER,
   CANDIDATE_ON_PROFILE_COMPLETED_CONSUMER,
+  CANDIDATE_ON_PROFILE_UPDATED_CONSUMER,
 } from './infrastructure/candidate-profile-consumers.js';
 
 export interface MatchingWorkerDeps {

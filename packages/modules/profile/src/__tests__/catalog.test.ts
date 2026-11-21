@@ -11,6 +11,13 @@ describe('profile catalogs', () => {
     expect(domain.EDUCATION_LEVELS).toEqual(contracts.EDUCATION_LEVELS);
     expect(domain.INCOME_RANGES).toEqual(contracts.INCOME_RANGES);
     expect(domain.HOUSING_TYPES).toEqual(contracts.HOUSING_TYPES);
+    expect(domain.PROFILE_RELIGIONS).toEqual(contracts.PROFILE_RELIGIONS);
+    expect(domain.PROFILE_CHILDREN_PLANS).toEqual(contracts.PROFILE_CHILDREN_PLANS);
+    // Tôn giáo / con cái của bản thân dùng cùng mã với tiêu chí, chỉ bỏ `not_important`.
+    expect(domain.PROFILE_RELIGIONS).toEqual(prefs.RELIGIONS.filter((r) => r !== prefs.NOT_IMPORTANT));
+    expect(domain.PROFILE_CHILDREN_PLANS).toEqual(
+      prefs.CHILDREN_PLANS.filter((r) => r !== prefs.NOT_IMPORTANT),
+    );
   });
 
   it('preference catalogs match the published contracts', () => {

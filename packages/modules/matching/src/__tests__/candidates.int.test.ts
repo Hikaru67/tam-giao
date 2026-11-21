@@ -1,4 +1,10 @@
-import { KYC_APPROVED, KYC_REJECTED, PREFERENCES_UPDATED, PROFILE_COMPLETED } from '@tamgiao/contracts';
+import {
+  KYC_APPROVED,
+  KYC_REJECTED,
+  PREFERENCES_UPDATED,
+  PROFILE_COMPLETED,
+  PROFILE_UPDATED,
+} from '@tamgiao/contracts';
 import { createDatabase, deliverOnce, DrizzleUnitOfWork, EventBus, type Database } from '@tamgiao/db';
 import { FakeClock, newId, ok, type DomainEvent } from '@tamgiao/kernel';
 import type { MatchingProfile } from '@tamgiao/module-profile/facade';
@@ -13,6 +19,7 @@ import {
   CANDIDATE_ON_KYC_REJECTED_CONSUMER,
   CANDIDATE_ON_PREFERENCES_UPDATED_CONSUMER,
   CANDIDATE_ON_PROFILE_COMPLETED_CONSUMER,
+  CANDIDATE_ON_PROFILE_UPDATED_CONSUMER,
   createFindCandidates,
   createMatchingWorker,
 } from '../index.js';
@@ -58,8 +65,15 @@ describe('DrizzleCandidateFinder — lọc cứng hai chiều (AC1)', () => {
     ['A ngoài khoảng tuổi B muốn (chiều B→A)', undefined, { criteria: { ageMin: 31, ageMax: 40 } }],
     ['B chỉ muốn Huế, A ở Hà Nội (chiều B→A)', undefined, { criteria: { cityKey: 'huế' } }],
     ['A chỉ muốn Hà Nội, B ở Huế (chiều A→B)', { criteria: { cityKey: 'hà nội' } }, { cityKey: 'huế' }],
-    ['tôn giáo xung đột', { criteria: { religion: 'buddhism' } }, { criteria: { religion: 'catholicism' } }],
-    ['kế hoạch con cái xung đột', undefined, { criteria: { childrenPlan: 'no_children' } }],
+    // AC1 (BE-S6-07): A muốn bạn đời theo Phật giáo, B là Công giáo.
+    ['B là Công giáo, A muốn Phật giáo', { criteria: { religion: 'buddhism' } }, { religion: 'catholicism' }],
+    ['A (Phật giáo) không thoả B muốn Công giáo', undefined, { criteria: { religion: 'catholicism' } }],
+    ['B không muốn con, A muốn bạn đời muốn con', undefined, { childrenPlan: 'no_children' }],
+    [
+      'A muốn con không thoả B muốn bạn đời không con',
+      undefined,
+      { criteria: { childrenPlan: 'no_children' } },
+    ],
     ['cùng giới (chỉ ghép khác giới)', undefined, { gender: 'male' }],
   ])('%s → bị loại', async (_name, seekerOver, badOver) => {
     if (seekerOver) await seed(candidate(a, { gender: 'male', ...seekerOver }));
@@ -77,7 +91,10 @@ describe('DrizzleCandidateFinder — lọc cứng hai chiều (AC1)', () => {
     const ages = [24, 29, 33, 38];
     const cities = ['hà nội', 'huế'];
     const religions = ['buddhism', 'catholicism', 'not_important'] as const;
-    const plans = ['want_children', 'no_children', 'open'] as const;
+    const plans = ['want_children', 'no_children', 'open', 'not_important'] as const;
+    // Hồ sơ của chính người đó, gồm `null` (hồ sơ cũ chưa khai — BE-S6-07).
+    const ownReligions = ['buddhism', 'catholicism', null, 'none'] as const;
+    const ownPlans = ['want_children', 'no_children', 'open', null, 'want_children'] as const;
     let k = 0;
     for (const age of ages)
       for (const city of cities) {
@@ -87,6 +104,8 @@ describe('DrizzleCandidateFinder — lọc cứng hai chiều (AC1)', () => {
             gender: i % 2 === 0 ? 'female' : 'male',
             birthDate: bornAged(age),
             cityKey: city,
+            religion: ownReligions[i % ownReligions.length] ?? null,
+            childrenPlan: ownPlans[i % ownPlans.length] ?? null,
             criteria: {
               ageMin: 22 + (i % 3) * 4,
               ageMax: 30 + (i % 4) * 3,
@@ -108,8 +127,49 @@ describe('DrizzleCandidateFinder — lọc cứng hai chiều (AC1)', () => {
     }
   });
 
+  it('SQL khớp `passesHardFilters` trên lưới tôn giáo × con cái (hồ sơ ↔ tiêu chí, có null) — BE-S6-07', async () => {
+    const criteriaReligions = ['buddhism', 'catholicism', 'not_important'] as const;
+    const ownReligions = ['buddhism', 'catholicism', null] as const;
+    const criteriaPlans = ['want_children', 'no_children', 'open', 'not_important'] as const;
+    const ownPlans = ['want_children', 'no_children', 'open', null] as const;
+    const profiles: CandidateProfile[] = [];
+    // Tuổi/khu vực luôn thoả để chỉ tôn giáo, con cái, giới tính quyết định.
+    for (let i = 0; i < 24; i++) {
+      profiles.push(
+        candidate(newId(), {
+          gender: i % 2 === 0 ? 'female' : 'male',
+          religion: ownReligions[Math.floor(i / 2) % 3] ?? null,
+          childrenPlan: ownPlans[Math.floor(i / 6) % 4] ?? null,
+          criteria: {
+            religion: criteriaReligions[i % 3] ?? 'not_important',
+            childrenPlan: criteriaPlans[Math.floor(i / 3) % 4] ?? 'not_important',
+          },
+        }),
+      );
+    }
+    for (const p of profiles) await seed(p);
+    const all = [candidate(a, { gender: 'male' }), ...profiles];
+    let matched = 0;
+    for (const seeker of all) {
+      const expected = all
+        .filter((c) => c.userId !== seeker.userId && passesHardFilters(seeker, c, NOW))
+        .map((c) => c.userId)
+        .sort();
+      matched += expected.length;
+      expect(await findIds(seeker.userId)).toEqual(expected);
+    }
+    // Lưới có cả cặp qua và cặp bị loại (tránh test rỗng nghĩa).
+    expect(matched).toBeGreaterThan(0);
+    expect(matched).toBeLessThan(24 * 12);
+  });
+
   it('trả dữ liệu đủ để chấm điểm (Value Object khôi phục đúng)', async () => {
-    const b = candidate(newId(), { criteria: { minEducation: 'college', cityKey: 'hà nội' } });
+    // Hồ sơ cũ chưa khai tôn giáo / con cái → khôi phục `null` (BE-S6-07).
+    const b = candidate(newId(), {
+      religion: null,
+      childrenPlan: null,
+      criteria: { minEducation: 'college', cityKey: 'hà nội' },
+    });
     await seed(b);
     const r = await uow.run(async (tx) => ok(await finder.find(tx, a, 10, NOW)));
     const pool = r.unwrapOr(null);
@@ -215,12 +275,18 @@ describe('consumer read model matching.candidate_profiles', () => {
     occurredAt: NOW,
     payload: { userId, submissionId: newId() },
   });
-  const matchingProfile = (userId: string, versions: [number, number], ageMax = 36): MatchingProfile => ({
+  const matchingProfile = (
+    userId: string,
+    versions: [number, number],
+    ageMax = 36,
+    own: Pick<MatchingProfile, 'religion' | 'childrenPlan'> = { religion: 'none', childrenPlan: 'open' },
+  ): MatchingProfile => ({
     userId,
     gender: 'female',
     birthDate: '1996-03-02',
     currentCity: 'Hà Nội',
     education: 'master',
+    ...own,
     criteria: {
       ageMin: 28,
       ageMax,
@@ -239,16 +305,17 @@ describe('consumer read model matching.candidate_profiles', () => {
   const row = async (userId: string) =>
     (
       await sql(
-        `select verified, gender, birth_date::text as birth_date, city_key, pref_age_max, pref_city_key,
-                profile_version, preferences_version, scoring
+        `select verified, gender, birth_date::text as birth_date, city_key, own_religion, own_children_plan,
+                pref_age_max, pref_city_key, profile_version, preferences_version, scoring
            from matching.candidate_profiles where user_id = $1`,
         [userId],
       )
     ).rows[0];
 
-  it('đăng ký đúng tên consumer cho 4 event', () => {
+  it('đăng ký đúng tên consumer cho 5 event', () => {
     expect(bus.list().map((s) => [s.eventType, s.consumer])).toEqual([
       [PROFILE_COMPLETED, CANDIDATE_ON_PROFILE_COMPLETED_CONSUMER],
+      [PROFILE_UPDATED, CANDIDATE_ON_PROFILE_UPDATED_CONSUMER],
       [PREFERENCES_UPDATED, CANDIDATE_ON_PREFERENCES_UPDATED_CONSUMER],
       [KYC_APPROVED, CANDIDATE_ON_KYC_APPROVED_CONSUMER],
       [KYC_REJECTED, CANDIDATE_ON_KYC_REJECTED_CONSUMER],
@@ -274,6 +341,8 @@ describe('consumer read model matching.candidate_profiles', () => {
       gender: 'female',
       birth_date: '1996-03-02',
       city_key: 'hà nội',
+      own_religion: 'none',
+      own_children_plan: 'open',
       pref_age_max: 36,
       pref_city_key: null,
       profile_version: 2,
@@ -295,6 +364,21 @@ describe('consumer read model matching.candidate_profiles', () => {
     source.set(u, matchingProfile(u, [2, 2], 33)); // bản đọc từ trước (consumer chạy chậm)
     await deliverOnce(uow, sub(CANDIDATE_ON_PROFILE_COMPLETED_CONSUMER), event(PROFILE_COMPLETED, u));
     expect(await row(u)).toMatchObject({ pref_age_max: 40, preferences_version: 3 });
+  });
+
+  it('hồ sơ cũ (tôn giáo/con cái null) được đồng bộ; ProfileUpdated sau khi khai → cập nhật cột own_* (BE-S6-07)', async () => {
+    const u = newId();
+    source.set(u, matchingProfile(u, [1, 1], 36, { religion: null, childrenPlan: null }));
+    await deliverOnce(uow, sub(CANDIDATE_ON_PROFILE_COMPLETED_CONSUMER), event(PROFILE_COMPLETED, u));
+    expect(await row(u)).toMatchObject({ own_religion: null, own_children_plan: null, profile_version: 1 });
+
+    source.set(u, matchingProfile(u, [2, 1], 36, { religion: 'buddhism', childrenPlan: 'want_children' }));
+    await deliverOnce(uow, sub(CANDIDATE_ON_PROFILE_UPDATED_CONSUMER), event(PROFILE_UPDATED, u));
+    expect(await row(u)).toMatchObject({
+      own_religion: 'buddhism',
+      own_children_plan: 'want_children',
+      profile_version: 2,
+    });
   });
 
   it('hồ sơ chưa hoàn tất / chưa có tiêu chí (facade null) → không tạo dòng', async () => {

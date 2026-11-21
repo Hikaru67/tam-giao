@@ -172,7 +172,7 @@ báo cáo (màn 14) → match `LOCKED`, hội thoại đóng, admin thấy báo 
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| profile, matching | domain, application, infrastructure, presentation | P1 | 1.5d | BE-S5-03 | BE-S6-01, BE-S6-03, BE-S6-05 | TODO |
+| profile, matching | domain, application, infrastructure, presentation | P1 | 1.5d | BE-S5-03 | BE-S6-01, BE-S6-03, BE-S6-05 | IN_REVIEW |
 
 **Mục tiêu:** Lọc cứng tôn giáo / con cái đúng nghĩa (người kia *là* gì so với điều mình *muốn*). Hiện hồ sơ chưa có hai
 trường này nên BE-S5-03 so khớp đối xứng hai giá trị tiêu chí — PO đã chốt bổ sung trường vào hồ sơ (review BE-S5-03).
@@ -186,8 +186,8 @@ trường này nên BE-S5-03 so khớp đối xứng hai giá trị tiêu chí �
 - Ngoài: đổi trọng số chấm điểm (giữ nguyên trừ khi PO yêu cầu).
 
 **Tiêu chí nghiệm thu**
-- [ ] AC1: A muốn bạn đời theo Phật giáo, B là Công giáo → B bị loại khỏi danh sách của A và A khỏi danh sách của B.
-- [ ] AC2: Hồ sơ cũ chưa có hai trường → hành vi lọc được định nghĩa rõ (ghi trong ARCHITECTURE) và có test.
+- [x] AC1: A muốn bạn đời theo Phật giáo, B là Công giáo → B bị loại khỏi danh sách của A và A khỏi danh sách của B.
+- [x] AC2: Hồ sơ cũ chưa có hai trường → hành vi lọc được định nghĩa rõ (ghi trong ARCHITECTURE) và có test.
 
 **Test bắt buộc:** Unit `passesHardFilters` dạng bảng; integration finder đối chiếu SQL ↔ domain trên lưới mẫu; HTTP profile.
 
