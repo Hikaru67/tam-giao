@@ -32,6 +32,7 @@ export class DrizzleMessageRepository implements MessageRepository {
         maskedBody: s.maskedBody,
         flagged: s.flagged,
         flagReasons: [...s.flagReasons],
+        visibleTo: s.visibleTo,
         sentAt: s.sentAt,
       });
     await this.outbox.append(tx, events);

@@ -62,6 +62,7 @@ export interface SendMessageDeps {
  *    cặp, nên đếm rate limit chính xác) → không có → `NOT_FOUND` → người ngoài cặp → `NOT_PARTICIPANT` (trước mọi
  *    kiểm tra trạng thái) → đã đóng / qua `closesAt` → `CONVERSATION_CLOSED` → đã gửi ≥ `MESSAGE_RATE_LIMIT_PER_MINUTE`
  *    tin trong 60 giây → `RATE_LIMITED` → sàng lọc nội dung → lưu tin + event (`MessageSent`, `MessageFlagged`).
+ * 4. Tin bị gắn cờ lừa đảo (BE-S6-03) → thêm tin hệ thống `FRAUD_WARNING` chỉ người nhận thấy (`visibleTo`), cùng `tx`.
  *
  * BE-S6-02 thêm idempotency key phía client: tra tin cũ theo (người gửi, key) ngay sau khi khoá hội thoại và trả lại
  * tin đó (không đếm rate limit, không tạo tin mới); unique (sender_id, client_message_id) ở DB làm chốt chặn.
@@ -105,6 +106,12 @@ export class SendMessage {
       const message = sent.value;
       const state = message.toState();
       await this.deps.messages.save(tx, message);
+      if (state.flagged) {
+        for (const recipientId of conversation.recipientsOf(senderId)) {
+          const warning = { id: newId<'Message'>(), code: 'FRAUD_WARNING', visibleTo: recipientId } as const;
+          await this.deps.messages.save(tx, Message.system(conversation, warning, now));
+        }
+      }
       return ok({
         messageId: state.id,
         conversationId: state.conversationId,

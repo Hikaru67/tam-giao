@@ -14,7 +14,15 @@ export const MESSAGE_KIND_NAMES = ['TEXT', 'IMAGE', 'SYSTEM'] as const;
 export type MessageKindName = (typeof MESSAGE_KIND_NAMES)[number];
 
 /** Mã tin hệ thống (FE có thể tự dịch; `body` của tin hệ thống là câu tiếng Việt mặc định). */
-export const SYSTEM_MESSAGE_CODE_NAMES = ['CONVERSATION_OPENED', 'CONVERSATION_CLOSED'] as const;
+/**
+ * `FRAUD_WARNING` (BE-S6-03): cảnh báo lừa đảo chỉ người nhận tin bị gắn cờ thấy — `MessageSent.recipientIds` chỉ có
+ * người đó.
+ */
+export const SYSTEM_MESSAGE_CODE_NAMES = [
+  'CONVERSATION_OPENED',
+  'CONVERSATION_CLOSED',
+  'FRAUD_WARNING',
+] as const;
 export type SystemMessageCodeName = (typeof SYSTEM_MESSAGE_CODE_NAMES)[number];
 
 /** Match vào `DATING` → mở hội thoại. `closesAt` = hết giai đoạn tìm hiểu (`expiresAt` của `MatchStartedDating`). */

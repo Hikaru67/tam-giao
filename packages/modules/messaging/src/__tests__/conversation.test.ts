@@ -268,8 +268,8 @@ describe('Message.send', () => {
 });
 
 describe('Message.system', () => {
-  it.each(['CONVERSATION_OPENED', 'CONVERSATION_CLOSED'] as const)(
-    '%s: không người gửi, gửi cả hai',
+  it.each(['CONVERSATION_OPENED', 'CONVERSATION_CLOSED', 'FRAUD_WARNING'] as const)(
+    '%s: không người gửi, mặc định gửi cả hai',
     (code) => {
       const c = open();
       const m = Message.system(c, { id: newId<'Message'>(), code }, T0);
@@ -288,6 +288,57 @@ describe('Message.system', () => {
       ]);
     },
   );
+
+  it('FRAUD_WARNING với visibleTo: chỉ người đó thấy, MessageSent chỉ gửi người đó', () => {
+    const c = open();
+    const m = Message.system(
+      c,
+      { id: newId<'Message'>(), code: 'FRAUD_WARNING', visibleTo: B.toUpperCase() },
+      T0,
+    );
+    expect(m.toState()).toMatchObject({ systemCode: 'FRAUD_WARNING', visibleTo: B, senderId: null });
+    expect(m.isVisibleTo(B)).toBe(true);
+    expect(m.isVisibleTo(A)).toBe(false);
+    expect(m.pullEvents()).toMatchObject([{ payload: { recipientIds: [B], systemCode: 'FRAUD_WARNING' } }]);
+  });
+
+  it('visibleTo không phải participant → lỗi lập trình', () => {
+    const c = open();
+    expect(() =>
+      Message.system(c, { id: newId<'Message'>(), code: 'FRAUD_WARNING', visibleTo: OUTSIDER }, T0),
+    ).toThrow();
+  });
+});
+
+describe('Message.bodyFor — quy tắc hiển thị', () => {
+  it('người gửi thấy body gốc; người nhận thấy maskedBody; không che → cả hai thấy body gốc', () => {
+    const c = open();
+    const masked = Message.send(
+      c,
+      {
+        id: newId<'Message'>(),
+        senderId: A,
+        body: body('zalo: 0912345678'),
+        screening: { maskedBody: 'zalo: ***', flagged: false, reasons: [] },
+      },
+      T0,
+    ).unwrapOr(undefined as never);
+    expect(masked.bodyFor(A.toUpperCase())).toBe('zalo: 0912345678');
+    expect(masked.bodyFor(B)).toBe('zalo: ***');
+    expect(masked.isVisibleTo(A) && masked.isVisibleTo(B)).toBe(true);
+
+    const plain = Message.send(
+      c,
+      {
+        id: newId<'Message'>(),
+        senderId: A,
+        body: body('chào'),
+        screening: PASS_THROUGH_SCREENER(body('chào')),
+      },
+      T0,
+    ).unwrapOr(undefined as never);
+    expect(plain.bodyFor(B)).toBe('chào');
+  });
 });
 
 describe('parseMessageBody', () => {
