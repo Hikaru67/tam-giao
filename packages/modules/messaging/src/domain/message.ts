@@ -14,7 +14,8 @@ export type MessageId = Id<'Message'>;
 export const MESSAGE_KINDS = ['TEXT', 'IMAGE', 'SYSTEM'] as const;
 export type MessageKind = (typeof MESSAGE_KINDS)[number];
 
-export const SYSTEM_MESSAGE_CODES = ['CONVERSATION_OPENED', 'CONVERSATION_CLOSED'] as const;
+/** `FRAUD_WARNING` (BE-S6-03): cảnh báo riêng cho người nhận một tin bị bộ lọc lừa đảo gắn cờ (`visibleTo`). */
+export const SYSTEM_MESSAGE_CODES = ['CONVERSATION_OPENED', 'CONVERSATION_CLOSED', 'FRAUD_WARNING'] as const;
 export type SystemMessageCode = (typeof SYSTEM_MESSAGE_CODES)[number];
 
 /** Câu hiển thị mặc định của tin hệ thống (FE có thể tự dịch theo `systemCode`). */
@@ -22,6 +23,8 @@ export const SYSTEM_MESSAGE_TEXT: Readonly<Record<SystemMessageCode, string>> = 
   CONVERSATION_OPENED:
     'Hai bạn đã đồng ý kết nối. Cuộc trò chuyện mở trong giai đoạn tìm hiểu — hãy tôn trọng và không chia sẻ thông tin tài chính.',
   CONVERSATION_CLOSED: 'Cuộc trò chuyện đã đóng.',
+  FRAUD_WARNING:
+    'Cảnh báo: tin nhắn vừa nhận có dấu hiệu lừa đảo tài chính. Đừng chuyển tiền, cho vay, đầu tư hay cung cấp mã OTP theo yêu cầu qua chat — hãy báo cáo nếu bạn thấy nghi ngờ.',
 };
 
 export interface MessageState {
@@ -40,6 +43,8 @@ export interface MessageState {
   readonly flagged: boolean;
   /** Mã luật khiến tin bị gắn cờ (rỗng khi không gắn cờ). */
   readonly flagReasons: readonly string[];
+  /** Tin hệ thống chỉ một người thấy (vd `FRAUD_WARNING` cho người nhận); `null` = mọi người trong hội thoại. */
+  readonly visibleTo: ConversationUserId | null;
   readonly sentAt: Date;
   readonly version: number;
 }
@@ -52,7 +57,10 @@ type MutableState = Omit<MessageState, 'version'>;
  * - `Message.send(conversation, …)`: tin người dùng (`TEXT`). Kiểm tra `conversation.ensureCanSend` (người gửi thuộc
  *   cặp, hội thoại còn mở và chưa qua `closesAt`) — không thể tạo tin bỏ qua luật này. Kết quả sàng lọc (`screening`)
  *   quyết định `maskedBody`/`flagged`. Event: `MessageSent`; thêm `MessageFlagged` khi bị gắn cờ.
- * - `Message.system(conversation, code, …)`: tin hệ thống (mở/đóng hội thoại), gửi cho cả hai, event `MessageSent`.
+ * - `Message.system(conversation, code, …)`: tin hệ thống, gửi cho cả hai — hoặc chỉ `visibleTo` (một participant,
+ *   vd cảnh báo lừa đảo cho người nhận), event `MessageSent` với `recipientIds` tương ứng.
+ *
+ * Quy tắc hiển thị (`bodyFor`): người gửi luôn thấy `body` gốc của mình; người khác thấy `maskedBody` nếu có.
  */
 export class Message extends AggregateRoot<MessageId> {
   protected readonly aggregateType = 'Message';
@@ -92,6 +100,7 @@ export class Message extends AggregateRoot<MessageId> {
         maskedBody: screening.maskedBody,
         flagged: screening.flagged,
         flagReasons: screening.flagged ? [...screening.reasons] : [],
+        visibleTo: null,
         sentAt: new Date(now.getTime()),
       },
       0,
@@ -114,9 +123,18 @@ export class Message extends AggregateRoot<MessageId> {
 
   static system(
     conversation: Conversation,
-    input: { readonly id: MessageId; readonly code: SystemMessageCode },
+    input: {
+      readonly id: MessageId;
+      readonly code: SystemMessageCode;
+      /** Chỉ participant này thấy tin (bỏ trống = cả hai). Không phải participant → lỗi lập trình. */
+      readonly visibleTo?: ConversationUserId;
+    },
     now: Date,
   ): Message {
+    const visibleTo = input.visibleTo?.toLowerCase() ?? null;
+    if (visibleTo !== null && !conversation.isParticipant(visibleTo)) {
+      throw new Error('Message.system: visibleTo phải là người trong hội thoại');
+    }
     const message = new Message(
       {
         id: input.id,
@@ -128,11 +146,12 @@ export class Message extends AggregateRoot<MessageId> {
         maskedBody: null,
         flagged: false,
         flagReasons: [],
+        visibleTo,
         sentAt: new Date(now.getTime()),
       },
       0,
     );
-    message.recordSent(conversation.recipientsOf(null), now);
+    message.recordSent(visibleTo === null ? conversation.recipientsOf(null) : [visibleTo], now);
     return message;
   }
 
@@ -144,6 +163,16 @@ export class Message extends AggregateRoot<MessageId> {
   /** Nội dung người nhận thấy: bản đã che nếu có, ngược lại nội dung gốc. */
   get displayBody(): string {
     return this.state.maskedBody ?? this.state.body;
+  }
+
+  /** Tin có hiển thị cho `viewerId` không (tin `visibleTo` chỉ người đó thấy). */
+  isVisibleTo(viewerId: ConversationUserId): boolean {
+    return this.state.visibleTo === null || this.state.visibleTo === viewerId.toLowerCase();
+  }
+
+  /** Nội dung `viewerId` thấy: người gửi thấy `body` gốc của mình, người khác thấy `maskedBody` nếu có. */
+  bodyFor(viewerId: ConversationUserId): string {
+    return this.state.senderId === viewerId.toLowerCase() ? this.state.body : this.displayBody;
   }
 
   toState(): MessageState {

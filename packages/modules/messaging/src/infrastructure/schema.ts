@@ -64,10 +64,16 @@ export const messages = messaging.table(
       .notNull()
       .default(sql`'{}'::text[]`),
     sentAt: timestamptz('sent_at').notNull(),
+    /** BE-S6-03: tin hệ thống chỉ một participant thấy (cảnh báo lừa đảo cho người nhận); null = cả hai. */
+    visibleTo: uuid('visible_to'),
   },
   (t) => [
     check('messages_kind_ck', sql`${t.kind} in ('TEXT', 'IMAGE', 'SYSTEM')`),
-    check('messages_system_code_ck', sql`${t.systemCode} in ('CONVERSATION_OPENED', 'CONVERSATION_CLOSED')`),
+    check(
+      'messages_system_code_ck',
+      sql`${t.systemCode} in ('CONVERSATION_OPENED', 'CONVERSATION_CLOSED', 'FRAUD_WARNING')`,
+    ),
+    check('messages_visible_to_ck', sql`${t.visibleTo} is null or ${t.kind} = 'SYSTEM'`),
     check(
       'messages_system_shape_ck',
       sql`(${t.kind} = 'SYSTEM') = (${t.senderId} is null) and (${t.kind} = 'SYSTEM') = (${t.systemCode} is not null)`,

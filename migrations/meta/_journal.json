@@ -134,6 +134,13 @@
       "when": 1795247620746,
       "tag": "0018_safety_reports",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1795248281706,
+      "tag": "0019_messaging_fraud_warning",
+      "breakpoints": true
     }
   ]
 }

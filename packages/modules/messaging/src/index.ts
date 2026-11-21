@@ -9,6 +9,7 @@ import {
 } from './application/conversation-lifecycle.js';
 import { SendMessage } from './application/send-message.js';
 import type { MessageScreener } from './domain/message-policy.js';
+import { createContentScreener } from './domain/message-screener.js';
 import { registerConversationConsumers } from './infrastructure/conversation-consumers.js';
 import { DrizzleConversationRepository } from './infrastructure/drizzle-conversation-repository.js';
 import { DrizzleMessageRepository } from './infrastructure/drizzle-message-repository.js';
@@ -16,7 +17,7 @@ import { DrizzleMessageRepository } from './infrastructure/drizzle-message-repos
 /**
  * Module messaging (Sprint 6): chat chỉ mở trong giai đoạn `DATING` của match. BE-S6-01: domain hội thoại/tin nhắn,
  * mở/đóng hội thoại theo event matching, use case `SendMessage`. Transport realtime + route ở BE-S6-02/BE-S6-04,
- * bộ lọc lừa đảo/che liên hệ ở BE-S6-03 (cắm vào `screener`).
+ * bộ lọc lừa đảo/che liên hệ ở BE-S6-03 (`createContentScreener`, mặc định của `createMessagingModule`).
  */
 
 export type { ConversationCloseReason, ConversationId, ConversationStatus } from './domain/conversation.js';
@@ -69,7 +70,7 @@ export function createMessagingWorker(deps: MessagingWorkerDeps): MessagingWorke
 export interface MessagingModuleDeps {
   readonly uow: UnitOfWork;
   readonly clock: Clock;
-  /** Sàng lọc nội dung tin (BE-S6-03). Bỏ trống = không lọc. */
+  /** Sàng lọc nội dung tin. Bỏ trống = bộ lọc lừa đảo + che liên hệ (`createContentScreener`, BE-S6-03). */
   readonly screener?: MessageScreener;
 }
 
@@ -91,7 +92,7 @@ export function createMessagingModule(deps: MessagingModuleDeps): MessagingModul
     clock: deps.clock,
     conversations: lifecycle.conversations,
     messages: lifecycle.messages,
-    ...(deps.screener === undefined ? {} : { screener: deps.screener }),
+    screener: deps.screener ?? createContentScreener(),
   });
   return { name: 'messaging', routes: new Hono<AppEnv>(), commands: { sendMessage } };
 }

@@ -241,7 +241,7 @@ describe('SendMessage trên Postgres', () => {
         sender_id: pair.a,
         kind: 'TEXT',
         body: 'Chào anh, số em 0912345678',
-        masked_body: null,
+        masked_body: 'Chào anh, số em [SĐT đã ẩn]',
         flagged: false,
         flag_reasons: [],
       },
@@ -251,6 +251,72 @@ describe('SendMessage trên Postgres', () => {
     );
     expect(outbox[0]?.payload).toMatchObject({ senderId: pair.a, recipientIds: [pair.b], flagged: false });
     expect(JSON.stringify(outbox)).not.toContain('0912345678');
+  });
+
+  it('BE-S6-03: tin lừa đảo → flagged + flag_reasons, FRAUD_WARNING visible_to người nhận, outbox không nội dung', async () => {
+    const pair = newPair();
+    const conversationId = await openedConversationId(pair);
+    clock.advance({ minutes: 1 });
+    const text = 'Em ơi chuyển khoản giúp anh 5 triệu, STK 0123456789 Vietcombank';
+    const r = await messaging().execute({ conversationId, senderId: pair.a, body: text });
+    expect(r.unwrapOr(undefined as never)).toMatchObject({ body: text, flagged: true });
+    const { rows } = await sql(
+      `select sender_id, kind, system_code, masked_body, flagged, flag_reasons, visible_to
+         from messaging.messages where conversation_id = $1 and system_code is distinct from 'CONVERSATION_OPENED'
+        order by id`,
+      [conversationId],
+    );
+    expect(rows).toEqual([
+      {
+        sender_id: pair.a,
+        kind: 'TEXT',
+        system_code: null,
+        masked_body: 'Em ơi chuyển khoản giúp anh 5 triệu, STK [SĐT đã ẩn] Vietcombank',
+        flagged: true,
+        flag_reasons: ['MONEY_TRANSFER', 'BANK_ACCOUNT', 'ACCOUNT_NUMBER', 'MONEY_AMOUNT'],
+        visible_to: null,
+      },
+      {
+        sender_id: null,
+        kind: 'SYSTEM',
+        system_code: 'FRAUD_WARNING',
+        masked_body: null,
+        flagged: false,
+        flag_reasons: [],
+        visible_to: pair.b,
+      },
+    ]);
+    const { rows: outbox } = await sql(
+      `select event_type, payload from platform.outbox
+        where event_type in ('MessageSent', 'MessageFlagged') and payload->>'conversationId' = $1
+          and payload->>'systemCode' is distinct from 'CONVERSATION_OPENED'
+        order by id`,
+      [conversationId],
+    );
+    expect(outbox.map((o) => o.event_type)).toEqual(['MessageSent', 'MessageFlagged', 'MessageSent']);
+    expect(outbox[1]?.payload).toMatchObject({ senderId: pair.a, reasons: rows[0]?.flag_reasons });
+    expect(outbox[2]?.payload).toMatchObject({ systemCode: 'FRAUD_WARNING', recipientIds: [pair.b] });
+    expect(JSON.stringify(outbox)).not.toContain('0123456789');
+    expect(JSON.stringify(outbox)).not.toContain('chuyển khoản');
+  });
+
+  it('CHECK: visible_to chỉ cho tin SYSTEM; system_code ngoài danh sách bị từ chối', async () => {
+    const pair = newPair();
+    const conversationId = await openedConversationId(pair);
+    await expect(
+      sql(
+        `insert into messaging.messages (id, conversation_id, sender_id, kind, body, sent_at, visible_to)
+         values ($1, $2, $3, 'TEXT', 'x', now(), $4)`,
+        [newId(), conversationId, pair.a, pair.b],
+      ),
+    ).rejects.toThrow(/messages_visible_to_ck/);
+    await expect(
+      sql(
+        `insert into messaging.messages (id, conversation_id, kind, system_code, body, sent_at)
+         values ($1, $2, 'SYSTEM', 'OTHER', 'x', now())`,
+        [newId(), conversationId],
+      ),
+    ).rejects.toThrow(/messages_system_code_ck/);
   });
 
   it('AC1: hội thoại đã đóng (MatchLocked) → CONVERSATION_CLOSED, không lưu tin', async () => {

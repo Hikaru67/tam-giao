@@ -8,6 +8,8 @@ import {
 import { SendMessage } from '../application/send-message.js';
 import type { ConversationId } from '../domain/conversation.js';
 import type { MessageScreener } from '../domain/message-policy.js';
+import { CONTACT_MASK_LABELS } from '../domain/contact-masker.js';
+import { createContentScreener } from '../domain/message-screener.js';
 import {
   InMemoryConversationRepository,
   InMemoryMessageRepository,
@@ -158,6 +160,62 @@ describe('SendMessage', () => {
       maskedBody: 'số mình ****',
       flagged: true,
     });
-    expect(messages.events.slice(-2).map((e) => e.type)).toEqual(['MessageSent', 'MessageFlagged']);
+    // + tin hệ thống FRAUD_WARNING cho người nhận (BE-S6-03).
+    expect(messages.events.slice(-3).map((e) => e.type)).toEqual([
+      'MessageSent',
+      'MessageFlagged',
+      'MessageSent',
+    ]);
+  });
+
+  describe('bộ lọc thật (BE-S6-03)', () => {
+    it('tin lừa đảo → flagged + MessageFlagged (mã luật, không nội dung) + FRAUD_WARNING chỉ người nhận thấy', async () => {
+      const id = await openConversation();
+      const text =
+        'Anh đầu tư Bitcoin trên sàn Binance, lãi 30% mỗi tuần, chuyển khoản 5 triệu vào STK 0123456789';
+      const r = await sendMessage(createContentScreener()).execute({
+        conversationId: id,
+        senderId: A,
+        body: text,
+      });
+      const view = r.unwrapOr(undefined as never);
+      expect(view).toMatchObject({ body: text, flagged: true });
+      expect(view.maskedBody).toContain(CONTACT_MASK_LABELS.PHONE);
+
+      const [flaggedMsg, warning] = messages.states.slice(-2);
+      expect(flaggedMsg).toMatchObject({ senderId: A, flagged: true, visibleTo: null });
+      expect(flaggedMsg?.flagReasons).toEqual(
+        expect.arrayContaining(['CRYPTO', 'INVESTMENT', 'MONEY_TRANSFER']),
+      );
+      expect(warning).toMatchObject({
+        kind: 'SYSTEM',
+        systemCode: 'FRAUD_WARNING',
+        senderId: null,
+        visibleTo: B,
+      });
+
+      const events = messages.events.slice(-3);
+      expect(events.map((e) => e.type)).toEqual(['MessageSent', 'MessageFlagged', 'MessageSent']);
+      expect(events[1]?.payload).toMatchObject({ senderId: A, reasons: flaggedMsg?.flagReasons });
+      expect(events[2]?.payload).toMatchObject({ systemCode: 'FRAUD_WARNING', recipientIds: [B] });
+      expect(JSON.stringify(events)).not.toContain('Bitcoin');
+    });
+
+    it('tin bình thường có SĐT → che cho người nhận, không gắn cờ, không cảnh báo', async () => {
+      const id = await openConversation();
+      const before = messages.states.length;
+      const r = await sendMessage(createContentScreener()).execute({
+        conversationId: id,
+        senderId: A,
+        body: 'zalo: 0912345678',
+      });
+      expect(r.unwrapOr(undefined as never)).toMatchObject({
+        body: 'zalo: 0912345678',
+        maskedBody: `zalo: ${CONTACT_MASK_LABELS.PHONE}`,
+        flagged: false,
+      });
+      expect(messages.states).toHaveLength(before + 1);
+      expect(messages.events.at(-1)?.type).toBe('MessageSent');
+    });
   });
 });
