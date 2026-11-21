@@ -45,3 +45,17 @@ export interface ReportStatusChangedPayload {
   readonly fromStatus: ReportStatusName;
   readonly toStatus: ReportStatusName;
 }
+
+/**
+ * Admin khoá vĩnh viễn một người dùng (BE-S6-06, aggregate `UserBan`). Lý do khoá (văn bản tự do) KHÔNG nằm trong event.
+ * Tiêu thụ: identity thu hồi mọi phiên/refresh token + chặn mở phiên mới (`ACCOUNT_BANNED`); matching loại khỏi
+ * `CandidateFinder` và khoá match đang mở (`LOCKED`, lý do `USER_BANNED` → messaging đóng hội thoại qua `MatchLocked`).
+ * `reportId` = báo cáo dẫn tới quyết định, nếu có.
+ */
+export const USER_BANNED = 'UserBanned';
+export interface UserBannedPayload {
+  readonly banId: string;
+  readonly userId: string;
+  readonly bannedBy: string;
+  readonly reportId: string | null;
+}

@@ -43,6 +43,8 @@ function toReport(row: ReportRow): Report {
     status: row.status,
     createdAt: row.createdAt,
     closedAt: row.closedAt,
+    handledBy: row.handledBy,
+    conclusion: row.conclusion,
     updatedAt: row.updatedAt,
     version: row.version,
   });
@@ -78,6 +80,8 @@ export class DrizzleReportRepository implements ReportRepository {
         status: s.status,
         createdAt: s.createdAt,
         closedAt: s.closedAt,
+        handledBy: s.handledBy,
+        conclusion: s.conclusion,
         updatedAt: s.updatedAt,
         version: s.version,
       });
@@ -88,6 +92,8 @@ export class DrizzleReportRepository implements ReportRepository {
           severity: s.severity,
           status: s.status,
           closedAt: s.closedAt,
+          handledBy: s.handledBy,
+          conclusion: s.conclusion,
           updatedAt: s.updatedAt,
           version: s.version,
         })

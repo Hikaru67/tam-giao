@@ -30,6 +30,10 @@ export const reports = safety.table(
     status: text('status').notNull(),
     createdAt: timestamptz('created_at').notNull(),
     closedAt: timestamptz('closed_at'),
+    /** BE-S6-06: admin nhận xử lý / đóng báo cáo gần nhất (id `identity.admin_users`, không FK — A3). */
+    handledBy: uuid('handled_by'),
+    /** BE-S6-06: kết luận của chuyên viên khi đóng (văn bản tự do, PII — không log/event/audit). */
+    conclusion: text('conclusion'),
     updatedAt: timestamptz('updated_at').notNull(),
     version: integer('version').notNull(),
   },
@@ -45,8 +49,35 @@ export const reports = safety.table(
     check('reports_evidence_count_ck', sql`cardinality(${t.evidenceKeys}) <= 5`),
     check('reports_urgent_due_at_ck', sql`${t.urgent} = (${t.dueAt} is not null)`),
     check('reports_version_ck', sql`${t.version} >= 1`),
+    check('reports_conclusion_length_ck', sql`char_length(${t.conclusion}) <= 2000`),
+    check(
+      'reports_closed_at_ck',
+      sql`(${t.status} in ('RESOLVED', 'DISMISSED')) = (${t.closedAt} is not null)`,
+    ),
     index('reports_reporter_id_idx').on(t.reporterId),
     index('reports_reported_user_id_idx').on(t.reportedUserId),
     index('reports_status_due_at_idx').on(t.status, t.dueAt),
+  ],
+);
+
+/**
+ * Aggregate `UserBan` (BE-S6-06) — quyết định khoá vĩnh viễn. PK `user_id`: mỗi người dùng tối đa một bản ghi, chặn
+ * hai admin khoá đồng thời ở DB (A10). `reason` là văn bản tự do (có thể chứa PII): không log, không đưa vào
+ * event/audit. `user_id`, `report_id`, `banned_by` không khai FK sang module khác (A3).
+ */
+export const userBans = safety.table(
+  'user_bans',
+  {
+    userId: uuid('user_id').primaryKey(),
+    id: uuid('id').notNull().unique('user_bans_id_uq'),
+    reason: text('reason').notNull(),
+    reportId: uuid('report_id').references(() => reports.id),
+    bannedBy: uuid('banned_by').notNull(),
+    bannedAt: timestamptz('banned_at').notNull(),
+    version: integer('version').notNull(),
+  },
+  (t) => [
+    check('user_bans_reason_length_ck', sql`char_length(${t.reason}) between 1 and 1000`),
+    check('user_bans_version_ck', sql`${t.version} >= 1`),
   ],
 );

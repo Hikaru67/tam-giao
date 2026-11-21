@@ -5,6 +5,7 @@ import {
   PROFILE_COMPLETED,
   PROFILE_UPDATED,
   REPORT_FILED,
+  USER_BANNED,
 } from '@tamgiao/contracts';
 import { createDatabase, deliverOnce, DrizzleUnitOfWork, EventBus, type Database } from '@tamgiao/db';
 import { FakeClock, newId, ok, type DomainEvent } from '@tamgiao/kernel';
@@ -23,6 +24,7 @@ import {
   CANDIDATE_ON_PROFILE_UPDATED_CONSUMER,
   createFindCandidates,
   createMatchingWorker,
+  MATCH_EXCLUDE_ON_USER_BANNED_CONSUMER,
   MATCH_LOCK_ON_REPORT_FILED_CONSUMER,
 } from '../index.js';
 import { bornAged, candidate, NOW } from './candidate-fixtures.js';
@@ -323,6 +325,7 @@ describe('consumer read model matching.candidate_profiles', () => {
       [KYC_APPROVED, CANDIDATE_ON_KYC_APPROVED_CONSUMER],
       [KYC_REJECTED, CANDIDATE_ON_KYC_REJECTED_CONSUMER],
       [REPORT_FILED, MATCH_LOCK_ON_REPORT_FILED_CONSUMER],
+      [USER_BANNED, MATCH_EXCLUDE_ON_USER_BANNED_CONSUMER],
     ]);
   });
 

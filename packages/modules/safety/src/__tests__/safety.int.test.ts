@@ -38,6 +38,7 @@ import { createSafetyModule } from '../index.js';
 
 const NOW = new Date('2026-11-21T03:00:00.000Z');
 /** Mô tả có PII giả (SĐT) — không được xuất hiện trong log / outbox. */
+const ADMIN_ID = newId();
 const SECRET_DESCRIPTION = 'Anh ấy xin chuyển khoản gấp, SĐT 0912345678';
 
 let database: Database;
@@ -101,7 +102,20 @@ beforeAll(() => {
     c.set('auth', { userId, sessionId: newId() });
     return next();
   });
-  const safety = createSafetyModule({ uow, clock, uploads, matching: matching.facade, requireUser });
+  const safety = createSafetyModule({
+    uow,
+    clock,
+    uploads,
+    matching: matching.facade,
+    requireUser,
+    requireAdmin: () => async (_c, next) => next(),
+    auditLogger,
+    storage,
+    messaging: {
+      listFlaggedMessages: async () => ({ items: [], nextCursor: null }),
+      getFlaggedMessage: async () => null,
+    },
+  });
   const logger = createLogger({
     service: 'api',
     level: 'debug',
@@ -417,13 +431,19 @@ describe('DrizzleReportRepository', () => {
     await uow.run(async (tx) => {
       const r = await repo.findById(tx, report.id);
       if (!r) throw new Error('missing');
-      r.startReview(later);
-      r.resolve(later);
+      r.startReview(later, ADMIN_ID);
+      r.resolve(later, { staffId: ADMIN_ID, conclusion: 'Có vi phạm' });
       await repo.save(tx, r);
       return ok();
     });
     const after = await withRollback(uow, (tx) => repo.findById(tx, report.id));
-    expect(after?.toState()).toMatchObject({ status: 'RESOLVED', closedAt: later, version: 3 });
+    expect(after?.toState()).toMatchObject({
+      status: 'RESOLVED',
+      closedAt: later,
+      handledBy: ADMIN_ID,
+      conclusion: 'Có vi phạm',
+      version: 3,
+    });
     expect((await outboxOf('ReportStatusChanged')).map((r) => r.payload)).toEqual([
       { reportId: report.id, fromStatus: 'OPEN', toStatus: 'IN_REVIEW' },
       { reportId: report.id, fromStatus: 'IN_REVIEW', toStatus: 'RESOLVED' },
@@ -436,9 +456,9 @@ describe('DrizzleReportRepository', () => {
     const stale = await withRollback(uow, (tx) => repo.findById(tx, report.id));
     const fresh = await withRollback(uow, (tx) => repo.findById(tx, report.id));
     if (!stale || !fresh) throw new Error('missing');
-    fresh.startReview(NOW);
+    fresh.startReview(NOW, ADMIN_ID);
     await uow.run(async (tx) => ok(await repo.save(tx, fresh)));
-    stale.dismiss(NOW);
+    stale.dismiss(NOW, { staffId: ADMIN_ID, conclusion: 'Bác bỏ' });
     await expect(uow.run(async (tx) => ok(await repo.save(tx, stale)))).rejects.toThrow(/xung đột version/);
     const now = await withRollback(uow, (tx) => repo.findById(tx, report.id as ReportId));
     expect(now?.status).toBe('IN_REVIEW');

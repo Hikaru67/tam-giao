@@ -20,7 +20,7 @@ import {
   createVoucherExpiryJob,
   FakePaymentGateway,
 } from '@tamgiao/module-billing';
-import { ConsoleSmsSender, createIdentityModule } from '@tamgiao/module-identity';
+import { ConsoleSmsSender, createIdentityModule, createIdentityWorker } from '@tamgiao/module-identity';
 import { createExpireMatchJob, createMatchingWorker } from '@tamgiao/module-matching';
 import { createMessagingWorker } from '@tamgiao/module-messaging';
 import { createMatchingProfileReader } from '@tamgiao/module-profile';
@@ -70,6 +70,9 @@ createMatchingWorker({
 }).registerConsumers(bus);
 // Messaging (BE-S6-01): MatchStartedDating → mở hội thoại; MatchClosed / MatchLocked → đóng.
 createMessagingWorker({ clock: new SystemClock() }).registerConsumers(bus);
+// Identity (BE-S6-06): UserBanned (safety) → chặn đăng nhập + thu hồi mọi phiên. Matching xử lý cùng event ở trên
+// (loại khỏi ứng viên + khoá match đang mở).
+createIdentityWorker({ clock: new SystemClock() }).registerConsumers(bus);
 await registerConsumers({ boss, uow, bus, logger });
 for (const job of jobs) {
   await registerJob({ boss, uow, logger, ...job });

@@ -12,7 +12,9 @@ import {
 import { SendMessage } from './application/send-message.js';
 import type { MessageScreener } from './domain/message-policy.js';
 import { createContentScreener } from './domain/message-screener.js';
+import type { MessagingFacade } from './application/facade.js';
 import { registerConversationConsumers } from './infrastructure/conversation-consumers.js';
+import { DrizzleMessagingFacade } from './infrastructure/drizzle-messaging-facade.js';
 import { DrizzleConversationRepository } from './infrastructure/drizzle-conversation-repository.js';
 import { DrizzleMessageRepository } from './infrastructure/drizzle-message-repository.js';
 import { ChatGateway, type ChatGatewayLogger } from './presentation/chat-gateway.js';
@@ -34,6 +36,13 @@ export type {
   SendMessageError,
   SentMessageView,
 } from './application/send-message.js';
+export type {
+  FlaggedMessageCursor,
+  FlaggedMessageDetail,
+  FlaggedMessagePage,
+  FlaggedMessageSummary,
+  MessagingFacade,
+} from './application/facade.js';
 export type {
   CloseConversationOutcome,
   OpenConversationOutcome,
@@ -62,6 +71,11 @@ function lifecycleDeps(clock: Clock): ConversationLifecycleDeps {
     conversations: new DrizzleConversationRepository(outbox),
     messages: new DrizzleMessageRepository(outbox),
   };
+}
+
+/** Facade read-only của messaging (BE-S6-06) — `createMessagingModule` dùng lại; cũng cho test/composition khác. */
+export function createMessagingFacade(deps: { readonly uow: UnitOfWork }): MessagingFacade {
+  return new DrizzleMessagingFacade(deps.uow);
 }
 
 export interface MessagingWorkerDeps {
@@ -109,6 +123,8 @@ export interface MessagingModule {
     /** Gửi tin — WS `message.send` (BE-S6-02) gọi use case này. */
     readonly sendMessage: SendMessage;
   };
+  /** Facade read-only cho module khác (BE-S6-06: safety — hàng chờ tin bị gắn cờ). */
+  readonly facade: MessagingFacade;
 }
 
 /** Composition root phía API của module messaging. */
@@ -137,5 +153,6 @@ export function createMessagingModule(deps: MessagingModuleDeps): MessagingModul
     listMessagesAfter: new ListMessagesAfter(access),
     requireUser: deps.requireUser,
   });
-  return { name: 'messaging', routes, realtime, commands: { sendMessage } };
+  const facade = createMessagingFacade(deps);
+  return { name: 'messaging', routes, realtime, commands: { sendMessage }, facade };
 }

@@ -736,9 +736,15 @@ importers:
       '@tamgiao/kernel':
         specifier: workspace:*
         version: link:../../kernel
+      '@tamgiao/module-identity':
+        specifier: workspace:*
+        version: link:../identity
       '@tamgiao/module-matching':
         specifier: workspace:*
         version: link:../matching
+      '@tamgiao/module-messaging':
+        specifier: workspace:*
+        version: link:../messaging
       drizzle-orm:
         specifier: 0.45.4
         version: 0.45.4(@opentelemetry/api@1.10.0)(@types/pg@8.23.1)(pg@8.23.1)
@@ -752,9 +758,6 @@ importers:
       '@tamgiao/config':
         specifier: workspace:*
         version: link:../../config
-      '@tamgiao/module-identity':
-        specifier: workspace:*
-        version: link:../identity
       '@tamgiao/testing':
         specifier: workspace:*
         version: link:../../testing
