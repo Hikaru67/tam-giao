@@ -34,6 +34,8 @@ export type ReportStatus = (typeof REPORT_STATUSES)[number];
 export const REPORT_DESCRIPTION_MAX_LENGTH = 1000;
 /** Số ảnh bằng chứng tối đa (sau khi bỏ trùng). Khớp `REPORT_MAX_EVIDENCE` ở contracts. */
 export const REPORT_MAX_EVIDENCE = 5;
+/** Độ dài tối đa kết luận của chuyên viên (ký tự, sau khi trim). Khớp `REPORT_CONCLUSION_MAX_LENGTH` ở contracts. */
+export const REPORT_CONCLUSION_MAX_LENGTH = 2000;
 
 /**
  * Mức độ mặc định theo loại vi phạm — theo nhãn trên màn thiết kế ("Gian dối tình trạng hôn nhân: Cực kỳ nghiêm
@@ -51,6 +53,15 @@ export type ReportFileError = DomainError<
   'REPORT_TARGET_INVALID' | 'REPORT_DESCRIPTION_TOO_LONG' | 'REPORT_EVIDENCE_TOO_MANY'
 >;
 export type ReportTransitionError = DomainError<'REPORT_INVALID_TRANSITION'>;
+export type ReportCloseError = DomainError<'REPORT_INVALID_TRANSITION' | 'REPORT_CONCLUSION_INVALID'>;
+
+/** Kết luận của chuyên viên khi đóng báo cáo (`resolve` / `dismiss`). */
+export interface ReportConclusionInput {
+  /** Id admin (module identity) xử lý. */
+  readonly staffId: string;
+  /** Văn bản tự do — có thể chứa PII: KHÔNG log, KHÔNG đưa vào event/audit. */
+  readonly conclusion: string;
+}
 
 export interface ReportState {
   readonly id: ReportId;
@@ -72,6 +83,10 @@ export interface ReportState {
   readonly createdAt: Date;
   /** Lúc vào `RESOLVED | DISMISSED`. */
   readonly closedAt: Date | null;
+  /** Admin nhận xử lý (`startReview`) / đóng báo cáo gần nhất (BE-S6-06). `null` khi chưa ai xử lý. */
+  readonly handledBy: string | null;
+  /** Kết luận khi `RESOLVED | DISMISSED` (văn bản tự do, PII — không log/event/audit). */
+  readonly conclusion: string | null;
   readonly updatedAt: Date;
   readonly version: number;
 }
@@ -104,6 +119,8 @@ export interface FileReportInput {
  * - IN_REVIEW → resolve → RESOLVED; dismiss → DISMISSED
  * - RESOLVED | DISMISSED: trạng thái cuối — mọi thao tác → `REPORT_INVALID_TRANSITION`.
  * (`resolve` từ OPEN không được: phải nhận xử lý trước.) Lỗi không đổi state, không phát event.
+ * BE-S6-06: mỗi bước ghi `handledBy` (admin); `resolve`/`dismiss` bắt buộc kết luận trim, 1…
+ * `REPORT_CONCLUSION_MAX_LENGTH` ký tự (`REPORT_CONCLUSION_INVALID`, kiểm tra sau luật trạng thái).
  */
 export class Report extends AggregateRoot<ReportId> {
   protected readonly aggregateType = 'Report';
@@ -150,6 +167,8 @@ export class Report extends AggregateRoot<ReportId> {
         status: 'OPEN',
         createdAt: now,
         closedAt: null,
+        handledBy: null,
+        conclusion: null,
         updatedAt: now,
       },
       0,
@@ -200,26 +219,28 @@ export class Report extends AggregateRoot<ReportId> {
     return this.state.createdAt;
   }
 
-  /** Chuyên viên nhận xử lý: OPEN → IN_REVIEW. */
-  startReview(now: Date): Result<void, ReportTransitionError> {
+  get handledBy(): string | null {
+    return this.state.handledBy;
+  }
+
+  /** Chuyên viên nhận xử lý: OPEN → IN_REVIEW (ghi `handledBy`). */
+  startReview(now: Date, staffId: string): Result<void, ReportTransitionError> {
     if (this.state.status !== 'OPEN') return this.invalid('startReview');
-    this.transition('IN_REVIEW', now);
+    this.transition('IN_REVIEW', now, { handledBy: staffId, conclusion: null });
     return ok();
   }
 
-  /** Kết luận vi phạm: IN_REVIEW → RESOLVED. */
-  resolve(now: Date): Result<void, ReportTransitionError> {
+  /** Kết luận vi phạm: IN_REVIEW → RESOLVED (bắt buộc kết luận). */
+  resolve(now: Date, input: ReportConclusionInput): Result<void, ReportCloseError> {
     if (this.state.status !== 'IN_REVIEW') return this.invalid('resolve');
-    this.transition('RESOLVED', now);
-    return ok();
+    return this.close('RESOLVED', now, input);
   }
 
-  /** Bác bỏ báo cáo: OPEN | IN_REVIEW → DISMISSED. */
-  dismiss(now: Date): Result<void, ReportTransitionError> {
+  /** Bác bỏ báo cáo: OPEN | IN_REVIEW → DISMISSED (bắt buộc kết luận). */
+  dismiss(now: Date, input: ReportConclusionInput): Result<void, ReportCloseError> {
     const { status } = this.state;
     if (status !== 'OPEN' && status !== 'IN_REVIEW') return this.invalid('dismiss');
-    this.transition('DISMISSED', now);
-    return ok();
+    return this.close('DISMISSED', now, input);
   }
 
   toState(): ReportState {
@@ -230,10 +251,27 @@ export class Report extends AggregateRoot<ReportId> {
     return fail('REPORT_INVALID_TRANSITION', { action, status: this.state.status });
   }
 
-  private transition(to: ReportStatus, now: Date): void {
+  private close(
+    to: 'RESOLVED' | 'DISMISSED',
+    now: Date,
+    input: ReportConclusionInput,
+  ): Result<void, ReportCloseError> {
+    const conclusion = input.conclusion.trim();
+    if (conclusion.length === 0 || conclusion.length > REPORT_CONCLUSION_MAX_LENGTH) {
+      return fail('REPORT_CONCLUSION_INVALID', { maxLength: REPORT_CONCLUSION_MAX_LENGTH });
+    }
+    this.transition(to, now, { handledBy: input.staffId, conclusion });
+    return ok();
+  }
+
+  private transition(
+    to: ReportStatus,
+    now: Date,
+    handling: { readonly handledBy: string; readonly conclusion: string | null },
+  ): void {
     const fromStatus = this.state.status;
     const closed = to === 'RESOLVED' || to === 'DISMISSED';
-    this.state = { ...this.state, status: to, closedAt: closed ? now : null, updatedAt: now };
+    this.state = { ...this.state, ...handling, status: to, closedAt: closed ? now : null, updatedAt: now };
     this.record(REPORT_STATUS_CHANGED, { reportId: this.id, fromStatus, toStatus: to }, now);
   }
 }

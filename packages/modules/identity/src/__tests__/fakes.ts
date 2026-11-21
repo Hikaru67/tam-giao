@@ -1,3 +1,4 @@
+import type { BannedUserRegistry } from '../application/ports/banned-user-registry.js';
 import {
   fail,
   ok,
@@ -169,6 +170,19 @@ export class RecordingSmsSender implements SmsSender {
 export class FakeBlindIndexer implements BlindIndexer {
   index(value: string, purpose: string): string {
     return `${purpose}|${value}`;
+  }
+}
+
+/** `BannedUserRegistry` in-memory (BE-S6-06). */
+export class InMemoryBannedUserRegistry implements BannedUserRegistry {
+  readonly table = new MemoryTable<Date>();
+
+  async markBanned(_tx: Tx, userId: string, bannedAt: Date): Promise<void> {
+    if (!this.table.rows.has(userId)) this.table.rows.set(userId, bannedAt);
+  }
+
+  async isBanned(_tx: Tx, userId: string): Promise<boolean> {
+    return this.table.rows.has(userId);
   }
 }
 

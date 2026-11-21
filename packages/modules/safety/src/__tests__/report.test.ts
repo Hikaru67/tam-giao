@@ -3,6 +3,7 @@ import { addDuration, newId } from '@tamgiao/kernel';
 import { describe, expect, it } from 'vitest';
 import {
   REPORT_CATEGORIES,
+  REPORT_CONCLUSION_MAX_LENGTH,
   REPORT_DESCRIPTION_MAX_LENGTH,
   REPORT_MAX_EVIDENCE,
   Report,
@@ -43,6 +44,8 @@ describe('Report.file', () => {
       severity: 'HIGH',
       createdAt: NOW,
       closedAt: null,
+      handledBy: null,
+      conclusion: null,
     });
     const events = report.pullEvents();
     expect(events).toHaveLength(1);
@@ -120,21 +123,24 @@ describe('Report.file', () => {
 
 describe('Report — trạng thái xử lý', () => {
   const later = addDuration(NOW, { hours: 1 });
+  const STAFF = 'admin-1';
+  const OTHER_STAFF = 'admin-2';
+  const close = { staffId: STAFF, conclusion: '  Đã xác minh vi phạm  ' };
 
   /** Đưa báo cáo tới trạng thái `status`. */
   const at = (status: ReportStatus): Report => {
     const r = filed();
-    if (status === 'IN_REVIEW' || status === 'RESOLVED') r.startReview(NOW);
-    if (status === 'RESOLVED') r.resolve(NOW);
-    if (status === 'DISMISSED') r.dismiss(NOW);
+    if (status === 'IN_REVIEW' || status === 'RESOLVED') r.startReview(NOW, OTHER_STAFF);
+    if (status === 'RESOLVED') r.resolve(NOW, close);
+    if (status === 'DISMISSED') r.dismiss(NOW, close);
     r.pullEvents();
     return r;
   };
 
   const actions = {
-    startReview: (r: Report) => r.startReview(later),
-    resolve: (r: Report) => r.resolve(later),
-    dismiss: (r: Report) => r.dismiss(later),
+    startReview: (r: Report) => r.startReview(later, STAFF),
+    resolve: (r: Report) => r.resolve(later, close),
+    dismiss: (r: Report) => r.dismiss(later, close),
   } as const;
 
   const allowed: Record<ReportStatus, Partial<Record<keyof typeof actions, ReportStatus>>> = {
@@ -165,12 +171,41 @@ describe('Report — trạng thái xử lý', () => {
     expect(result.isOk()).toBe(true);
     expect(report.status).toBe(target);
     expect(report.version).toBe(before.version + 1);
-    expect(report.toState().closedAt).toEqual(target === 'IN_REVIEW' ? null : later);
+    expect(report.toState()).toMatchObject({
+      closedAt: target === 'IN_REVIEW' ? null : later,
+      handledBy: STAFF,
+      conclusion: target === 'IN_REVIEW' ? null : 'Đã xác minh vi phạm',
+    });
     const events = report.pullEvents();
     expect(events.map((e) => [e.type, e.payload])).toEqual([
       ['ReportStatusChanged', { reportId: report.id, fromStatus: status, toStatus: target }],
     ]);
   });
+
+  it.each([
+    ['resolve', 'IN_REVIEW'],
+    ['dismiss', 'OPEN'],
+  ] as const)(
+    '%s: kết luận rỗng / quá dài → REPORT_CONCLUSION_INVALID, không đổi state',
+    (action, status) => {
+      for (const conclusion of ['   ', 'x'.repeat(REPORT_CONCLUSION_MAX_LENGTH + 1)]) {
+        const report = at(status);
+        const before = report.toState();
+        const result = report[action](later, { staffId: STAFF, conclusion });
+        expect(result.isErr() && result.error).toEqual({
+          code: 'REPORT_CONCLUSION_INVALID',
+          details: { maxLength: REPORT_CONCLUSION_MAX_LENGTH },
+        });
+        expect(report.toState()).toEqual(before);
+        expect(report.pullEvents()).toEqual([]);
+      }
+      const ok = at(status)[action](later, {
+        staffId: STAFF,
+        conclusion: 'x'.repeat(REPORT_CONCLUSION_MAX_LENGTH),
+      });
+      expect(ok.isOk()).toBe(true);
+    },
+  );
 
   it('restore ↔ toState giữ nguyên dữ liệu', () => {
     const report = filed({ urgent: true, evidenceKeys: ['x'], description: 'mô tả' });

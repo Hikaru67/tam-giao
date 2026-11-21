@@ -146,7 +146,7 @@ báo cáo (màn 14) → match `LOCKED`, hội thoại đóng, admin thấy báo 
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| safety | application, infrastructure, presentation | P0 | 1.5d | BE-S6-05, BE-S6-03 | BE-S6-02 | TODO |
+| safety | application, infrastructure, presentation | P0 | 1.5d | BE-S6-05, BE-S6-03 | BE-S6-02 | IN_REVIEW |
 
 **Mục tiêu:** Phục vụ mục "Báo cáo Vi phạm & Khiếu nại" và thẻ "Cảnh báo vi phạm" trên admin.
 
@@ -155,8 +155,8 @@ báo cáo (màn 14) → match `LOCKED`, hội thoại đóng, admin thấy báo 
 - Ngoài: Bàn giao cơ quan chức năng (quy trình ngoài hệ thống).
 
 **Tiêu chí nghiệm thu**
-- [ ] AC1: User bị ban → mọi token bị thu hồi, không còn trong `CandidateFinder`.
-- [ ] AC2: Mỗi lần mở chi tiết báo cáo/tin gắn cờ có audit log.
+- [x] AC1: User bị ban → mọi token bị thu hồi, không còn trong `CandidateFinder`.
+- [x] AC2: Mỗi lần mở chi tiết báo cáo/tin gắn cờ có audit log.
 
 **Test bắt buộc:** Integration chuỗi `UserBanned`; HTTP phân quyền.
 

@@ -9,7 +9,8 @@ export const ACCESS_TOKEN_TTL_SECONDS = 15 * 60;
 /** Refresh token hết hạn nếu không dùng trong 30 ngày (mỗi lần xoay được gia hạn lại). */
 export const REFRESH_TOKEN_TTL_DAYS = 30;
 
-export type SessionRevokeReason = 'LOGOUT' | 'REVOKED_BY_USER' | 'REFRESH_TOKEN_REUSED';
+/** `USER_BANNED`: tài khoản bị khoá vĩnh viễn (safety `UserBanned`, BE-S6-06). */
+export type SessionRevokeReason = 'LOGOUT' | 'REVOKED_BY_USER' | 'REFRESH_TOKEN_REUSED' | 'USER_BANNED';
 
 export interface SessionState {
   readonly id: SessionId;

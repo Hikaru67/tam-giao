@@ -1,6 +1,7 @@
 import {
   fail,
   ok,
+  type DomainError,
   type Result,
   type Tx,
   type UnitOfWork,
@@ -10,8 +11,22 @@ import {
   type UploadVerifyError,
 } from '@tamgiao/kernel';
 import type { MatchBetweenSummary, MatchingFacade } from '@tamgiao/module-matching/facade';
+import type { AuditLogInput, AuditLogger } from '@tamgiao/module-identity/facade';
+import type {
+  FlaggedMessageCursor,
+  FlaggedMessageDetail,
+  FlaggedMessagePage,
+  MessagingFacade,
+} from '@tamgiao/module-messaging/facade';
+import type {
+  ReportQueue,
+  ReportQueueFilter,
+  ReportQueuePageRows,
+} from '../application/ports/report-queue.js';
 import type { ReportRepository } from '../application/ports/report-repository.js';
+import type { UserBanRepository } from '../application/ports/user-ban-repository.js';
 import { Report, type ReportId, type ReportState } from '../domain/report.js';
+import type { UserBan, UserBanState } from '../domain/user-ban.js';
 
 /**
  * UnitOfWork giả: chạy `work`; trả `Err` → khôi phục bản chụp của các repository đăng ký (mô phỏng rollback).
@@ -117,5 +132,63 @@ export class FakeMatchingFacade implements Pick<MatchingFacade, 'findLatestMatch
     this.calls += 1;
     if (a.toLowerCase() === b.toLowerCase()) return null;
     return this.pairs.get(FakeMatchingFacade.key(a, b)) ?? null;
+  }
+}
+
+/** Fake `UserBanRepository`: PK theo `userId` như DB. */
+export class InMemoryUserBanRepository implements UserBanRepository {
+  readonly states = new Map<string, UserBanState>();
+  outbox: { readonly type: string; readonly payload: unknown }[] = [];
+
+  async insert(_tx: Tx, ban: UserBan): Promise<boolean> {
+    const s = ban.toState();
+    if (this.states.has(s.userId)) return false;
+    this.states.set(s.userId, s);
+    for (const e of ban.pullEvents()) this.outbox.push({ type: e.type, payload: e.payload });
+    return true;
+  }
+}
+
+/** `AuditLogger` ghi lại mọi bản ghi; `failWith` → trả `Err` (giả lập audit bị từ chối). */
+export class RecordingAuditLogger implements AuditLogger {
+  readonly entries: { readonly withTx: boolean; readonly entry: AuditLogInput }[] = [];
+  failWith: string | null = null;
+
+  log(entry: AuditLogInput): Promise<Result<void, DomainError>>;
+  log(tx: Tx, entry: AuditLogInput): Promise<Result<void, DomainError>>;
+  async log(a: Tx | AuditLogInput, b?: AuditLogInput): Promise<Result<void, DomainError>> {
+    const entry = b ?? (a as AuditLogInput);
+    if (this.failWith !== null) return fail(this.failWith);
+    this.entries.push({ withTx: b !== undefined, entry });
+    return ok();
+  }
+}
+
+/** `ReportQueue` giả: trả dữ liệu dựng sẵn, ghi lại filter. */
+export class FakeReportQueue implements ReportQueue {
+  result: ReportQueuePageRows = { rows: [], total: 0 };
+  readonly filters: ReportQueueFilter[] = [];
+
+  async list(_tx: Tx, filter: ReportQueueFilter): Promise<ReportQueuePageRows> {
+    this.filters.push(filter);
+    return this.result;
+  }
+}
+
+/** Facade messaging giả cho hàng chờ tin gắn cờ. */
+export class FakeMessagingFacade implements MessagingFacade {
+  readonly messages = new Map<string, FlaggedMessageDetail>();
+  readonly listCalls: { cursor: FlaggedMessageCursor | null; limit: number }[] = [];
+
+  async listFlaggedMessages(query: {
+    readonly cursor: FlaggedMessageCursor | null;
+    readonly limit: number;
+  }): Promise<FlaggedMessagePage> {
+    this.listCalls.push({ ...query });
+    return { items: [...this.messages.values()].slice(0, query.limit), nextCursor: null };
+  }
+
+  async getFlaggedMessage(messageId: string): Promise<FlaggedMessageDetail | null> {
+    return this.messages.get(messageId) ?? null;
   }
 }

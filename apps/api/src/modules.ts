@@ -195,6 +195,11 @@ export function buildModules({ config, uow, clock, scheduler, logger }: ModuleDe
     uploads,
     matching: matching.facade,
     requireUser: userGuard,
+    // BE-S6-06: route admin kiểm duyệt (báo cáo, tin gắn cờ qua facade messaging, khoá tài khoản).
+    requireAdmin: identity.requireAdmin,
+    auditLogger: identity.auditLogger,
+    storage,
+    messaging: messagingModule.facade,
   });
 
   return [identity, uploadModule, profile, verification, billing, matching, messaging, safety];

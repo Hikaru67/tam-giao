@@ -16,6 +16,7 @@ import type { MatchResponseDeps } from './application/responses/respond-to-open-
 import { WithdrawIntro } from './application/responses/withdraw-intro.js';
 import { registerCandidateProfileConsumers } from './infrastructure/candidate-profile-consumers.js';
 import { registerReportFiledConsumer } from './infrastructure/report-filed-consumer.js';
+import { registerUserBannedConsumer } from './infrastructure/user-banned-consumer.js';
 import { LockMatch } from './application/responses/lock-match.js';
 import type { MatchingFacade } from './application/facade.js';
 import { MatchPairLookup } from './application/match-pair-lookup.js';
@@ -54,6 +55,10 @@ export {
 } from './infrastructure/candidate-profile-consumers.js';
 
 export { MATCH_LOCK_ON_REPORT_FILED_CONSUMER } from './infrastructure/report-filed-consumer.js';
+export {
+  MATCH_EXCLUDE_ON_USER_BANNED_CONSUMER,
+  MATCH_LOCK_REASON_USER_BANNED,
+} from './infrastructure/user-banned-consumer.js';
 
 export interface MatchingWorkerDeps {
   readonly clock: Clock;
@@ -86,6 +91,12 @@ export function createMatchingWorker(deps: MatchingWorkerDeps): MatchingWorker {
     registerConsumers: (bus) => {
       registerCandidateProfileConsumers(bus, consumers);
       registerReportFiledConsumer(bus, lockMatch);
+      // BE-S6-06: UserBanned (safety) → loại khỏi ứng viên + khoá match đang mở.
+      registerUserBannedConsumer(bus, {
+        setVerification: consumers.setVerification,
+        matches: new DrizzleMatchRepository(new OutboxWriter()),
+        lockMatch,
+      });
     },
   };
 }
