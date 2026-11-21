@@ -4,8 +4,10 @@ import {
   bigint,
   boolean,
   check,
+  date,
   index,
   integer,
+  jsonb,
   pgSchema,
   text,
   unique,
@@ -193,5 +195,46 @@ export const vouchers = billing.table(
     check('vouchers_value_ck', sql`${t.value} > 0`),
     index('vouchers_user_id_idx').on(t.userId, t.issuedAt),
     index('vouchers_status_expires_at_idx').on(t.status, t.expiresAt),
+  ],
+);
+
+/** Tên constraint unique theo ngày — `insertIfAbsent` dùng `ON CONFLICT` trên cột này (BE-S4-07). */
+export const RECONCILIATION_REPORT_DATE_UNIQUE = 'reconciliation_reports_report_date_uq';
+
+/**
+ * Báo cáo đối soát ledger hằng ngày (BE-S4-07). Mỗi ngày (giờ VN) tối đa một báo cáo (`report_date` unique → job chạy
+ * lại cùng ngày không ghi thêm). Ghi cả khi khớp để có lịch sử. Các tổng là snapshot tích luỹ tại `run_at` (as-of),
+ * tiền `bigint` (A8). `mismatches` là mảng `{check, ledger, state, difference}` (số dạng chuỗi); rỗng ⇔ `MATCHED`.
+ */
+export const reconciliationReports = billing.table(
+  'reconciliation_reports',
+  {
+    id: uuid('id').primaryKey(),
+    reportDate: date('report_date', { mode: 'string' }).notNull(),
+    runAt: timestamptz('run_at').notNull(),
+    status: text('status').notNull(),
+    ledgerChargeTotal: bigint('ledger_charge_total', { mode: 'bigint' }).notNull(),
+    ledgerRefundTotal: bigint('ledger_refund_total', { mode: 'bigint' }).notNull(),
+    heldPaymentTotal: bigint('held_payment_total', { mode: 'bigint' }).notNull(),
+    heldPaymentCount: integer('held_payment_count').notNull(),
+    voucherIssueEntries: integer('voucher_issue_entries').notNull(),
+    voucherRedeemEntries: integer('voucher_redeem_entries').notNull(),
+    voucherVoidEntries: integer('voucher_void_entries').notNull(),
+    vouchersReserved: integer('vouchers_reserved').notNull(),
+    vouchersActive: integer('vouchers_active').notNull(),
+    vouchersRedeemed: integer('vouchers_redeemed').notNull(),
+    vouchersVoid: integer('vouchers_void').notNull(),
+    vouchersExpired: integer('vouchers_expired').notNull(),
+    mismatches: jsonb('mismatches').notNull(),
+  },
+  (t) => [
+    unique(RECONCILIATION_REPORT_DATE_UNIQUE).on(t.reportDate),
+    check('reconciliation_reports_status_ck', sql`${t.status} in ('MATCHED', 'MISMATCH')`),
+    check(
+      'reconciliation_reports_mismatches_ck',
+      sql`case when jsonb_typeof(${t.mismatches}) = 'array' then (${t.status} = 'MATCHED') = (jsonb_array_length(${t.mismatches}) = 0) else false end`,
+    ),
+    index('reconciliation_reports_run_at_idx').on(t.runAt, t.id),
+    index('reconciliation_reports_status_run_at_idx').on(t.status, t.runAt, t.id),
   ],
 );

@@ -5,3 +5,4 @@ export * from './partner-errors.js';
 export * from './partner-dto.js';
 export * from './voucher-errors.js';
 export * from './voucher-dto.js';
+export * from './reconciliation-dto.js';

@@ -45,6 +45,9 @@ const workerEnvSchema = z
     /** Lịch job chuyển voucher quá hạn sang EXPIRED (mặc định mỗi 15 phút — BE-S4-05). */
     VOUCHER_EXPIRY_CRON: envCron.default('*/15 * * * *'),
     VOUCHER_EXPIRY_TZ: z.string().min(1).default('Asia/Ho_Chi_Minh'),
+    /** Lịch job đối soát ledger (mặc định 02:30 hằng ngày giờ VN — BE-S4-07). */
+    LEDGER_RECONCILIATION_CRON: envCron.default('30 2 * * *'),
+    LEDGER_RECONCILIATION_TZ: z.string().min(1).default('Asia/Ho_Chi_Minh'),
     /** Cổng thanh toán cho job hoàn tiền (BE-S4-04) — D3 chưa chốt, hiện chỉ `fake`, bị cấm ở production. */
     PAYMENT_GATEWAY: z.enum(['fake']).default('fake'),
     /** Secret của cổng (fake: ký webhook) — dùng chung giá trị với API. */
@@ -77,6 +80,7 @@ const workerEnvSchema = z
     jobs: {
       kycMediaRetention: { cron: e.KYC_MEDIA_RETENTION_CRON, tz: e.KYC_MEDIA_RETENTION_TZ },
       voucherExpiry: { cron: e.VOUCHER_EXPIRY_CRON, tz: e.VOUCHER_EXPIRY_TZ },
+      ledgerReconciliation: { cron: e.LEDGER_RECONCILIATION_CRON, tz: e.LEDGER_RECONCILIATION_TZ },
     },
     payment: { gateway: e.PAYMENT_GATEWAY, webhookSecret: e.PAYMENT_WEBHOOK_SECRET },
   }));
