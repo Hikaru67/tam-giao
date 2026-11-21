@@ -4,6 +4,7 @@ import {
   PREFERENCES_UPDATED,
   PROFILE_COMPLETED,
   PROFILE_UPDATED,
+  REPORT_FILED,
 } from '@tamgiao/contracts';
 import { createDatabase, deliverOnce, DrizzleUnitOfWork, EventBus, type Database } from '@tamgiao/db';
 import { FakeClock, newId, ok, type DomainEvent } from '@tamgiao/kernel';
@@ -22,6 +23,7 @@ import {
   CANDIDATE_ON_PROFILE_UPDATED_CONSUMER,
   createFindCandidates,
   createMatchingWorker,
+  MATCH_LOCK_ON_REPORT_FILED_CONSUMER,
 } from '../index.js';
 import { bornAged, candidate, NOW } from './candidate-fixtures.js';
 
@@ -259,6 +261,7 @@ describe('consumer read model matching.candidate_profiles', () => {
   createMatchingWorker({
     clock,
     profiles: { getMatchingProfile: async (userId) => source.get(userId) ?? null },
+    scheduler: { schedule: async () => undefined },
   }).registerConsumers(bus);
 
   const sub = (consumer: string) => {
@@ -312,13 +315,14 @@ describe('consumer read model matching.candidate_profiles', () => {
       )
     ).rows[0];
 
-  it('đăng ký đúng tên consumer cho 5 event', () => {
+  it('đăng ký đúng tên consumer cho 5 event read model (+ ReportFiled → khoá match, BE-S6-05)', () => {
     expect(bus.list().map((s) => [s.eventType, s.consumer])).toEqual([
       [PROFILE_COMPLETED, CANDIDATE_ON_PROFILE_COMPLETED_CONSUMER],
       [PROFILE_UPDATED, CANDIDATE_ON_PROFILE_UPDATED_CONSUMER],
       [PREFERENCES_UPDATED, CANDIDATE_ON_PREFERENCES_UPDATED_CONSUMER],
       [KYC_APPROVED, CANDIDATE_ON_KYC_APPROVED_CONSUMER],
       [KYC_REJECTED, CANDIDATE_ON_KYC_REJECTED_CONSUMER],
+      [REPORT_FILED, MATCH_LOCK_ON_REPORT_FILED_CONSUMER],
     ]);
   });
 

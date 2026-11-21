@@ -58,6 +58,22 @@ export class InMemoryMatchRepository implements MatchRepository {
     }
     return null;
   }
+
+  async findLatestBetween(_tx: Tx, userA: string, userB: string): Promise<Match | null> {
+    let latest: MatchState | null = null;
+    for (const state of this.states.values()) {
+      const match = Match.restore(state);
+      if (!match.isParticipant(userA) || !match.isParticipant(userB) || userA === userB) continue;
+      if (
+        latest === null ||
+        state.offeredAt > latest.offeredAt ||
+        (state.offeredAt.getTime() === latest.offeredAt.getTime() && state.id > latest.id)
+      ) {
+        latest = state;
+      }
+    }
+    return latest ? Match.restore(latest) : null;
+  }
 }
 
 export class RecordingScheduler implements Scheduler {

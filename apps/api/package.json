@@ -20,6 +20,7 @@
     "@tamgiao/module-matching": "workspace:*",
     "@tamgiao/module-messaging": "workspace:*",
     "@tamgiao/module-profile": "workspace:*",
+    "@tamgiao/module-safety": "workspace:*",
     "@tamgiao/module-verification": "workspace:*",
     "hono": "4.13.18",
     "pg-boss": "12.38.2",

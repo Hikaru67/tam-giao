@@ -119,7 +119,7 @@ báo cáo (màn 14) → match `LOCKED`, hội thoại đóng, admin thấy báo 
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| safety | domain, application, infrastructure, presentation | P0 | 2d | Sprint 5 | BE-S6-01, BE-S6-03 | TODO |
+| safety | domain, application, infrastructure, presentation | P0 | 2d | Sprint 5 | BE-S6-01, BE-S6-03 | IN_REVIEW |
 
 **Mục tiêu:** Phục vụ màn "Báo cáo Vi phạm & Trung tâm An toàn Khẩn cấp".
 
