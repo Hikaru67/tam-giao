@@ -12,7 +12,8 @@
     "./uploads": "./src/uploads/index.ts",
     "./profile": "./src/profile/index.ts",
     "./verification": "./src/verification/index.ts",
-    "./billing": "./src/billing/index.ts"
+    "./billing": "./src/billing/index.ts",
+    "./matching": "./src/matching/index.ts"
   },
   "scripts": {
     "typecheck": "tsc -p tsconfig.json"
