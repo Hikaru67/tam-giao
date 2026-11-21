@@ -1,6 +1,16 @@
 import { timestamptz } from '@tamgiao/db';
 import { sql } from 'drizzle-orm';
-import { boolean, check, index, integer, pgSchema, text, unique, uuid } from 'drizzle-orm/pg-core';
+import {
+  boolean,
+  check,
+  index,
+  integer,
+  pgSchema,
+  primaryKey,
+  text,
+  unique,
+  uuid,
+} from 'drizzle-orm/pg-core';
 
 /** Schema Postgres của module messaging (AGENTS.md mục 4). drizzle-kit đọc file này. */
 export const messaging = pgSchema('messaging');
@@ -85,4 +95,24 @@ export const messages = messaging.table(
     index('messages_conversation_id_idx').on(t.conversationId, t.id),
     index('messages_rate_limit_idx').on(t.conversationId, t.senderId, t.sentAt),
   ],
+);
+
+/**
+ * Con trỏ đã đọc theo participant (BE-S6-04): mỗi (hội thoại, người dùng) một dòng, `last_read_message_id` = tin mới nhất
+ * đã đọc (mọi tin id ≤ con trỏ coi là đã đọc — id UUID v7 tăng theo thời gian). Chỉ tiến: UPSERT có điều kiện
+ * `last_read_message_id < excluded.last_read_message_id`. `user_id` tham chiếu tài khoản module identity — không FK (A3).
+ */
+export const conversationReads = messaging.table(
+  'conversation_reads',
+  {
+    conversationId: uuid('conversation_id')
+      .notNull()
+      .references(() => conversations.id),
+    userId: uuid('user_id').notNull(),
+    lastReadMessageId: uuid('last_read_message_id')
+      .notNull()
+      .references(() => messages.id),
+    readAt: timestamptz('read_at').notNull(),
+  },
+  (t) => [primaryKey({ name: 'conversation_reads_pk', columns: [t.conversationId, t.userId] })],
 );

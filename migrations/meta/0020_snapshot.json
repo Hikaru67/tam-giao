@@ -145,10 +145,7 @@
       "compositePrimaryKeys": {
         "processed_events_consumer_event_id_pk": {
           "name": "processed_events_consumer_event_id_pk",
-          "columns": [
-            "consumer",
-            "event_id"
-          ]
+          "columns": ["consumer", "event_id"]
         }
       },
       "uniqueConstraints": {},
@@ -250,9 +247,7 @@
         "uploads_key_uq": {
           "name": "uploads_key_uq",
           "nullsNotDistinct": false,
-          "columns": [
-            "key"
-          ]
+          "columns": ["key"]
         }
       },
       "policies": {},
@@ -411,12 +406,8 @@
           "tableFrom": "ledger_entries",
           "tableTo": "payments",
           "schemaTo": "billing",
-          "columnsFrom": [
-            "payment_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["payment_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -425,12 +416,8 @@
           "tableFrom": "ledger_entries",
           "tableTo": "vouchers",
           "schemaTo": "billing",
-          "columnsFrom": [
-            "voucher_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["voucher_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -560,12 +547,8 @@
           "tableFrom": "partner_staff",
           "tableTo": "partners",
           "schemaTo": "billing",
-          "columnsFrom": [
-            "partner_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["partner_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -830,24 +813,17 @@
         "payments_order_id_uq": {
           "name": "payments_order_id_uq",
           "nullsNotDistinct": false,
-          "columns": [
-            "order_id"
-          ]
+          "columns": ["order_id"]
         },
         "payments_gateway_txn_id_uq": {
           "name": "payments_gateway_txn_id_uq",
           "nullsNotDistinct": false,
-          "columns": [
-            "gateway_txn_id"
-          ]
+          "columns": ["gateway_txn_id"]
         },
         "payments_user_id_idempotency_key_uq": {
           "name": "payments_user_id_idempotency_key_uq",
           "nullsNotDistinct": false,
-          "columns": [
-            "user_id",
-            "idempotency_key"
-          ]
+          "columns": ["user_id", "idempotency_key"]
         }
       },
       "policies": {},
@@ -1030,9 +1006,7 @@
         "reconciliation_reports_report_date_uq": {
           "name": "reconciliation_reports_report_date_uq",
           "nullsNotDistinct": false,
-          "columns": [
-            "report_date"
-          ]
+          "columns": ["report_date"]
         }
       },
       "policies": {},
@@ -1199,12 +1173,8 @@
           "tableFrom": "vouchers",
           "tableTo": "payments",
           "schemaTo": "billing",
-          "columnsFrom": [
-            "payment_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["payment_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -1213,12 +1183,8 @@
           "tableFrom": "vouchers",
           "tableTo": "partners",
           "schemaTo": "billing",
-          "columnsFrom": [
-            "partner_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["partner_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -1227,12 +1193,8 @@
           "tableFrom": "vouchers",
           "tableTo": "partners",
           "schemaTo": "billing",
-          "columnsFrom": [
-            "redeemed_by_partner_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["redeemed_by_partner_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -1242,9 +1204,7 @@
         "vouchers_payment_id_uq": {
           "name": "vouchers_payment_id_uq",
           "nullsNotDistinct": false,
-          "columns": [
-            "payment_id"
-          ]
+          "columns": ["payment_id"]
         }
       },
       "policies": {},
@@ -1330,12 +1290,8 @@
           "tableFrom": "admin_sessions",
           "tableTo": "admin_users",
           "schemaTo": "identity",
-          "columnsFrom": [
-            "admin_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["admin_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -1345,9 +1301,7 @@
         "admin_sessions_token_hash_uq": {
           "name": "admin_sessions_token_hash_uq",
           "nullsNotDistinct": false,
-          "columns": [
-            "token_hash"
-          ]
+          "columns": ["token_hash"]
         }
       },
       "policies": {},
@@ -1420,9 +1374,7 @@
         "admin_users_email_uq": {
           "name": "admin_users_email_uq",
           "nullsNotDistinct": false,
-          "columns": [
-            "email"
-          ]
+          "columns": ["email"]
         }
       },
       "policies": {},
@@ -1752,12 +1704,8 @@
           "tableFrom": "refresh_tokens",
           "tableTo": "sessions",
           "schemaTo": "identity",
-          "columnsFrom": [
-            "session_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["session_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1767,9 +1715,7 @@
         "refresh_tokens_token_hash_uq": {
           "name": "refresh_tokens_token_hash_uq",
           "nullsNotDistinct": false,
-          "columns": [
-            "token_hash"
-          ]
+          "columns": ["token_hash"]
         }
       },
       "policies": {},
@@ -1846,12 +1792,8 @@
           "tableFrom": "sessions",
           "tableTo": "users",
           "schemaTo": "identity",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -1904,9 +1846,7 @@
         "users_phone_bidx_uq": {
           "name": "users_phone_bidx_uq",
           "nullsNotDistinct": false,
-          "columns": [
-            "phone_bidx"
-          ]
+          "columns": ["phone_bidx"]
         }
       },
       "policies": {},
@@ -2047,10 +1987,7 @@
       "compositePrimaryKeys": {
         "pair_history_pk": {
           "name": "pair_history_pk",
-          "columns": [
-            "user_low",
-            "user_high"
-          ]
+          "columns": ["user_low", "user_high"]
         }
       },
       "uniqueConstraints": {},
@@ -2293,12 +2230,8 @@
           "tableFrom": "match_events",
           "tableTo": "matches",
           "schemaTo": "matching",
-          "columnsFrom": [
-            "match_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["match_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -2308,10 +2241,7 @@
         "match_events_match_version_uq": {
           "name": "match_events_match_version_uq",
           "nullsNotDistinct": false,
-          "columns": [
-            "match_id",
-            "version"
-          ]
+          "columns": ["match_id", "version"]
         }
       },
       "policies": {},
@@ -2614,9 +2544,7 @@
         "conversations_match_id_uq": {
           "name": "conversations_match_id_uq",
           "nullsNotDistinct": false,
-          "columns": [
-            "match_id"
-          ]
+          "columns": ["match_id"]
         }
       },
       "policies": {},
@@ -2783,12 +2711,8 @@
           "tableFrom": "messages",
           "tableTo": "conversations",
           "schemaTo": "messaging",
-          "columnsFrom": [
-            "conversation_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["conversation_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -2798,10 +2722,7 @@
         "messages_sender_client_message_id_uq": {
           "name": "messages_sender_client_message_id_uq",
           "nullsNotDistinct": false,
-          "columns": [
-            "sender_id",
-            "client_message_id"
-          ]
+          "columns": ["sender_id", "client_message_id"]
         }
       },
       "policies": {},
@@ -3448,10 +3369,7 @@
         "interview_slots_interviewer_starts_at_uq": {
           "name": "interview_slots_interviewer_starts_at_uq",
           "nullsNotDistinct": false,
-          "columns": [
-            "interviewer_id",
-            "starts_at"
-          ]
+          "columns": ["interviewer_id", "starts_at"]
         }
       },
       "policies": {},
@@ -3639,16 +3557,12 @@
         "kyc_submissions_user_id_uq": {
           "name": "kyc_submissions_user_id_uq",
           "nullsNotDistinct": false,
-          "columns": [
-            "user_id"
-          ]
+          "columns": ["user_id"]
         },
         "kyc_submissions_cccd_number_bidx_uq": {
           "name": "kyc_submissions_cccd_number_bidx_uq",
           "nullsNotDistinct": false,
-          "columns": [
-            "cccd_number_bidx"
-          ]
+          "columns": ["cccd_number_bidx"]
         }
       },
       "policies": {},

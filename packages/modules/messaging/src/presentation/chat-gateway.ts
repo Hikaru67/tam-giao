@@ -11,16 +11,17 @@ import {
   type WsServerEvent,
 } from '@tamgiao/contracts';
 import { bearerToken, type UserAuthenticator } from '@tamgiao/http';
-import { newId, type Clock, type DomainError } from '@tamgiao/kernel';
+import { newId, type DomainError } from '@tamgiao/kernel';
 import { WebSocket, WebSocketServer, type RawData } from 'ws';
 import type { JoinConversation } from '../application/conversation-access.js';
+import type { MarkConversationRead } from '../application/conversation-inbox.js';
 import type {
   ConversationBroadcast,
   MessageBroadcaster,
   RealtimeMessage,
 } from '../application/ports/message-broadcaster.js';
 import type { SendMessage } from '../application/send-message.js';
-import { realtimeFromSent, realtimeFromSystem, toMessageDto } from './message-dto-mapper.js';
+import { readBroadcast, realtimeFromSent, realtimeFromSystem, toMessageDto } from './message-dto-mapper.js';
 
 /** Ghi log lỗi kỹ thuật của gateway (tương thích pino). Không bao giờ nhận nội dung tin / token. */
 export interface ChatGatewayLogger {
@@ -39,8 +40,9 @@ export interface ChatGatewayDeps {
   readonly authenticate: UserAuthenticator;
   readonly joinConversation: JoinConversation;
   readonly sendMessage: SendMessage;
+  /** WS `message.read` → lưu con trỏ đã đọc (BE-S6-04). */
+  readonly markConversationRead: MarkConversationRead;
   readonly broadcaster: MessageBroadcaster;
-  readonly clock: Clock;
   readonly logger?: ChatGatewayLogger;
   /** Đường dẫn upgrade (mặc định `/ws`). */
   readonly path?: string;
@@ -231,14 +233,7 @@ export class ChatGateway {
       case 'message.send':
         return this.sendMessage(conn, event);
       case 'message.read':
-        return this.publishRoomEvent(conn, event.conversationId, (conversationId) => ({
-          type: 'message.read',
-          conversationId,
-          originConnectionId: conn.id,
-          readerId: conn.userId,
-          messageId: event.messageId.toLowerCase(),
-          readAt: this.deps.clock.now().toISOString(),
-        }));
+        return this.markRead(conn, event);
       case 'typing':
         return this.publishRoomEvent(conn, event.conversationId, (conversationId) => ({
           type: 'typing',
@@ -323,7 +318,33 @@ export class ChatGateway {
     }
   }
 
-  /** `typing` / `message.read`: chỉ cho phòng đã join trên kết nối này (đã kiểm tra participant lúc join). */
+  /**
+   * `message.read` (BE-S6-04): chỉ phòng đã join; lưu con trỏ qua `MarkConversationRead` (cùng use case với REST
+   * `POST /me/conversations/:id/read`). Lỗi (vd tin không thuộc hội thoại → `NOT_FOUND`) → frame `error`, giữ kết nối.
+   * Chỉ phát cho phòng khi con trỏ thật sự tiến.
+   */
+  private async markRead(
+    conn: Connection,
+    event: Extract<WsClientEvent, { type: 'message.read' }>,
+  ): Promise<void> {
+    const conversationId = event.conversationId.toLowerCase();
+    if (!conn.rooms.has(conversationId)) {
+      this.send(conn, { type: 'error', code: 'CONVERSATION_NOT_JOINED', conversationId });
+      return;
+    }
+    const result = await this.deps.markConversationRead.execute({
+      conversationId,
+      userId: conn.userId,
+      messageId: event.messageId,
+    });
+    if (result.isErr()) {
+      this.sendError(conn, result.error, { conversationId });
+      return;
+    }
+    if (result.value.advanced) await this.publish(readBroadcast(result.value, conn.id));
+  }
+
+  /** `typing`: chỉ cho phòng đã join trên kết nối này (đã kiểm tra participant lúc join). */
   private async publishRoomEvent(
     conn: Connection,
     rawConversationId: string,

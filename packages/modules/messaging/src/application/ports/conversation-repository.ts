@@ -1,5 +1,10 @@
 import type { Tx } from '@tamgiao/kernel';
-import type { Conversation, ConversationId, ConversationMatchId } from '../../domain/conversation.js';
+import type {
+  Conversation,
+  ConversationId,
+  ConversationMatchId,
+  ConversationUserId,
+} from '../../domain/conversation.js';
 
 /** Lưu / tải aggregate `Conversation` (`messaging.conversations`). Mọi thao tác chạy trong `tx` của caller (A5). */
 export interface ConversationRepository {
@@ -17,4 +22,7 @@ export interface ConversationRepository {
 
   /** Hội thoại của match (khoá `FOR UPDATE`) — handler mở/đóng theo event matching. */
   findByMatchIdForUpdate(tx: Tx, matchId: ConversationMatchId): Promise<Conversation | null>;
+
+  /** Mọi hội thoại (mở + đã đóng) có `userId` tham gia — hộp thư (BE-S6-04). Thứ tự không đảm bảo. */
+  listByParticipant(tx: Tx, userId: ConversationUserId): Promise<readonly Conversation[]>;
 }

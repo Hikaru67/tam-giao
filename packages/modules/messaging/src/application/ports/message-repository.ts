@@ -37,4 +37,35 @@ export interface MessageRepository {
       readonly limit: number;
     },
   ): Promise<readonly MessageState[]>;
+
+  /** Tin theo id (bất kể hội thoại / `visible_to` — caller tự kiểm tra) — BE-S6-04 đánh dấu đã đọc. */
+  findById(tx: Tx, id: MessageId): Promise<MessageState | null>;
+
+  /**
+   * Tối đa `limit` tin của hội thoại mà `viewerId` được thấy có id < `beforeId`, **giảm dần** theo id (mới nhất trước);
+   * `beforeId` `null` = từ tin mới nhất. Con trỏ theo id UUID v7 nên tin mới chen vào (id lớn hơn) không làm xô lệch
+   * các trang cũ — BE-S6-04.
+   */
+  listBefore(
+    tx: Tx,
+    input: {
+      readonly conversationId: ConversationId;
+      readonly viewerId: ConversationUserId;
+      readonly beforeId: MessageId | null;
+      readonly limit: number;
+    },
+  ): Promise<readonly MessageState[]>;
+
+  /**
+   * Số tin chưa đọc của `viewerId`: tin `viewerId` được thấy, không do chính `viewerId` gửi (tin hệ thống có tính), id >
+   * `afterId` (`null` = chưa đọc tin nào) — BE-S6-04.
+   */
+  countUnread(
+    tx: Tx,
+    input: {
+      readonly conversationId: ConversationId;
+      readonly viewerId: ConversationUserId;
+      readonly afterId: MessageId | null;
+    },
+  ): Promise<number>;
 }

@@ -155,6 +155,13 @@
       "when": 1795259230988,
       "tag": "0021_safety_moderation_bans",
       "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1795259631880,
+      "tag": "0022_messaging_conversation_reads",
+      "breakpoints": true
     }
   ]
 }

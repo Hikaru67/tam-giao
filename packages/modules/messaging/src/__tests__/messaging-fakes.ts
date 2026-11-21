@@ -1,4 +1,8 @@
 import type { DomainEvent, Result, Tx, UnitOfWork } from '@tamgiao/kernel';
+import type {
+  ConversationReadRepository,
+  ConversationReadState,
+} from '../application/ports/conversation-read-repository.js';
 import type { ConversationRepository } from '../application/ports/conversation-repository.js';
 import type { MessageRepository } from '../application/ports/message-repository.js';
 import {
@@ -54,6 +58,11 @@ export class InMemoryConversationRepository implements ConversationRepository {
   async findByMatchIdForUpdate(_tx: Tx, matchId: string): Promise<Conversation | null> {
     const state = [...this.states.values()].find((s) => s.matchId === matchId.toLowerCase());
     return state ? Conversation.restore(state) : null;
+  }
+
+  async listByParticipant(_tx: Tx, userId: ConversationUserId): Promise<readonly Conversation[]> {
+    const id = userId.toLowerCase();
+    return [...this.states.values()].filter((s) => s.participants.includes(id)).map(Conversation.restore);
   }
 }
 
@@ -112,8 +121,87 @@ export class InMemoryMessageRepository implements MessageRepository {
           (m.visibleTo === null || m.visibleTo === input.viewerId.toLowerCase()) &&
           (input.afterId === null || m.id > input.afterId),
       )
-      .sort((x, y) => (x.id < y.id ? -1 : x.id > y.id ? 1 : 0))
+      .sort(byId)
       .slice(0, input.limit);
+  }
+
+  async findById(_tx: Tx, id: MessageId): Promise<MessageState | null> {
+    return this.states.find((m) => m.id === id) ?? null;
+  }
+
+  async listBefore(
+    _tx: Tx,
+    input: {
+      readonly conversationId: ConversationId;
+      readonly viewerId: ConversationUserId;
+      readonly beforeId: MessageId | null;
+      readonly limit: number;
+    },
+  ): Promise<readonly MessageState[]> {
+    return this.states
+      .filter(
+        (m) =>
+          m.conversationId === input.conversationId &&
+          visibleTo(m, input.viewerId) &&
+          (input.beforeId === null || m.id < input.beforeId),
+      )
+      .sort((x, y) => byId(y, x))
+      .slice(0, input.limit);
+  }
+
+  async countUnread(
+    _tx: Tx,
+    input: {
+      readonly conversationId: ConversationId;
+      readonly viewerId: ConversationUserId;
+      readonly afterId: MessageId | null;
+    },
+  ): Promise<number> {
+    return this.states.filter(
+      (m) =>
+        m.conversationId === input.conversationId &&
+        visibleTo(m, input.viewerId) &&
+        m.senderId !== input.viewerId.toLowerCase() &&
+        (input.afterId === null || m.id > input.afterId),
+    ).length;
+  }
+}
+
+const byId = (x: MessageState, y: MessageState): number => (x.id < y.id ? -1 : x.id > y.id ? 1 : 0);
+const visibleTo = (m: MessageState, viewerId: string): boolean =>
+  m.visibleTo === null || m.visibleTo === viewerId.toLowerCase();
+
+/** Fake in-memory của `ConversationReadRepository` (con trỏ chỉ tiến như UPSERT có điều kiện ở DB). */
+export class InMemoryConversationReadRepository implements ConversationReadRepository {
+  readonly states = new Map<string, ConversationReadState>();
+
+  async advance(
+    _tx: Tx,
+    input: {
+      readonly conversationId: ConversationId;
+      readonly userId: ConversationUserId;
+      readonly messageId: MessageId;
+      readonly readAt: Date;
+    },
+  ): Promise<{ readonly state: ConversationReadState; readonly advanced: boolean }> {
+    const key = `${input.conversationId}:${input.userId.toLowerCase()}`;
+    const current = this.states.get(key);
+    if (current && current.lastReadMessageId >= input.messageId) return { state: current, advanced: false };
+    const state: ConversationReadState = {
+      conversationId: input.conversationId,
+      userId: input.userId.toLowerCase(),
+      lastReadMessageId: input.messageId,
+      readAt: input.readAt,
+    };
+    this.states.set(key, state);
+    return { state, advanced: true };
+  }
+
+  async find(
+    _tx: Tx,
+    input: { readonly conversationId: ConversationId; readonly userId: ConversationUserId },
+  ): Promise<ConversationReadState | null> {
+    return this.states.get(`${input.conversationId}:${input.userId.toLowerCase()}`) ?? null;
   }
 }
 
