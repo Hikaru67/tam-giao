@@ -41,11 +41,17 @@ describe('createErrorReporter', () => {
   });
 });
 
+/** JWT giả dựng lúc chạy (không để literal trông giống secret — tránh secret scanner báo nhầm). */
+function fakeJwt(): string {
+  const b64url = (value: object): string => Buffer.from(JSON.stringify(value)).toString('base64url');
+  return [b64url({ alg: 'HS256' }), b64url({ sub: '1' }), 'abc-def_123'].join('.');
+}
+
 describe('scrubText', () => {
   it('che SĐT VN, CCCD 12 số, email, JWT, mã 6 số trong chuỗi tự do', () => {
     const text =
       'user 0912345678 / +84987654321 cccd 001095012345 mail a.b@example.com otp 842913 ' +
-      'token eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxIn0.abc-def_123';
+      `token ${fakeJwt()}`;
     const scrubbed = scrubText(text);
     expect(scrubbed).toBe('user [PHONE] / [PHONE] cccd [ID_NUMBER] mail [EMAIL] otp [CODE] token [TOKEN]');
   });

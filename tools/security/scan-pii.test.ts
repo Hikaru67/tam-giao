@@ -4,14 +4,24 @@ import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { main, scanText } from './scan-pii.js';
 
+/**
+ * Token giả dựng lúc chạy test (không để literal trông giống secret trong mã nguồn — tránh secret scanner báo nhầm).
+ * JWT = base64url(header).base64url(payload).chữ-ký-bịa; Bearer = chuỗi lặp vô nghĩa.
+ */
+const b64url = (value: object): string => Buffer.from(JSON.stringify(value)).toString('base64url');
+const FAKE_JWT = [b64url({ alg: 'HS256', typ: 'JWT' }), b64url({ sub: 'test-user' }), 'x'.repeat(24)].join(
+  '.',
+);
+const FAKE_BEARER = `Bearer ${'ab'.repeat(11)}`;
+
 describe('scanText', () => {
   it('phát hiện đúng các pattern PII ví dụ', () => {
     const text = [
       'phone: 0912345678',
       'intl phone: +84912345678',
       'citizen id: 001095012345',
-      'auth: Bearer abcdefghijklmnopqrstu',
-      'token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.dozqvE54byc1b7QsmSGEMmzW4i_n3F_n',
+      `auth: ${FAKE_BEARER}`,
+      `token: ${FAKE_JWT}`,
       'email: user@gmail.com',
       'code: otp: 842913',
     ].join('\n');
@@ -32,7 +42,7 @@ describe('scanText', () => {
     const text = [
       'phone: 0912345678',
       'cccd: 001095012345',
-      'auth: Bearer abcdefghijklmnopqrstu',
+      `auth: ${FAKE_BEARER}`,
       'email: user@gmail.com',
       'otp: 842913',
     ].join('\n');
@@ -41,7 +51,7 @@ describe('scanText', () => {
     for (const finding of findings) {
       expect(finding.excerpt).not.toContain('0912345678');
       expect(finding.excerpt).not.toContain('001095012345');
-      expect(finding.excerpt).not.toContain('Bearer abcdefghijklmnopqrstu');
+      expect(finding.excerpt).not.toContain(FAKE_BEARER);
       expect(finding.excerpt).not.toContain('user@gmail.com');
       expect(finding.excerpt).not.toContain('842913');
       expect(finding.excerpt.endsWith('***')).toBe(true);
