@@ -102,7 +102,7 @@ CI kiểm tra FE. Chưa có màn nghiệp vụ.
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| packages/api-client | presentation | P0 | 0.5d | FE-S1-03 | FE-S1-06, FE-S1-07 | TODO |
+| packages/api-client | presentation | P0 | 0.5d | FE-S1-03 | FE-S1-06, FE-S1-07 | DONE |
 
 **Mục tiêu:** Người dùng thấy câu tiếng Việt dễ hiểu cho mọi mã lỗi BE (luật F3).
 
