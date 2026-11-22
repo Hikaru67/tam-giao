@@ -21,7 +21,12 @@ import {
   FakePaymentGateway,
 } from '@tamgiao/module-billing';
 import { createExpireDatePlanJob } from '@tamgiao/module-dating';
-import { ConsoleSmsSender, createIdentityModule, createIdentityWorker } from '@tamgiao/module-identity';
+import {
+  ConsoleSmsSender,
+  createDataExportPurgeJob,
+  createIdentityModule,
+  createIdentityWorker,
+} from '@tamgiao/module-identity';
 import { createExpireMatchJob, createMatchingWorker } from '@tamgiao/module-matching';
 import { createMessagingWorker } from '@tamgiao/module-messaging';
 import { createNotificationWorker, ExpoPushSender, FakePushSender } from '@tamgiao/module-notification';
@@ -29,8 +34,10 @@ import { createMatchingProfileReader } from '@tamgiao/module-profile';
 import { createKycMediaRetention } from '@tamgiao/module-verification';
 import { PgBoss } from 'pg-boss';
 import { loadWorkerConfig } from './config.js';
+import { personalDataSources, registerAccountDeletionConsumers } from './data-rights.js';
 import { registerBillingRefundJobs } from './jobs/billing-refund.js';
 import { registerDatePlanExpiryJob } from './jobs/date-plan-expiry.js';
+import { registerDataExportPurgeJob } from './jobs/data-export-purge.js';
 import { registerKycMediaRetentionJob } from './jobs/kyc-media-retention.js';
 import { registerLedgerReconciliationJob } from './jobs/ledger-reconciliation.js';
 import { registerMatchExpiryJob } from './jobs/match-expiry.js';
@@ -55,6 +62,12 @@ const uow = new DrizzleUnitOfWork(database.pool);
 const boss = new PgBoss({ connectionString: config.database.url });
 boss.on('error', (error) => logger.error({ err: error }, 'pg-boss error'));
 await boss.start();
+
+const clock = new SystemClock();
+const encryptor = new LocalKeyEncryptor(
+  parseMasterKeyRing(config.crypto.masterKeys, config.crypto.masterKeyVersion),
+);
+const storage = new S3ObjectStorage({ ...config.storage, presignGetTtlSeconds: PRESIGNED_URL_TTL_SECONDS });
 
 const bus = new EventBus();
 const jobs = registerWorkers(bus);
@@ -82,7 +95,13 @@ createMatchingWorker({
 createMessagingWorker({ clock: new SystemClock() }).registerConsumers(bus);
 // Identity (BE-S6-06): UserBanned (safety) → chặn đăng nhập + thu hồi mọi phiên. Matching xử lý cùng event ở trên
 // (loại khỏi ứng viên + khoá match đang mở).
-createIdentityWorker({ clock: new SystemClock() }).registerConsumers(bus);
+// BE-S7-06: DataExportRequested → dựng file xuất dữ liệu từ nguồn của mọi module.
+createIdentityWorker({
+  clock: new SystemClock(),
+  dataExport: { encryptor, sources: personalDataSources({ encryptor }) },
+}).registerConsumers(bus);
+// BE-S7-06: AccountDeletionRequested → mỗi module tự xoá/ẩn danh dữ liệu của mình (matching + messaging đăng ký ở trên).
+registerAccountDeletionConsumers(bus, { clock, encryptor, storage });
 // Notification (BE-S7-05): consumer event → `notification.deliveries` + hẹn job `notification.send` (push Expo; SMS thay
 // thế cho thông báo giao dịch). SMS dùng lại adapter của identity (D4); chưa có facade identity tra SĐT nên `phones`
 // bỏ trống → chưa gửi SMS thay thế (xem báo cáo BE-S7-05).
@@ -106,19 +125,15 @@ for (const job of jobs) {
 }
 
 // Job xoá ảnh eKYC hết thời hạn lưu (BE-S3-06): storage S3 + audit log của identity.
-const clock = new SystemClock();
 const identity = createIdentityModule({
   uow,
   clock,
-  encryptor: new LocalKeyEncryptor(
-    parseMasterKeyRing(config.crypto.masterKeys, config.crypto.masterKeyVersion),
-  ),
+  encryptor,
   blindIndexer: new HmacBlindIndexer(config.crypto.blindIndexKey),
   // Worker không gửi OTP; identity chỉ dùng để lấy `auditLogger`.
   smsSender: new ConsoleSmsSender(),
   authSecret: config.auth.secret,
 });
-const storage = new S3ObjectStorage({ ...config.storage, presignGetTtlSeconds: PRESIGNED_URL_TTL_SECONDS });
 await registerKycMediaRetentionJob({
   boss,
   logger,
@@ -144,6 +159,9 @@ await registerLedgerReconciliationJob({
 
 // Hoàn tiền (BE-S4-04): job từng khoản (retry backoff) + điều phối REFUND_PENDING + cảnh báo SLA.
 await registerBillingRefundJobs({ boss, logger, billing: billingWorker });
+
+// Xoá nội dung file xuất dữ liệu quá hạn tải 24 giờ (BE-S7-06).
+await registerDataExportPurgeJob({ boss, logger, purger: createDataExportPurgeJob({ uow, clock, encryptor }) });
 
 // Hết hạn match (BE-S5-05): job `matching.expire-match` do API hẹn lúc `expiresAt` → `ExpireMatch` (idempotent).
 await registerMatchExpiryJob({

@@ -16,6 +16,7 @@ import type { MatchResponseDeps } from './application/responses/respond-to-open-
 import { WithdrawIntro } from './application/responses/withdraw-intro.js';
 import { registerCandidateProfileConsumers } from './infrastructure/candidate-profile-consumers.js';
 import { registerReportFiledConsumer } from './infrastructure/report-filed-consumer.js';
+import { registerAccountDeletionConsumer } from './infrastructure/account-data.js';
 import { registerUserBannedConsumer } from './infrastructure/user-banned-consumer.js';
 import { LockMatch } from './application/responses/lock-match.js';
 import type { MatchingFacade } from './application/facade.js';
@@ -56,6 +57,11 @@ export {
 
 export { MATCH_LOCK_ON_REPORT_FILED_CONSUMER } from './infrastructure/report-filed-consumer.js';
 export {
+  MATCH_ERASE_ON_ACCOUNT_DELETION_CONSUMER,
+  MATCH_LOCK_REASON_ACCOUNT_DELETED,
+  createMatchingPersonalDataSource,
+} from './infrastructure/account-data.js';
+export {
   MATCH_EXCLUDE_ON_USER_BANNED_CONSUMER,
   MATCH_LOCK_REASON_USER_BANNED,
 } from './infrastructure/user-banned-consumer.js';
@@ -94,6 +100,11 @@ export function createMatchingWorker(deps: MatchingWorkerDeps): MatchingWorker {
       // BE-S6-06: UserBanned (safety) → loại khỏi ứng viên + khoá match đang mở.
       registerUserBannedConsumer(bus, {
         setVerification: consumers.setVerification,
+        matches: new DrizzleMatchRepository(new OutboxWriter()),
+        lockMatch,
+      });
+      // BE-S7-06: AccountDeletionRequested (identity) → đóng match đang mở + xoá read model ứng viên.
+      registerAccountDeletionConsumer(bus, {
         matches: new DrizzleMatchRepository(new OutboxWriter()),
         lockMatch,
       });

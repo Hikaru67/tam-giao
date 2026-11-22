@@ -109,3 +109,10 @@ export function createMatchingProfileReader(deps: {
   const reader = new DrizzleMatchingProfileReader(deps.uow);
   return { getMatchingProfile: (userId) => reader.getMatchingProfile(userId) };
 }
+
+/** Quyền dữ liệu cá nhân (BE-S7-06): consumer xoá dữ liệu khi xoá tài khoản + nguồn dữ liệu cho file xuất. */
+export {
+  PROFILE_ERASE_ON_ACCOUNT_DELETION_CONSUMER,
+  createProfilePersonalDataSource,
+  registerProfileAccountDeletionConsumer,
+} from './infrastructure/account-data.js';

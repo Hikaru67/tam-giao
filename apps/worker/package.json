@@ -21,6 +21,7 @@
     "@tamgiao/module-messaging": "workspace:*",
     "@tamgiao/module-notification": "workspace:*",
     "@tamgiao/module-profile": "workspace:*",
+    "@tamgiao/module-safety": "workspace:*",
     "@tamgiao/module-verification": "workspace:*",
     "drizzle-orm": "0.45.4",
     "pg": "8.23.1",
@@ -29,9 +30,11 @@
     "zod": "4.6.7"
   },
   "devDependencies": {
+    "@tamgiao/http": "workspace:*",
     "@tamgiao/testing": "workspace:*",
     "@types/node": "22.20.5",
     "@types/pg": "8.23.1",
+    "hono": "4.13.18",
     "typescript": "5.9.3",
     "vitest": "3.2.7"
   }

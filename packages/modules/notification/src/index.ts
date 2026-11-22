@@ -110,3 +110,10 @@ export function createNotificationModule(deps: NotificationModuleDeps): Notifica
   });
   return { name: 'notification', routes };
 }
+
+/** Quyền dữ liệu cá nhân (BE-S7-06): consumer xoá token thiết bị, cài đặt và huỷ thông báo chờ gửi khi xoá tài khoản. */
+export {
+  NOTIFICATION_ERASE_ON_ACCOUNT_DELETION_CONSUMER,
+  registerNotificationAccountDeletionConsumer,
+} from './infrastructure/account-data.js';
+

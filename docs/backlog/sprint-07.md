@@ -145,7 +145,7 @@ hoặc `CLOSED_STOPPED` + cooldown; thông báo đẩy/SMS cho các mốc quan t
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| identity (điều phối) | application, infrastructure, presentation | P0 | 1.5d | Sprint 6 | BE-S7-01, BE-S7-05 | TODO |
+| identity (điều phối) | application, infrastructure, presentation | P0 | 1.5d | Sprint 6 | BE-S7-01, BE-S7-05 | DONE |
 
 **Mục tiêu:** Đáp ứng quyền của chủ thể dữ liệu theo Nghị định 13/2023.
 
@@ -215,7 +215,7 @@ hoặc `CLOSED_STOPPED` + cooldown; thông báo đẩy/SMS cho các mốc quan t
 
 **Contract / Event:** Không có.
 
-**Ghi chú:** D5.
+**Ghi chú:** D5. Đã merge (PARTIAL): AC2 + smoke test đạt; AC1 chờ hạ tầng staging + vars/secrets của Environment `staging` (D5) — giữ IN_REVIEW tới khi deploy thật xanh.
 
 ---
 

@@ -91,9 +91,21 @@ export class InMemoryUserRepository implements UserRepository {
   readonly table = new MemoryTable<UserState>();
   readonly events = new MemoryTable<DomainEvent>();
 
+  /** userId → thời điểm tài khoản bị xoá (BE-S7-06) — không còn tra được theo SĐT. */
+  readonly deleted = new MemoryTable<Date>();
+
   async findByPhone(_tx: Tx, phone: PhoneNumber): Promise<User | null> {
-    const state = [...this.table.rows.values()].find((u) => u.phone.equals(phone));
+    const state = [...this.table.rows.values()].find((u) => u.phone.equals(phone) && !this.deleted.rows.has(u.id));
     return state ? User.restore(state) : null;
+  }
+
+  async findActiveById(_tx: Tx, id: UserId): Promise<User | null> {
+    const state = this.table.rows.get(id);
+    return state && !this.deleted.rows.has(id) ? User.restore(state) : null;
+  }
+
+  async anonymize(_tx: Tx, id: UserId, now: Date): Promise<void> {
+    this.deleted.rows.set(id, now);
   }
 
   async save(_tx: Tx, user: User): Promise<void> {

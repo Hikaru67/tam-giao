@@ -347,3 +347,11 @@ export function createLedgerReconciliationJob(deps: LedgerReconciliationJobDeps)
     reconciliation: new DrizzleReconciliationRepository(),
   });
 }
+
+/** Quyền dữ liệu cá nhân (BE-S7-06): consumer khi xoá tài khoản (giữ ledger) + nguồn dữ liệu cho file xuất. */
+export {
+  ACCOUNT_DELETED_VOUCHER_VOID_REASON,
+  BILLING_ERASE_ON_ACCOUNT_DELETION_CONSUMER,
+  createBillingPersonalDataSource,
+  registerBillingAccountDeletionConsumer,
+} from './infrastructure/account-data.js';
