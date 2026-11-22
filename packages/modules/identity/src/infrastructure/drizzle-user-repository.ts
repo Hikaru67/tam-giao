@@ -5,7 +5,7 @@ import { PHONE_INDEX_PURPOSE } from '../application/index-purposes.js';
 import type { UserRepository } from '../application/ports/user-repository.js';
 import { PhoneNumber } from '../domain/phone-number.js';
 import { User, type UserId } from '../domain/user.js';
-import { users } from './schema.js';
+import { deletedPhoneIndexes, users } from './schema.js';
 
 const phoneContext = (userId: string) => `identity.users.phone:${userId}`;
 
@@ -33,8 +33,18 @@ export class DrizzleUserRepository implements UserRepository {
   }
 
   async anonymize(tx: Tx, id: UserId, now: Date): Promise<void> {
+    const db = asDbTx(tx);
+    const [existing] = await db.select({ phoneBidx: users.phoneBidx }).from(users).where(eq(users.id, id));
+
+    if (existing && !existing.phoneBidx.startsWith('deleted:')) {
+      await db
+        .insert(deletedPhoneIndexes)
+        .values({ userId: id, phoneBidx: existing.phoneBidx, deletedAt: now })
+        .onConflictDoNothing();
+    }
+
     // Blind index là HMAC (base64url) nên không bao giờ trùng `deleted:<uuid>`.
-    await asDbTx(tx)
+    await db
       .update(users)
       .set({ phoneEnc: Buffer.alloc(0), phoneBidx: `deleted:${id}`, deletedAt: now })
       .where(eq(users.id, id));

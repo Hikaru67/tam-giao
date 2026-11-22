@@ -419,6 +419,11 @@ describe('BE-S7-06 — xoá tài khoản xuyên module (AC1)', () => {
   it('mỗi module tự xoá/ẩn danh dữ liệu của mình; ledger còn nhưng không liên kết được danh tính; chạy lại idempotent', async () => {
     const me = await login('0912345678');
     const peer = await login('0987654321');
+    const [initialMe] = await sql<{ phone_bidx: string }>(
+      'select phone_bidx from identity.users where id = $1',
+      [me.userId],
+    );
+    if (!initialMe) throw new Error('user me không tồn tại');
     const ids = await seedEverything(me.userId, peer.userId);
 
     // Bus của worker có đủ consumer cho mọi bước API báo tiến độ.
@@ -448,7 +453,7 @@ describe('BE-S7-06 — xoá tài khoản xuyên module (AC1)', () => {
     expect(status.status).toBe('COMPLETED');
     expect(status.steps.every((s) => s.done)).toBe(true);
 
-    await expectErased(me.userId, peer.userId, ids);
+    await expectErased(me.userId, peer.userId, ids, initialMe.phone_bidx);
 
     // A9: chạy lại handler (bỏ qua processed_events) không lỗi, không đổi kết quả, không huỷ voucher/ghi ledger lần 2.
     for (const sub of bus.consumersOf(ACCOUNT_DELETION_REQUESTED)) {
@@ -457,7 +462,7 @@ describe('BE-S7-06 — xoá tài khoản xuyên module (AC1)', () => {
         return ok();
       });
     }
-    await expectErased(me.userId, peer.userId, ids);
+    await expectErased(me.userId, peer.userId, ids, initialMe.phone_bidx);
   });
 });
 
@@ -465,6 +470,7 @@ async function expectErased(
   me: string,
   peer: string,
   ids: Awaited<ReturnType<typeof seedEverything>>,
+  initialPhoneBidx?: string,
 ): Promise<void> {
   // identity: không còn SĐT
   const [user] = await sql<{ phone_enc: Buffer; phone_bidx: string }>(
@@ -473,6 +479,17 @@ async function expectErased(
   );
   expect(user?.phone_enc.length).toBe(0);
   expect(user?.phone_bidx).toBe(`deleted:${me}`);
+
+  // identity: deleted_phone_indexes có đúng 1 dòng cho user (phone_bidx khác deleted: và bằng phone_bidx ban đầu)
+  const deletedPhones = await sql<{ user_id: string; phone_bidx: string }>(
+    'select user_id, phone_bidx from identity.deleted_phone_indexes where user_id = $1',
+    [me],
+  );
+  expect(deletedPhones).toHaveLength(1);
+  expect(deletedPhones[0]?.phone_bidx).not.toMatch(/^deleted:/);
+  if (initialPhoneBidx) {
+    expect(deletedPhones[0]?.phone_bidx).toBe(initialPhoneBidx);
+  }
 
   // profile: hồ sơ + tiêu chí của tôi bị xoá, của người kia còn
   expect(await sql('select user_id from profile.profiles where user_id = $1', [me])).toEqual([]);
@@ -509,6 +526,13 @@ async function expectErased(
     [ids.paymentId],
   );
   expect(ledger.map((r) => r.type).sort()).toEqual(['CHARGE', 'VOUCHER_ISSUE', 'VOUCHER_VOID']);
+  // Quyết định PO: xoá tài khoản không hoàn phí xác thực
+  expect(ledger.map((r) => r.type)).not.toContain('REFUND');
+  const [payment] = await sql<{ status: string }>('select status from billing.payments where id = $1', [
+    ids.paymentId,
+  ]);
+  expect(payment?.status).toBe('SUCCEEDED');
+  expect(['REFUND_PENDING', 'REFUNDED']).not.toContain(payment?.status);
   expect(
     await sql('select status, void_reason from billing.vouchers where id = $1', [ids.voucherId]),
   ).toEqual([{ status: 'VOID', void_reason: 'ACCOUNT_DELETED' }]);

@@ -1,6 +1,7 @@
 import { OTP_MAX_ATTEMPTS, OTP_TTL_SECONDS } from '@tamgiao/contracts/constants';
 import { FakeClock } from '@tamgiao/kernel';
 import { beforeEach, describe, expect, it } from 'vitest';
+import { PHONE_INDEX_PURPOSE } from '../application/index-purposes.js';
 import { SessionIssuer } from '../application/session-issuer.js';
 import { RequestOtp } from '../application/use-cases/request-otp.js';
 import { VerifyOtp } from '../application/use-cases/verify-otp.js';
@@ -51,7 +52,7 @@ function setup() {
     issuer,
     bannedUsers,
   });
-  return { clock, challenges, users, sessions, sms, bannedUsers, requestOtp, verifyOtp };
+  return { clock, challenges, users, sessions, sms, bannedUsers, blindIndexer, requestOtp, verifyOtp };
 }
 
 let t: ReturnType<typeof setup>;
@@ -233,5 +234,38 @@ describe('VerifyOtp', () => {
     const [codeA] = t.sms.sent.map((m) => /\d{6}/.exec(m.text)?.[0] ?? '');
     const result = await t.verifyOtp.execute({ phone: '0987654321', code: codeA ?? '' });
     expect(errorOf(result)?.code).toBe('OTP_INVALID');
+  });
+
+  it('SĐT có trong deletedPhones và userId đó bị khoá → ACCOUNT_BANNED, không tạo user mới, không mở phiên', async () => {
+    const oldUserId = 'old-user-id';
+    const phoneBidx = t.blindIndexer.index('+84912345678', PHONE_INDEX_PURPOSE);
+    t.bannedUsers.deletedPhones.set(phoneBidx, oldUserId);
+    await t.bannedUsers.markBanned({} as never, oldUserId, t.clock.now());
+
+    await t.requestOtp.execute({ phone: PHONE, ip: IP });
+    const code = t.sms.lastCode();
+    const result = await t.verifyOtp.execute({ phone: PHONE, code });
+
+    expect(errorOf(result)?.code).toBe('ACCOUNT_BANNED');
+    expect(t.users.table.rows.size).toBe(0);
+    expect(t.sessions.table.rows.size).toBe(0);
+  });
+
+  it('SĐT có trong deletedPhones nhưng userId KHÔNG bị khoá → đăng ký mới thành công (isNewUser: true)', async () => {
+    const oldUserId = 'old-user-id';
+    const phoneBidx = t.blindIndexer.index('+84912345678', PHONE_INDEX_PURPOSE);
+    t.bannedUsers.deletedPhones.set(phoneBidx, oldUserId);
+
+    await t.requestOtp.execute({ phone: PHONE, ip: IP });
+    const code = t.sms.lastCode();
+    const result = await t.verifyOtp.execute({ phone: PHONE, code });
+
+    expect(result.isOk()).toBe(true);
+    if (result.isOk()) {
+      expect(result.value.isNewUser).toBe(true);
+      expect(result.value.userId).not.toBe(oldUserId);
+    }
+    expect(t.users.table.rows.size).toBe(1);
+    expect(t.sessions.table.rows.size).toBe(1);
   });
 });

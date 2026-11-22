@@ -97,6 +97,21 @@ export const bannedUsers = identity.table('banned_users', {
   bannedAt: timestamptz('banned_at').notNull(),
 });
 
+/**
+ * Lưu blind index SĐT của tài khoản đã xoá (BE-S7-06) nhằm chống lách lệnh khoá tài khoản.
+ * Theo Nghị định 13/2023: xử lý dựa trên lợi ích chính đáng hợp pháp; chỉ lưu HMAC blind index,
+ * không giải ngược được, không lưu SĐT rõ hay ciphertext.
+ */
+export const deletedPhoneIndexes = identity.table(
+  'deleted_phone_indexes',
+  {
+    userId: uuid('user_id').primaryKey(),
+    phoneBidx: text('phone_bidx').notNull(),
+    deletedAt: timestamptz('deleted_at').notNull(),
+  },
+  (t) => [index('deleted_phone_indexes_phone_bidx_idx').on(t.phoneBidx)],
+);
+
 /** Tài khoản cán bộ quản trị (BE-S2-03). */
 export const adminUsers = identity.table(
   'admin_users',
