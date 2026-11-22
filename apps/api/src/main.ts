@@ -11,6 +11,8 @@ import { buildModules } from './modules.js';
 import { readOutboxBacklog, readQueueDepths } from './observability/backlog.js';
 import { createErrorReporter, withErrorReporting } from './observability/error-reporter.js';
 import { createApiMetrics } from './observability/metrics.js';
+import { InMemoryRateLimitStore, RedisRateLimitStore, apiRateLimitRules } from './http/rate-limit.js';
+import { Redis } from 'ioredis';
 
 /** Composition root: nối config → hạ tầng → module → HTTP server. Không chứa logic nghiệp vụ. */
 const SHUTDOWN_TIMEOUT_MS = 10_000;
@@ -34,6 +36,13 @@ const modules = buildModules({
   scheduler: jobs.scheduler,
   logger,
 });
+// Rate limit HTTP (BE-S7-07): Redis riêng cho bộ đếm (không dùng chung kết nối pub/sub của messaging).
+const rateLimitRedis =
+  config.http.rateLimit.enabled && config.http.rateLimit.store === 'redis'
+    ? new Redis(config.redis.url, { maxRetriesPerRequest: 1, enableOfflineQueue: false })
+    : undefined;
+rateLimitRedis?.on('error', (error: unknown) => logger.warn({ err: error }, 'rate limit redis error'));
+
 const app = createApp({
   logger,
   modules,
@@ -41,6 +50,14 @@ const app = createApp({
   corsOrigins: config.http.corsOrigins,
   bodyLimitBytes: config.http.bodyLimitBytes,
   trustProxy: config.http.trustProxy,
+  ...(config.http.rateLimit.enabled
+    ? {
+        rateLimit: {
+          store: rateLimitRedis ? new RedisRateLimitStore(rateLimitRedis) : new InMemoryRateLimitStore(),
+          rules: apiRateLimitRules(config.http.rateLimit.limits),
+        },
+      }
+    : {}),
   observability: {
     ...(config.observability.metrics.enabled
       ? {
@@ -85,6 +102,7 @@ async function shutdown(signal: string): Promise<void> {
   for (const module of modules) await module.realtime?.close();
   await new Promise<void>((resolve) => server.close(() => resolve()));
   await jobs.stop();
+  await rateLimitRedis?.quit();
   await database.close();
   await errorReporter.flush(2_000);
   logger.info('shutdown complete');

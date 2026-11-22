@@ -171,7 +171,7 @@ hoặc `CLOSED_STOPPED` + cooldown; thông báo đẩy/SMS cho các mốc quan t
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| api, repo | devops, presentation | P0 | 2d | BE-S7-01…06 | BE-S7-08 | TODO |
+| api, repo | devops, presentation | P0 | 2d | BE-S7-01…06 | BE-S7-08 | IN_REVIEW |
 
 **Mục tiêu:** Giảm rủi ro trước khi mở beta.
 
@@ -180,8 +180,8 @@ hoặc `CLOSED_STOPPED` + cooldown; thông báo đẩy/SMS cho các mốc quan t
 - Ngoài: Pentest bên thứ ba.
 
 **Tiêu chí nghiệm thu**
-- [ ] AC1: Test tự động fail nếu có route admin không gắn `requireAdmin`.
-- [ ] AC2: Không route `/me/*` nào trả dữ liệu của user khác (test IDOR theo bảng route).
+- [x] AC1: Test tự động fail nếu có route admin không gắn `requireAdmin`.
+- [x] AC2: Không route `/me/*` nào trả dữ liệu của user khác (test IDOR theo bảng route).
 
 **Test bắt buộc:** Test meta trên danh sách route.
 

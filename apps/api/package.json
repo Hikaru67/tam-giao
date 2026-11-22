@@ -27,6 +27,7 @@
     "@tamgiao/module-safety": "workspace:*",
     "@tamgiao/module-verification": "workspace:*",
     "hono": "4.13.18",
+    "ioredis": "5.11.1",
     "pg-boss": "12.38.2",
     "prom-client": "15.1.3",
     "tsx": "4.23.15",
@@ -35,6 +36,7 @@
   "devDependencies": {
     "@tamgiao/testing": "workspace:*",
     "@types/node": "22.20.5",
+    "testcontainers": "12.2.1",
     "typescript": "5.9.3",
     "vitest": "3.2.7"
   }

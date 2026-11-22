@@ -9,6 +9,8 @@ import * as contracts from '@tamgiao/contracts';
 import { timingSafeEqual } from 'node:crypto';
 import type { ApiMetrics } from './observability/metrics.js';
 import { buildOpenApiDocument, openApiHtml } from './observability/openapi.js';
+import { rateLimit, type RateLimitOptions } from './http/rate-limit.js';
+import { securityHeaders } from './http/security-headers.js';
 
 export interface ReadinessCheck {
   readonly name: string;
@@ -23,6 +25,8 @@ export interface AppDeps {
   readonly bodyLimitBytes: number;
   readonly trustProxy?: boolean;
   readonly observability?: ObservabilityDeps;
+  /** Rate limit theo IP (BE-S7-07). Bỏ trống = tắt. */
+  readonly rateLimit?: RateLimitOptions;
 }
 
 /** Metric + tài liệu OpenAPI (BE-S7-08). Bỏ trống = tắt. */
@@ -46,9 +50,12 @@ export function createApp(deps: AppDeps): Hono<AppEnv> {
   // Đo trước mọi middleware khác để độ trễ gồm cả parse/guard.
   if (metrics) app.use('*', metrics.middleware);
   app.use('*', requestContext(deps.logger, { trustProxy: deps.trustProxy ?? false }));
+  // Header bảo mật cho mọi response (kể cả 404/429/lỗi); `/docs` có CSP riêng cho Scalar (BE-S7-07).
+  app.use('*', securityHeaders());
   if (deps.corsOrigins.length > 0) {
-    app.use('*', cors({ origin: [...deps.corsOrigins], exposeHeaders: ['x-request-id'] }));
+    app.use('*', cors({ origin: [...deps.corsOrigins], exposeHeaders: ['x-request-id', 'retry-after'] }));
   }
+  if (deps.rateLimit) app.use('*', rateLimit(deps.rateLimit));
   app.use(
     '*',
     bodyLimit({
