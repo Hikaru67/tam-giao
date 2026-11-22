@@ -56,6 +56,14 @@ describe('worker config', () => {
     expect(() => parseWorkerConfig({ ...ENV, PAYMENT_WEBHOOK_SECRET: 'short' })).toThrow(ConfigError);
   });
 
+  it('kênh push (BE-S7-05): mặc định fake; chọn expo + access token tuỳ chọn; giá trị lạ → ConfigError', () => {
+    expect(parseWorkerConfig(ENV).push).toEqual({ provider: 'fake', expoAccessToken: undefined });
+    expect(
+      parseWorkerConfig({ ...ENV, PUSH_PROVIDER: 'expo', EXPO_ACCESS_TOKEN: 'expo-token' }).push,
+    ).toEqual({ provider: 'expo', expoAccessToken: 'expo-token' });
+    expect(() => parseWorkerConfig({ ...ENV, PUSH_PROVIDER: 'fcm' })).toThrow(ConfigError);
+  });
+
   it('thiếu DATABASE_URL → ConfigError', () => {
     expect(() => parseWorkerConfig({})).toThrow(ConfigError);
   });

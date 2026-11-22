@@ -23,6 +23,7 @@ import {
 import { ConsoleSmsSender, createIdentityModule, createIdentityWorker } from '@tamgiao/module-identity';
 import { createExpireMatchJob, createMatchingWorker } from '@tamgiao/module-matching';
 import { createMessagingWorker } from '@tamgiao/module-messaging';
+import { createNotificationWorker, ExpoPushSender, FakePushSender } from '@tamgiao/module-notification';
 import { createMatchingProfileReader } from '@tamgiao/module-profile';
 import { createKycMediaRetention } from '@tamgiao/module-verification';
 import { PgBoss } from 'pg-boss';
@@ -31,6 +32,7 @@ import { registerBillingRefundJobs } from './jobs/billing-refund.js';
 import { registerKycMediaRetentionJob } from './jobs/kyc-media-retention.js';
 import { registerLedgerReconciliationJob } from './jobs/ledger-reconciliation.js';
 import { registerMatchExpiryJob } from './jobs/match-expiry.js';
+import { registerNotificationSendJob } from './jobs/notification-send.js';
 import { registerVoucherExpiryJob } from './jobs/voucher-expiry.js';
 import { registerWorkers } from './registry.js';
 
@@ -73,6 +75,23 @@ createMessagingWorker({ clock: new SystemClock() }).registerConsumers(bus);
 // Identity (BE-S6-06): UserBanned (safety) → chặn đăng nhập + thu hồi mọi phiên. Matching xử lý cùng event ở trên
 // (loại khỏi ứng viên + khoá match đang mở).
 createIdentityWorker({ clock: new SystemClock() }).registerConsumers(bus);
+// Notification (BE-S7-05): consumer event → `notification.deliveries` + hẹn job `notification.send` (push Expo; SMS thay
+// thế cho thông báo giao dịch). SMS dùng lại adapter của identity (D4); chưa có facade identity tra SĐT nên `phones`
+// bỏ trống → chưa gửi SMS thay thế (xem báo cáo BE-S7-05).
+const notificationWorker = createNotificationWorker({
+  uow,
+  clock: new SystemClock(),
+  scheduler: new PgBossScheduler(boss),
+  push:
+    config.push.provider === 'expo'
+      ? new ExpoPushSender(
+          config.push.expoAccessToken === undefined ? {} : { accessToken: config.push.expoAccessToken },
+        )
+      : new FakePushSender(),
+  sms: new ConsoleSmsSender(),
+});
+notificationWorker.registerConsumers(bus);
+await registerNotificationSendJob({ boss, logger, sender: notificationWorker.sendNotification });
 await registerConsumers({ boss, uow, bus, logger });
 for (const job of jobs) {
   await registerJob({ boss, uow, logger, ...job });

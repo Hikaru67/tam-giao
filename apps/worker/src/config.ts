@@ -20,7 +20,6 @@ const envBase64Key = (minBytes: number) =>
 /** Cron 5 trường (phút giờ ngày tháng thứ) — pg-boss kiểm tra cú pháp chi tiết khi `schedule`. */
 const envCron = z.string().regex(/^\S+(\s+\S+){4}$/, 'cron 5 trường, vd "0 3 * * *"');
 
-// Biến cho push được thêm ở task dùng tới (BE-S7-05).
 const workerEnvSchema = z
   .object({
     NODE_ENV: envNodeEnv.default('development'),
@@ -52,11 +51,18 @@ const workerEnvSchema = z
     PAYMENT_GATEWAY: z.enum(['fake']).default('fake'),
     /** Secret của cổng (fake: ký webhook) — dùng chung giá trị với API. */
     PAYMENT_WEBHOOK_SECRET: z.string().min(16),
+    /** Kênh push (BE-S7-05): `expo` = Expo Push API; `fake` = chỉ ghi nhận trong bộ nhớ, bị cấm ở production. */
+    PUSH_PROVIDER: z.enum(['expo', 'fake']).default('fake'),
+    /** Access token Expo ("Enhanced push security") — tuỳ chọn. */
+    EXPO_ACCESS_TOKEN: z.string().min(1).optional(),
   })
   .superRefine((e, ctx) => {
     if (e.NODE_ENV === 'production' && e.PAYMENT_GATEWAY === 'fake') {
       // FakePaymentGateway không hoàn tiền thật → không được chạy ở production.
       ctx.addIssue({ code: 'custom', path: ['PAYMENT_GATEWAY'], message: 'fake không dùng ở production' });
+    }
+    if (e.NODE_ENV === 'production' && e.PUSH_PROVIDER === 'fake') {
+      ctx.addIssue({ code: 'custom', path: ['PUSH_PROVIDER'], message: 'fake không dùng ở production' });
     }
   })
   .transform((e) => ({
@@ -83,6 +89,7 @@ const workerEnvSchema = z
       ledgerReconciliation: { cron: e.LEDGER_RECONCILIATION_CRON, tz: e.LEDGER_RECONCILIATION_TZ },
     },
     payment: { gateway: e.PAYMENT_GATEWAY, webhookSecret: e.PAYMENT_WEBHOOK_SECRET },
+    push: { provider: e.PUSH_PROVIDER, expoAccessToken: e.EXPO_ACCESS_TOKEN },
   }));
 
 export type WorkerConfig = z.output<typeof workerEnvSchema>;

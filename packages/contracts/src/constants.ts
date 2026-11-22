@@ -38,3 +38,7 @@ export const INTERVIEW_CHANGE_CUTOFF_HOURS = 2;
 export const MESSAGE_MAX_LENGTH = 2_000;
 /** Số tin tối đa một người gửi được trong 60 giây gần nhất của một hội thoại (BE-S6-01). */
 export const MESSAGE_RATE_LIMIT_PER_MINUTE = 30;
+/** Nhắc "gợi ý sắp hết hạn" khi còn ngần này giờ trước hạn phản hồi gợi ý (BE-S7-05). */
+export const OFFER_EXPIRY_REMINDER_HOURS = 2;
+/** Nhắc lịch hẹn gặp mặt trước giờ hẹn ngần này giờ (BE-S7-05). */
+export const DATE_REMINDER_HOURS = 2;

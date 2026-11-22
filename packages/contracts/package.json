@@ -15,7 +15,8 @@
     "./billing": "./src/billing/index.ts",
     "./matching": "./src/matching/index.ts",
     "./messaging": "./src/messaging/index.ts",
-    "./safety": "./src/safety/index.ts"
+    "./safety": "./src/safety/index.ts",
+    "./notification": "./src/notification/index.ts"
   },
   "scripts": {
     "typecheck": "tsc -p tsconfig.json"

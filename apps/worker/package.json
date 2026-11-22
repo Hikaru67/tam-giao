@@ -17,6 +17,7 @@
     "@tamgiao/module-identity": "workspace:*",
     "@tamgiao/module-matching": "workspace:*",
     "@tamgiao/module-messaging": "workspace:*",
+    "@tamgiao/module-notification": "workspace:*",
     "@tamgiao/module-profile": "workspace:*",
     "@tamgiao/module-verification": "workspace:*",
     "drizzle-orm": "0.45.4",
