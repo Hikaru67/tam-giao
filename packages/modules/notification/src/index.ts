@@ -116,4 +116,3 @@ export {
   NOTIFICATION_ERASE_ON_ACCOUNT_DELETION_CONSUMER,
   registerNotificationAccountDeletionConsumer,
 } from './infrastructure/account-data.js';
-

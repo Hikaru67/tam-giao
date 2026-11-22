@@ -12,7 +12,11 @@ export interface DataExportView {
 }
 
 /** Đường dẫn tải: `/data-exports/:id/download?expires=<epoch giây>&sig=<HMAC>` — hết hạn cùng file. */
-export function dataExportDownloadPath(exportId: string, expiresAt: Date, signer: DataExportLinkSigner): string {
+export function dataExportDownloadPath(
+  exportId: string,
+  expiresAt: Date,
+  signer: DataExportLinkSigner,
+): string {
   const expires = Math.floor(expiresAt.getTime() / 1_000);
   return `/data-exports/${exportId}/download?expires=${expires}&sig=${signer.sign(exportId, expires)}`;
 }

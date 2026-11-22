@@ -44,7 +44,10 @@ export function registerSafetyAccountDeletionConsumer(
       for (const key of report.evidenceKeys) await deps.storage.delete('privateKyc', key);
     }
     if (filed.length > 0) {
-      await db.update(reports).set({ description: null, evidenceKeys: [] }).where(eq(reports.reporterId, userId));
+      await db
+        .update(reports)
+        .set({ description: null, evidenceKeys: [] })
+        .where(eq(reports.reporterId, userId));
     }
   });
 }

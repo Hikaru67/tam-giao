@@ -2,7 +2,11 @@ import { fail, ok, type Clock, type DomainError, type Result, type UnitOfWork } 
 import { AccountDeletion, accountDeletionChallengeKey } from '../../domain/account-deletion.js';
 import type { UserId } from '../../domain/user.js';
 import type { AuditLogger } from '../facade.js';
-import type { AccountDeletionRepository, AccountDeletionStep, DataExportRepository } from '../ports/data-rights.js';
+import type {
+  AccountDeletionRepository,
+  AccountDeletionStep,
+  DataExportRepository,
+} from '../ports/data-rights.js';
 import type { OtpChallengeRepository } from '../ports/otp-challenge-repository.js';
 import type { OtpSecrets } from '../ports/otp-secrets.js';
 import type { SessionRepository } from '../ports/session-repository.js';
@@ -15,7 +19,9 @@ export interface DeleteAccountCommand {
   readonly ip?: string | null;
 }
 
-export type DeleteAccountError = DomainError<'OTP_INVALID' | 'OTP_EXPIRED' | 'OTP_LOCKED' | 'UNAUTHENTICATED'>;
+export type DeleteAccountError = DomainError<
+  'OTP_INVALID' | 'OTP_EXPIRED' | 'OTP_LOCKED' | 'UNAUTHENTICATED'
+>;
 
 export interface DeleteAccountDeps {
   readonly uow: UnitOfWork;

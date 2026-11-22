@@ -14,11 +14,7 @@ export const REFRESH_TOKEN_TTL_DAYS = 30;
  * `ACCOUNT_DELETED`: người dùng xoá tài khoản (BE-S7-06).
  */
 export type SessionRevokeReason =
-  | 'LOGOUT'
-  | 'REVOKED_BY_USER'
-  | 'REFRESH_TOKEN_REUSED'
-  | 'USER_BANNED'
-  | 'ACCOUNT_DELETED';
+  'LOGOUT' | 'REVOKED_BY_USER' | 'REFRESH_TOKEN_REUSED' | 'USER_BANNED' | 'ACCOUNT_DELETED';
 
 export interface SessionState {
   readonly id: SessionId;

@@ -23,7 +23,8 @@ export class InMemoryDataExportRepository implements DataExportRepository {
 
   async insert(_tx: Tx, exp: DataExport): Promise<boolean> {
     const s = exp.toState();
-    if ([...this.table.rows.values()].some((r) => r.userId === s.userId && r.status === 'PENDING')) return false;
+    if ([...this.table.rows.values()].some((r) => r.userId === s.userId && r.status === 'PENDING'))
+      return false;
     this.table.rows.set(s.id, s);
     for (const e of exp.pullEvents()) this.events.rows.set(e.eventId, e);
     return true;
@@ -88,7 +89,11 @@ export class InMemoryAccountDeletionRepository implements AccountDeletionReposit
 /** `processed`: các cặp `consumer|eventId` đã xử lý. */
 export class FakeConsumerProgressReader implements ConsumerProgressReader {
   readonly processed = new Set<string>();
-  async processedConsumers(_tx: Tx, eventId: string, consumers: readonly string[]): Promise<ReadonlySet<string>> {
+  async processedConsumers(
+    _tx: Tx,
+    eventId: string,
+    consumers: readonly string[],
+  ): Promise<ReadonlySet<string>> {
     return new Set(consumers.filter((c) => this.processed.has(`${c}|${eventId}`)));
   }
 }

@@ -172,7 +172,9 @@ describe('RequestDataExport / BuildDataExport / GetDataExport (BE-S7-06)', () =>
           askedFor.push(userId);
           return {
             data: { fullName: 'Nguyễn Văn A' },
-            files: [{ bucket: 'publicProfile', key: `profile_photo/${userId}/1.jpg`, label: 'profile_photo_1' }],
+            files: [
+              { bucket: 'publicProfile', key: `profile_photo/${userId}/1.jpg`, label: 'profile_photo_1' },
+            ],
           };
         },
       },
@@ -220,12 +222,22 @@ describe('RequestDataExport / BuildDataExport / GetDataExport (BE-S7-06)', () =>
     const r = await t.requestDataExport.execute({ userId: user.id });
     const exportId = r.isOk() ? r.value.view.exportId : '';
     const signer = new FakeLinkSigner();
-    const pending = await t.downloadDataExport.execute({ exportId, expires: 1, signature: signer.sign(exportId, 1) });
+    const pending = await t.downloadDataExport.execute({
+      exportId,
+      expires: 1,
+      signature: signer.sign(exportId, 1),
+    });
     expect(pending.isErr() && pending.error.code).toBe('DATA_EXPORT_NOT_READY');
 
-    await new BuildDataExport({ clock: t.clock, dataExports: t.dataExports, sources: [] }).handle(tx, { exportId });
+    await new BuildDataExport({ clock: t.clock, dataExports: t.dataExports, sources: [] }).handle(tx, {
+      exportId,
+    });
     const expires = Math.floor(t.clock.now().getTime() / 1000) + 24 * 3600;
-    const forged = await t.downloadDataExport.execute({ exportId, expires, signature: 'sig-forged-0000000000' });
+    const forged = await t.downloadDataExport.execute({
+      exportId,
+      expires,
+      signature: 'sig-forged-0000000000',
+    });
     expect(forged.isErr() && forged.error.code).toBe('DATA_EXPORT_LINK_INVALID');
     const shifted = await t.downloadDataExport.execute({
       exportId,
@@ -233,11 +245,19 @@ describe('RequestDataExport / BuildDataExport / GetDataExport (BE-S7-06)', () =>
       signature: signer.sign(exportId, expires + 3600),
     });
     expect(shifted.isErr() && shifted.error.code).toBe('DATA_EXPORT_LINK_INVALID');
-    const okNow = await t.downloadDataExport.execute({ exportId, expires, signature: signer.sign(exportId, expires) });
+    const okNow = await t.downloadDataExport.execute({
+      exportId,
+      expires,
+      signature: signer.sign(exportId, expires),
+    });
     expect(okNow.isOk()).toBe(true);
 
     t.clock.advance({ hours: 24 });
-    const late = await t.downloadDataExport.execute({ exportId, expires, signature: signer.sign(exportId, expires) });
+    const late = await t.downloadDataExport.execute({
+      exportId,
+      expires,
+      signature: signer.sign(exportId, expires),
+    });
     expect(late.isErr() && late.error.code).toBe('DATA_EXPORT_EXPIRED');
     const view = await t.getDataExport.execute({ userId: user.id, exportId });
     expect(view.isOk() && view.value).toMatchObject({ status: 'EXPIRED', downloadUrl: null });
@@ -262,7 +282,8 @@ describe('RequestAccountDeletionOtp / DeleteAccount / GetAccountDeletionStatus (
     const wrong = await t.deleteAccount.execute({ userId: user.id, code: '999999' });
     expect(wrong.isErr() && wrong.error.code).toBe('OTP_INVALID');
     expect([...t.challenges.table.rows.values()][0]?.failedAttempts).toBe(1);
-    for (let i = 1; i < OTP_MAX_ATTEMPTS; i++) await t.deleteAccount.execute({ userId: user.id, code: '999999' });
+    for (let i = 1; i < OTP_MAX_ATTEMPTS; i++)
+      await t.deleteAccount.execute({ userId: user.id, code: '999999' });
     const locked = await t.deleteAccount.execute({ userId: user.id, code: t.sms.lastCode() });
     expect(locked.isErr() && locked.error.code).toBe('OTP_LOCKED');
     expect(t.deletions.table.rows.size).toBe(0);
@@ -290,7 +311,10 @@ describe('RequestAccountDeletionOtp / DeleteAccount / GetAccountDeletionStatus (
     });
     const requestId = r.isOk() ? r.value.requestId : '';
     const [event] = [...t.deletions.events.rows.values()];
-    expect(event).toMatchObject({ type: 'AccountDeletionRequested', payload: { requestId, userId: user.id } });
+    expect(event).toMatchObject({
+      type: 'AccountDeletionRequested',
+      payload: { requestId, userId: user.id },
+    });
     expect(await t.users.findActiveById(tx, user.id)).toBeNull();
     expect(t.users.deleted.rows.has(user.id)).toBe(true);
     expect((await t.sessions.findById(tx, sessionId))?.toState().revokeReason).toBe('ACCOUNT_DELETED');

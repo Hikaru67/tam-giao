@@ -95,7 +95,9 @@ export class InMemoryUserRepository implements UserRepository {
   readonly deleted = new MemoryTable<Date>();
 
   async findByPhone(_tx: Tx, phone: PhoneNumber): Promise<User | null> {
-    const state = [...this.table.rows.values()].find((u) => u.phone.equals(phone) && !this.deleted.rows.has(u.id));
+    const state = [...this.table.rows.values()].find(
+      (u) => u.phone.equals(phone) && !this.deleted.rows.has(u.id),
+    );
     return state ? User.restore(state) : null;
   }
 

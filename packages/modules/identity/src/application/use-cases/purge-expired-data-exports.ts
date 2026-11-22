@@ -16,7 +16,9 @@ export class PurgeExpiredDataExports {
 
   async execute(): Promise<number> {
     const now = this.deps.clock.now();
-    const purged = await this.deps.uow.run(async (tx) => ok(await this.deps.dataExports.purgeExpired(tx, now)));
+    const purged = await this.deps.uow.run(async (tx) =>
+      ok(await this.deps.dataExports.purgeExpired(tx, now)),
+    );
     return purged.unwrapOr(0);
   }
 }

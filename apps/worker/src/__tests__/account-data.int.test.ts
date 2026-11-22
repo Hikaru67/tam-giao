@@ -28,7 +28,10 @@ import {
   type AccountDeletionStep,
 } from '@tamgiao/module-identity';
 import { MATCH_ERASE_ON_ACCOUNT_DELETION_CONSUMER, createMatchingWorker } from '@tamgiao/module-matching';
-import { MESSAGING_ERASE_ON_ACCOUNT_DELETION_CONSUMER, createMessagingWorker } from '@tamgiao/module-messaging';
+import {
+  MESSAGING_ERASE_ON_ACCOUNT_DELETION_CONSUMER,
+  createMessagingWorker,
+} from '@tamgiao/module-messaging';
 import { NOTIFICATION_ERASE_ON_ACCOUNT_DELETION_CONSUMER } from '@tamgiao/module-notification';
 import { PROFILE_ERASE_ON_ACCOUNT_DELETION_CONSUMER } from '@tamgiao/module-profile';
 import { SAFETY_ERASE_ON_ACCOUNT_DELETION_CONSUMER } from '@tamgiao/module-safety';
@@ -106,9 +109,10 @@ beforeAll(() => {
     scheduler: { schedule: async () => undefined },
   }).registerConsumers(bus);
   createMessagingWorker({ clock }).registerConsumers(bus);
-  createIdentityWorker({ clock, dataExport: { encryptor, sources: personalDataSources({ encryptor }) } }).registerConsumers(
-    bus,
-  );
+  createIdentityWorker({
+    clock,
+    dataExport: { encryptor, sources: personalDataSources({ encryptor }) },
+  }).registerConsumers(bus);
   registerAccountDeletionConsumers(bus, { clock, encryptor, storage });
 });
 beforeEach(async () => {
@@ -119,8 +123,10 @@ beforeEach(async () => {
 });
 afterAll(() => database.close());
 
-const sql = async <T extends object = Record<string, unknown>>(text: string, params: unknown[] = []): Promise<T[]> =>
-  (await database.pool.query<T>(text, params)).rows;
+const sql = async <T extends object = Record<string, unknown>>(
+  text: string,
+  params: unknown[] = [],
+): Promise<T[]> => (await database.pool.query<T>(text, params)).rows;
 
 const post = (path: string, body: unknown, token?: string) =>
   app.request(path, {
@@ -189,7 +195,13 @@ async function seedEverything(me: string, peer: string) {
       `insert into profile.profiles (user_id, full_name, birth_date, gender, interests, income_range_enc, photo_keys,
          status, created_at, updated_at, version)
        values ($1, $2, '1995-01-01', 'male', '{reading}', $3, $4, 'COMPLETED', $5, $5, 1)`,
-      [userId, name, await encryptor.encrypt('20-30m', `profile.profiles.income_range:${userId}`), photos, NOW],
+      [
+        userId,
+        name,
+        await encryptor.encrypt('20-30m', `profile.profiles.income_range:${userId}`),
+        photos,
+        NOW,
+      ],
     );
     await sql(
       `insert into profile.preferences (user_id, age_min, age_max, children_plan, religion, details, created_at,
@@ -260,10 +272,10 @@ async function seedEverything(me: string, peer: string) {
     [oldMatchId, me, newId(), newId(), addDuration(NOW, { days: -30 })],
   );
   for (const userId of [me, peer]) {
-    await sql(`insert into matching.candidate_profiles (user_id, verified, updated_at) values ($1, true, $2)`, [
-      userId,
-      NOW,
-    ]);
+    await sql(
+      `insert into matching.candidate_profiles (user_id, verified, updated_at) values ($1, true, $2)`,
+      [userId, NOW],
+    );
   }
   await sql(`insert into matching.cooldowns (user_id, until, updated_at) values ($1, $2, $2)`, [me, NOW]);
   // messaging
@@ -334,7 +346,17 @@ async function seedEverything(me: string, peer: string) {
       [newId(), key.includes(me) ? me : peer, key, bucket, purpose, NOW],
     );
   }
-  return { matchId, oldMatchId, paymentId, voucherId, conversationId, myMessageId, peerMessageId, myReportId, peerReportId };
+  return {
+    matchId,
+    oldMatchId,
+    paymentId,
+    voucherId,
+    conversationId,
+    myMessageId,
+    peerMessageId,
+    myReportId,
+    peerReportId,
+  };
 }
 
 describe('BE-S7-06 — xuất dữ liệu xuyên module (AC2)', () => {
@@ -347,16 +369,24 @@ describe('BE-S7-06 — xuất dữ liệu xuyên module (AC2)', () => {
     expect(created.status).toBe(202);
     const { exportId } = dataExportViewSchema.parse(await created.json());
     const [event] = await outboxEvents(DATA_EXPORT_REQUESTED);
-    expect(await deliverOnce(uow, subscription(IDENTITY_BUILD_DATA_EXPORT_CONSUMER), event as DomainEvent)).toBe(true);
+    expect(
+      await deliverOnce(uow, subscription(IDENTITY_BUILD_DATA_EXPORT_CONSUMER), event as DomainEvent),
+    ).toBe(true);
 
-    const view = dataExportViewSchema.parse(await (await get(`/me/data-exports/${exportId}`, me.tokens.accessToken)).json());
+    const view = dataExportViewSchema.parse(
+      await (await get(`/me/data-exports/${exportId}`, me.tokens.accessToken)).json(),
+    );
     const doc = dataExportDocumentSchema.parse(await (await get(view.downloadUrl ?? '')).json());
     expect(Object.keys(doc.sections).sort()).toEqual(
       ['account', 'billing', 'matching', 'messaging', 'profile', 'safety', 'verification'].sort(),
     );
     expect(doc.sections.account).toMatchObject({ userId: me.userId, phone: '+84912345678' });
-    expect(doc.sections.profile).toMatchObject({ profile: { fullName: 'Nguyễn Văn Tôi', incomeRange: '20-30m' } });
-    expect(doc.sections.verification).toMatchObject({ kyc: { status: 'APPROVED', cccdNumber: '001095000001' } });
+    expect(doc.sections.profile).toMatchObject({
+      profile: { fullName: 'Nguyễn Văn Tôi', incomeRange: '20-30m' },
+    });
+    expect(doc.sections.verification).toMatchObject({
+      kyc: { status: 'APPROVED', cccdNumber: '001095000001' },
+    });
     expect(doc.sections.billing).toMatchObject({ payments: [{ orderId: 'VPme', amountVnd: '299000' }] });
     expect(doc.sections.messaging).toMatchObject({ sentMessages: [{ body: MARKER.meBody }] });
     expect(doc.sections.safety).toMatchObject({ reportsFiled: [{ description: MARKER.myReport }] });
@@ -372,7 +402,13 @@ describe('BE-S7-06 — xuất dữ liệu xuyên module (AC2)', () => {
       ].sort(),
     );
     const text = JSON.stringify(doc);
-    for (const foreign of [MARKER.peerBody, MARKER.peerName, MARKER.peerReport, '+84987654321', peer.userId]) {
+    for (const foreign of [
+      MARKER.peerBody,
+      MARKER.peerName,
+      MARKER.peerReport,
+      '+84987654321',
+      peer.userId,
+    ]) {
       expect(text).not.toContain(foreign);
     }
     expect(text).not.toContain(`profile_photo/${peer.userId}`);
@@ -406,7 +442,9 @@ describe('BE-S7-06 — xoá tài khoản xuyên module (AC1)', () => {
       for (const sub of bus.consumersOf(MATCH_LOCKED)) await deliverOnce(uow, sub, locked);
     }
 
-    const status = accountDeletionViewSchema.parse(await (await get(`/account-deletions/${requestId}`)).json());
+    const status = accountDeletionViewSchema.parse(
+      await (await get(`/account-deletions/${requestId}`)).json(),
+    );
     expect(status.status).toBe('COMPLETED');
     expect(status.steps.every((s) => s.done)).toBe(true);
 
@@ -461,9 +499,9 @@ async function expectErased(
       ekyc_assessment: null,
     },
   ]);
-  expect(await sql('select outcome, notes from verification.interview_slots where booked_by = $1', [me])).toEqual([
-    { outcome: 'PASSED', notes: null },
-  ]);
+  expect(
+    await sql('select outcome, notes from verification.interview_slots where booked_by = $1', [me]),
+  ).toEqual([{ outcome: 'PASSED', notes: null }]);
 
   // billing: ledger còn đủ (+ VOUCHER_VOID), voucher VOID, phiên cổng bị xoá
   const ledger = await sql<{ type: string }>(
@@ -471,12 +509,12 @@ async function expectErased(
     [ids.paymentId],
   );
   expect(ledger.map((r) => r.type).sort()).toEqual(['CHARGE', 'VOUCHER_ISSUE', 'VOUCHER_VOID']);
-  expect(await sql('select status, void_reason from billing.vouchers where id = $1', [ids.voucherId])).toEqual([
-    { status: 'VOID', void_reason: 'ACCOUNT_DELETED' },
-  ]);
-  expect(await sql('select checkout_url, qr_data from billing.payments where id = $1', [ids.paymentId])).toEqual([
-    { checkout_url: null, qr_data: null },
-  ]);
+  expect(
+    await sql('select status, void_reason from billing.vouchers where id = $1', [ids.voucherId]),
+  ).toEqual([{ status: 'VOID', void_reason: 'ACCOUNT_DELETED' }]);
+  expect(
+    await sql('select checkout_url, qr_data from billing.payments where id = $1', [ids.paymentId]),
+  ).toEqual([{ checkout_url: null, qr_data: null }]);
   // "Không liên kết được danh tính": user_id của ledger không còn khớp dữ liệu định danh nào.
   expect(
     await sql(
@@ -488,19 +526,26 @@ async function expectErased(
   ).toEqual([]);
 
   // matching: match đang mở → LOCKED (ACCOUNT_DELETED), trả slot cho người kia; read model + cooldown bị xoá
-  expect(await sql('select status, lock_reason, staff_note from matching.matches where id = $1', [ids.matchId])).toEqual(
-    [{ status: 'LOCKED', lock_reason: 'ACCOUNT_DELETED', staff_note: null }],
-  );
+  expect(
+    await sql('select status, lock_reason, staff_note from matching.matches where id = $1', [ids.matchId]),
+  ).toEqual([{ status: 'LOCKED', lock_reason: 'ACCOUNT_DELETED', staff_note: null }]);
   expect(
     await sql('select decline_reason, staff_note from matching.matches where id = $1', [ids.oldMatchId]),
   ).toEqual([{ decline_reason: null, staff_note: null }]);
   expect(await sql('select user_id from matching.active_slots')).toEqual([]);
   expect(await sql('select user_id from matching.candidate_profiles where user_id = $1', [me])).toEqual([]);
-  expect(await sql('select user_id from matching.candidate_profiles where user_id = $1', [peer])).toHaveLength(1);
+  expect(
+    await sql('select user_id from matching.candidate_profiles where user_id = $1', [peer]),
+  ).toHaveLength(1);
   expect(await sql('select user_id from matching.cooldowns where user_id = $1', [me])).toEqual([]);
 
   // messaging: nội dung tin tôi gửi bị xoá, tin người kia còn; hội thoại đóng; con trỏ đọc của tôi bị xoá
-  const msgs = await sql<{ id: string; body: string; masked_body: string | null; client_message_id: string | null }>(
+  const msgs = await sql<{
+    id: string;
+    body: string;
+    masked_body: string | null;
+    client_message_id: string | null;
+  }>(
     'select id, body, masked_body, client_message_id from messaging.messages where conversation_id = $1 and kind = $2',
     [ids.conversationId, 'TEXT'],
   );
@@ -513,15 +558,17 @@ async function expectErased(
   expect(
     await sql<{ body: string }>('select body from messaging.messages where body like $1', ['%0912345678%']),
   ).toEqual([]);
-  expect(await sql('select status from messaging.conversations where id = $1', [ids.conversationId])).toEqual([
-    { status: 'CLOSED' },
-  ]);
+  expect(await sql('select status from messaging.conversations where id = $1', [ids.conversationId])).toEqual(
+    [{ status: 'CLOSED' }],
+  );
   expect(await sql('select user_id from messaging.conversation_reads where user_id = $1', [me])).toEqual([]);
 
   // safety: báo cáo tôi gửi còn nhưng không mô tả/bằng chứng; báo cáo về tôi giữ nguyên
-  expect(await sql('select description, evidence_keys, category from safety.reports where id = $1', [ids.myReportId])).toEqual([
-    { description: null, evidence_keys: [], category: 'HARASSMENT' },
-  ]);
+  expect(
+    await sql('select description, evidence_keys, category from safety.reports where id = $1', [
+      ids.myReportId,
+    ]),
+  ).toEqual([{ description: null, evidence_keys: [], category: 'HARASSMENT' }]);
   expect(await sql('select description from safety.reports where id = $1', [ids.peerReportId])).toEqual([
     { description: MARKER.peerReport },
   ]);

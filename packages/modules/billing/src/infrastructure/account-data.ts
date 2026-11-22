@@ -47,7 +47,8 @@ export function registerBillingAccountDeletionConsumer(bus: EventBus, deps: { re
       const voucher = await vouchersRepo.findByIdForUpdate(tx, listed.id);
       if (!voucher?.isOpen) continue;
       const voided = voucher.void(ACCOUNT_DELETED_VOUCHER_VOID_REASON, now);
-      if (voided.isErr()) throw new Error(`${BILLING_ERASE_ON_ACCOUNT_DELETION_CONSUMER}: ${voided.error.code}`);
+      if (voided.isErr())
+        throw new Error(`${BILLING_ERASE_ON_ACCOUNT_DELETION_CONSUMER}: ${voided.error.code}`);
       const entry = LedgerEntry.create({
         id: newId<'LedgerEntry'>(),
         type: 'VOUCHER_VOID',
@@ -57,7 +58,8 @@ export function registerBillingAccountDeletionConsumer(bus: EventBus, deps: { re
         voucherId: voucher.id,
         occurredAt: now,
       });
-      if (entry.isErr()) throw new Error(`${BILLING_ERASE_ON_ACCOUNT_DELETION_CONSUMER}: ${entry.error.code}`);
+      if (entry.isErr())
+        throw new Error(`${BILLING_ERASE_ON_ACCOUNT_DELETION_CONSUMER}: ${entry.error.code}`);
       await vouchersRepo.save(tx, voucher);
       await ledger.append(tx, [entry.value]);
     }

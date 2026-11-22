@@ -26,9 +26,10 @@ const bus = new EventBus();
 beforeAll(() => {
   h = createIdentityHarness();
   uow = new DrizzleUnitOfWork(h.database.pool);
-  createIdentityWorker({ clock: h.clock, dataExport: { encryptor: h.encryptor, sources: [] } }).registerConsumers(
-    bus,
-  );
+  createIdentityWorker({
+    clock: h.clock,
+    dataExport: { encryptor: h.encryptor, sources: [] },
+  }).registerConsumers(bus);
 });
 beforeEach(async () => {
   await resetDatabase(h.database.pool);
@@ -40,8 +41,7 @@ const sql = async <T extends object>(text: string, params: unknown[] = []): Prom
   (await h.database.pool.query<T>(text, params)).rows;
 const problemCode = async (res: Response) => problemSchema.parse(await res.json()).code;
 const auth = (token: string) => ({ authorization: `Bearer ${token}` });
-const get = (path: string, token?: string) =>
-  h.app.request(path, { headers: token ? auth(token) : {} });
+const get = (path: string, token?: string) => h.app.request(path, { headers: token ? auth(token) : {} });
 
 async function login(phone = PHONE) {
   h.clock.advance({ minutes: 5 });
@@ -98,17 +98,27 @@ describe('Xuất dữ liệu cá nhân — HTTP (BE-S7-06)', () => {
     const me = await loggedIn();
     await loggedIn('0987654321'); // người khác — không được lọt vào file
 
-    const created = await h.app.request('/me/data-exports', { method: 'POST', headers: auth(me.tokens.accessToken) });
+    const created = await h.app.request('/me/data-exports', {
+      method: 'POST',
+      headers: auth(me.tokens.accessToken),
+    });
     expect(created.status).toBe(202);
     const pending = dataExportViewSchema.parse(await created.json());
     expect(pending).toMatchObject({ status: 'PENDING', downloadUrl: null });
-    const again = await h.app.request('/me/data-exports', { method: 'POST', headers: auth(me.tokens.accessToken) });
+    const again = await h.app.request('/me/data-exports', {
+      method: 'POST',
+      headers: auth(me.tokens.accessToken),
+    });
     expect(again.status).toBe(200);
     expect(dataExportViewSchema.parse(await again.json()).exportId).toBe(pending.exportId);
 
-    expect(await deliverOnce(uow, consumer(IDENTITY_BUILD_DATA_EXPORT_CONSUMER), await outboxEvent(DATA_EXPORT_REQUESTED))).toBe(
-      true,
-    );
+    expect(
+      await deliverOnce(
+        uow,
+        consumer(IDENTITY_BUILD_DATA_EXPORT_CONSUMER),
+        await outboxEvent(DATA_EXPORT_REQUESTED),
+      ),
+    ).toBe(true);
     const [stored] = await sql<{ payload_enc: Buffer }>('select payload_enc from identity.data_exports');
     expect(stored?.payload_enc.toString('utf8')).not.toContain('+84912345678'); // nội dung mã hoá
 
@@ -116,7 +126,9 @@ describe('Xuất dữ liệu cá nhân — HTTP (BE-S7-06)', () => {
       await (await get(`/me/data-exports/${pending.exportId}`, me.tokens.accessToken)).json(),
     );
     expect(view.status).toBe('READY');
-    expect(new Date(view.expiresAt ?? 0).getTime() - new Date(view.readyAt ?? 0).getTime()).toBe(24 * 3600_000);
+    expect(new Date(view.expiresAt ?? 0).getTime() - new Date(view.readyAt ?? 0).getTime()).toBe(
+      24 * 3600_000,
+    );
 
     const download = await get(view.downloadUrl ?? '');
     expect(download.status).toBe(200);
@@ -131,9 +143,15 @@ describe('Xuất dữ liệu cá nhân — HTTP (BE-S7-06)', () => {
     const me = await loggedIn();
     const other = await loggedIn('0987654321');
     const created = dataExportViewSchema.parse(
-      await (await h.app.request('/me/data-exports', { method: 'POST', headers: auth(me.tokens.accessToken) })).json(),
+      await (
+        await h.app.request('/me/data-exports', { method: 'POST', headers: auth(me.tokens.accessToken) })
+      ).json(),
     );
-    await deliverOnce(uow, consumer(IDENTITY_BUILD_DATA_EXPORT_CONSUMER), await outboxEvent(DATA_EXPORT_REQUESTED));
+    await deliverOnce(
+      uow,
+      consumer(IDENTITY_BUILD_DATA_EXPORT_CONSUMER),
+      await outboxEvent(DATA_EXPORT_REQUESTED),
+    );
     const view = dataExportViewSchema.parse(
       await (await get(`/me/data-exports/${created.exportId}`, me.tokens.accessToken)).json(),
     );
@@ -164,7 +182,9 @@ describe('Xuất dữ liệu cá nhân — HTTP (BE-S7-06)', () => {
     expect(statuses.filter((s) => s === 202)).toHaveLength(1);
     expect(statuses.filter((s) => s === 200)).toHaveLength(4);
     expect(await sql('select id from identity.data_exports')).toHaveLength(1);
-    expect(await sql(`select id from platform.outbox where event_type = $1`, [DATA_EXPORT_REQUESTED])).toHaveLength(1);
+    expect(
+      await sql(`select id from platform.outbox where event_type = $1`, [DATA_EXPORT_REQUESTED]),
+    ).toHaveLength(1);
   });
 });
 
@@ -177,7 +197,11 @@ describe('Xoá tài khoản — HTTP (BE-S7-06)', () => {
     expect(view).toMatchObject({ status: 'PROCESSING', steps: [{ module: 'profile', done: false }] });
 
     const event = await outboxEvent(ACCOUNT_DELETION_REQUESTED);
-    expect(event.payload).toEqual({ requestId: view.requestId, userId: me.userId, requestedAt: view.requestedAt });
+    expect(event.payload).toEqual({
+      requestId: view.requestId,
+      userId: me.userId,
+      requestedAt: view.requestedAt,
+    });
 
     expect((await get('/auth/sessions', me.tokens.accessToken)).status).toBe(401);
     expect((await h.post('/auth/refresh', { refreshToken: me.tokens.refreshToken })).status).toBe(401);
@@ -188,7 +212,9 @@ describe('Xoá tài khoản — HTTP (BE-S7-06)', () => {
     expect(user?.phone_enc.length).toBe(0);
     expect(user?.phone_bidx).toBe(`deleted:${me.userId}`);
     expect(user?.deleted_at).not.toBeNull();
-    const audit = await sql<{ action: string; meta: unknown }>('select action, meta from identity.audit_logs');
+    const audit = await sql<{ action: string; meta: unknown }>(
+      'select action, meta from identity.audit_logs',
+    );
     expect(audit).toEqual([{ action: 'identity.account_delete', meta: { requestId: view.requestId } }]);
 
     const again = await loggedIn();
@@ -196,7 +222,8 @@ describe('Xoá tài khoản — HTTP (BE-S7-06)', () => {
     expect(again.userId).not.toBe(me.userId);
 
     // Tiến độ: chưa module nào xử lý → PROCESSING; consumer ghi processed_events → COMPLETED.
-    const status = async () => accountDeletionViewSchema.parse(await (await get(`/account-deletions/${view.requestId}`)).json());
+    const status = async () =>
+      accountDeletionViewSchema.parse(await (await get(`/account-deletions/${view.requestId}`)).json());
     expect((await status()).status).toBe('PROCESSING');
     await sql('insert into platform.processed_events (consumer, event_id) values ($1, $2)', [
       HARNESS_DELETION_STEPS[0]?.consumer,

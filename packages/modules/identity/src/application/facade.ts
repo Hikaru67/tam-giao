@@ -58,8 +58,4 @@ export interface AuditLogger {
  * Hợp đồng nguồn dữ liệu cá nhân cho file xuất (BE-S7-06): mỗi module hiện thực trong file riêng của mình, composition
  * root của worker truyền vào `createIdentityWorker({ dataExport })`.
  */
-export type {
-  PersonalDataFile,
-  PersonalDataSection,
-  PersonalDataSource,
-} from './ports/data-rights.js';
+export type { PersonalDataFile, PersonalDataSection, PersonalDataSource } from './ports/data-rights.js';

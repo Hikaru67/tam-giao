@@ -88,7 +88,9 @@ export class DrizzleDataExportRepository implements DataExportRepository {
       .from(dataExports)
       .where(eq(dataExports.id, exp.id));
     if (!row?.payloadEnc) return null;
-    return JSON.parse(await this.encryptor.decrypt(row.payloadEnc, payloadContext(exp.id))) as DataExportPayload;
+    return JSON.parse(
+      await this.encryptor.decrypt(row.payloadEnc, payloadContext(exp.id)),
+    ) as DataExportPayload;
   }
 
   async purgeExpired(tx: Tx, now: Date): Promise<number> {
@@ -145,7 +147,11 @@ export class DrizzleAccountDeletionRepository implements AccountDeletionReposito
 
 /** Đọc `platform.processed_events` (bảng hạ tầng dùng chung, không thuộc module nào). */
 export class DrizzleConsumerProgressReader implements ConsumerProgressReader {
-  async processedConsumers(tx: Tx, eventId: string, consumers: readonly string[]): Promise<ReadonlySet<string>> {
+  async processedConsumers(
+    tx: Tx,
+    eventId: string,
+    consumers: readonly string[],
+  ): Promise<ReadonlySet<string>> {
     if (consumers.length === 0) return new Set();
     const rows = await asDbTx(tx)
       .select({ consumer: processedEvents.consumer })

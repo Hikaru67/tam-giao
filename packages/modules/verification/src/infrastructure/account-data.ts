@@ -124,7 +124,10 @@ export function createVerificationPersonalDataSource(encryptor: Encryptor): Pers
                 cccdNumber:
                   s.cccdNumberEnc === null
                     ? null
-                    : await encryptor.decrypt(s.cccdNumberEnc, `verification.kyc_submissions.cccd_number:${userId}`),
+                    : await encryptor.decrypt(
+                        s.cccdNumberEnc,
+                        `verification.kyc_submissions.cccd_number:${userId}`,
+                      ),
                 rejectionCode: s.rejectionCode,
                 submittedAt: s.submittedAt?.toISOString() ?? null,
                 decidedAt: s.decidedAt?.toISOString() ?? null,

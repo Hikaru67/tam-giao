@@ -10,11 +10,7 @@ import {
   type UnitOfWork,
 } from '@tamgiao/kernel';
 import type { DataExportId } from '../../domain/data-export.js';
-import type {
-  DataExportLinkSigner,
-  DataExportPayload,
-  DataExportRepository,
-} from '../ports/data-rights.js';
+import type { DataExportLinkSigner, DataExportPayload, DataExportRepository } from '../ports/data-rights.js';
 
 export interface DataExportDocument {
   readonly exportId: string;
