@@ -32,6 +32,16 @@ describe('migrateWithLock (advisory lock khi deploy)', () => {
   });
 
   afterAll(async () => {
+    // Pool của các test đã `close()` nhưng socket có thể chưa đóng hẳn: `with (force)` cắt phiên đang đóng dở →
+    // client không có listener 'error' → unhandled 57P01 làm fail cả lượt chạy. Chờ hết phiên rồi mới drop.
+    for (let i = 0; i < 50; i += 1) {
+      const { rows } = await admin.pool.query<{ count: number }>(
+        'select count(*)::int as count from pg_stat_activity where datname = $1',
+        [FRESH_DB],
+      );
+      if (rows[0]?.count === 0) break;
+      await new Promise((resolve) => setTimeout(resolve, 100));
+    }
     await admin.pool.query(`drop database if exists ${FRESH_DB} with (force)`);
     await admin.close();
   });
