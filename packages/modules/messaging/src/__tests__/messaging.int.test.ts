@@ -157,7 +157,7 @@ describe('consumer mở/đóng hội thoại theo event matching', () => {
     expect(results.some((r) => r.status === 'fulfilled')).toBe(true);
     for (const r of results) {
       if (r.status === 'rejected')
-        expect(String(r.reason)).toMatch(/conversations_match_id_uq|duplicate key/);
+        expect(errorChainText(r.reason)).toMatch(/conversations_match_id_uq|duplicate key/);
     }
     expect(await conversationsOf(pair.matchId)).toHaveLength(1);
     // pg-boss thử lại lượt thua: processed_events đã rollback → chạy lại handler → thấy hội thoại, không ghi gì.
@@ -365,3 +365,14 @@ describe('SendMessage trên Postgres', () => {
     expect((await send.execute({ conversationId, senderId: pair.a, body: 'sau 1 phút' })).isOk()).toBe(true);
   });
 });
+
+/** Drizzle bọc lỗi pg trong `Failed query: …` (lỗi gốc ở `cause`) — gộp message cả chuỗi `cause` để so khớp. */
+function errorChainText(error: unknown): string {
+  const parts: string[] = [];
+  let current: unknown = error;
+  for (let depth = 0; current !== undefined && current !== null && depth < 5; depth++) {
+    parts.push(String(current));
+    current = current instanceof Error ? current.cause : undefined;
+  }
+  return parts.join(' <- ');
+}
