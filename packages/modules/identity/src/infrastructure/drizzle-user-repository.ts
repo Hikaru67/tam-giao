@@ -1,6 +1,6 @@
 import { asDbTx, type OutboxWriter } from '@tamgiao/db';
 import type { BlindIndexer, Encryptor, Tx } from '@tamgiao/kernel';
-import { eq } from 'drizzle-orm';
+import { and, eq, isNull } from 'drizzle-orm';
 import { PHONE_INDEX_PURPOSE } from '../application/index-purposes.js';
 import type { UserRepository } from '../application/ports/user-repository.js';
 import { PhoneNumber } from '../domain/phone-number.js';
@@ -21,8 +21,26 @@ export class DrizzleUserRepository implements UserRepository {
       .select()
       .from(users)
       .where(eq(users.phoneBidx, this.blindIndexer.index(phone.e164, PHONE_INDEX_PURPOSE)));
-    if (!row) return null;
+    return row ? this.toUser(row) : null;
+  }
 
+  async findActiveById(tx: Tx, id: UserId): Promise<User | null> {
+    const [row] = await asDbTx(tx)
+      .select()
+      .from(users)
+      .where(and(eq(users.id, id), isNull(users.deletedAt)));
+    return row ? this.toUser(row) : null;
+  }
+
+  async anonymize(tx: Tx, id: UserId, now: Date): Promise<void> {
+    // Blind index là HMAC (base64url) nên không bao giờ trùng `deleted:<uuid>`.
+    await asDbTx(tx)
+      .update(users)
+      .set({ phoneEnc: Buffer.alloc(0), phoneBidx: `deleted:${id}`, deletedAt: now })
+      .where(eq(users.id, id));
+  }
+
+  private async toUser(row: typeof users.$inferSelect): Promise<User> {
     const stored = PhoneNumber.parse(await this.encryptor.decrypt(row.phoneEnc, phoneContext(row.id)));
     if (stored.isErr()) throw new Error(`identity.users ${row.id}: SĐT lưu trong DB không hợp lệ`);
     return User.restore({

@@ -18,6 +18,7 @@ import { SendMessage } from './application/send-message.js';
 import type { MessageScreener } from './domain/message-policy.js';
 import { createContentScreener } from './domain/message-screener.js';
 import type { MessagingFacade } from './application/facade.js';
+import { registerMessagingAccountDeletionConsumer } from './infrastructure/account-data.js';
 import { registerConversationConsumers } from './infrastructure/conversation-consumers.js';
 import { DrizzleMessagingFacade } from './infrastructure/drizzle-messaging-facade.js';
 import { DrizzleConversationReadRepository } from './infrastructure/drizzle-conversation-read-repository.js';
@@ -100,8 +101,20 @@ export function createMessagingWorker(deps: MessagingWorkerDeps): MessagingWorke
     open: new OpenConversationForMatch(lifecycle),
     close: new CloseConversationForMatch(lifecycle),
   };
-  return { registerConsumers: (bus) => registerConversationConsumers(bus, consumers) };
+  return {
+    registerConsumers: (bus) => {
+      registerConversationConsumers(bus, consumers);
+      // BE-S7-06: AccountDeletionRequested (identity) → xoá nội dung tin người đó đã gửi.
+      registerMessagingAccountDeletionConsumer(bus);
+    },
+  };
 }
+
+/** Quyền dữ liệu cá nhân (BE-S7-06): tên consumer xoá dữ liệu + nguồn dữ liệu cho file xuất. */
+export {
+  MESSAGING_ERASE_ON_ACCOUNT_DELETION_CONSUMER,
+  createMessagingPersonalDataSource,
+} from './infrastructure/account-data.js';
 
 export interface MessagingModuleDeps {
   readonly uow: UnitOfWork;

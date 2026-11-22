@@ -21,6 +21,9 @@ export const IDENTITY_ERRORS = [
   'ADMIN_EMAIL_TAKEN',
   'ACCOUNT_BANNED',
   'AUDIT_ENTRY_INVALID',
+  'DATA_EXPORT_NOT_READY',
+  'DATA_EXPORT_EXPIRED',
+  'DATA_EXPORT_LINK_INVALID',
 ] as const;
 
 export type IdentityErrorCode = (typeof IDENTITY_ERRORS)[number];

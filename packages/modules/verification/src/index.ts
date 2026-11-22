@@ -192,3 +192,10 @@ export function createKycMediaRetention(deps: KycMediaRetentionDeps): PurgeExpir
     auditLogger: deps.auditLogger,
   });
 }
+
+/** Quyền dữ liệu cá nhân (BE-S7-06): consumer xoá/ẩn danh khi xoá tài khoản + nguồn dữ liệu cho file xuất. */
+export {
+  VERIFICATION_ERASE_ON_ACCOUNT_DELETION_CONSUMER,
+  createVerificationPersonalDataSource,
+  registerVerificationAccountDeletionConsumer,
+} from './infrastructure/account-data.js';
