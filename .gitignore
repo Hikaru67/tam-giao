@@ -24,3 +24,10 @@ pnpm-debug.log*
 # design exports (bản gốc lưu ngoài git)
 design/*.zip
 design/_original/
+
+# apps/mobile (FE-S1-01)
+apps/mobile/.expo/
+apps/mobile/ios/
+apps/mobile/android/
+dev-dist/
+

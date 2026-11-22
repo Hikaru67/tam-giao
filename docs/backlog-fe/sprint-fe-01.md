@@ -14,7 +14,7 @@ CI kiểm tra FE. Chưa có màn nghiệp vụ.
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| mobile, admin, partner, repo | devops | P0 | 1.5d | — | — | TODO |
+| mobile, admin, partner, repo | devops | P0 | 1.5d | — | — | DONE |
 
 **Mục tiêu:** Có khung 3 app theo FE-D1/FE-D2 để các task sau chỉ thêm màn.
 

@@ -9,7 +9,7 @@ export default defineConfig({
         test: {
           name: 'unit',
           include: ['{apps,packages,tools}/**/*.test.ts'],
-          exclude: [...ignored, '**/*.int.test.ts'],
+          exclude: [...ignored, '**/*.int.test.ts', 'apps/{admin,partner,mobile}/**'],
         },
       },
       {
@@ -24,6 +24,17 @@ export default defineConfig({
           poolOptions: { forks: { singleFork: true } },
           testTimeout: 30_000,
           hookTimeout: 120_000,
+        },
+      },
+      {
+        test: {
+          name: 'web',
+          include: ['apps/{admin,partner}/src/**/*.test.{ts,tsx}'],
+          exclude: ignored,
+          environment: 'jsdom',
+        },
+        esbuild: {
+          jsx: 'automatic',
         },
       },
     ],

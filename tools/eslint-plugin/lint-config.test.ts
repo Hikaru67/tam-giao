@@ -28,4 +28,9 @@ describe('eslint.config.js — luật kiến trúc', () => {
     const rules = await lint(fixture('packages/modules/matching/src/domain/default-export.ts'));
     expect(rules).toContain('import-x/no-default-export');
   });
+
+  it('báo lỗi khi app FE import package backend (FE-S1-01)', async () => {
+    const rules = await lint(fixture('apps/admin/src/imports-backend.ts'));
+    expect(rules.filter((r) => r === 'no-restricted-imports')).toHaveLength(2);
+  });
 });
