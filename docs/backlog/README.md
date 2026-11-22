@@ -48,7 +48,7 @@ Cập nhật cột Trạng thái tại đây và trong file sprint khi task đ�
 | S4 | 0 | 0 | 0 | 7 | 0 |
 | S5 | 0 | 0 | 0 | 7 | 0 |
 | S6 | 0 | 0 | 0 | 7 | 0 |
-| S7 | 4 | 0 | 1 | 4 | 1 |
+| S7 | 3 | 0 | 1 | 5 | 1 |
 
 ## Cách giao task cho subagent
 

@@ -1,6 +1,6 @@
 import { asDbTx, type OutboxWriter } from '@tamgiao/db';
 import { fail, ok, type Result, type Tx } from '@tamgiao/kernel';
-import { and, desc, eq, inArray } from 'drizzle-orm';
+import { and, desc, eq, gte, inArray, lte, or } from 'drizzle-orm';
 import type { DatePlanRepository, DatePlanSaveError } from '../application/ports/date-plan-repository.js';
 import {
   DATE_PLAN_STATUSES,
@@ -9,6 +9,8 @@ import {
   type DatePlanId,
   type DatePlanStatus,
   type DatingMatchId,
+  type DatingPartnerId,
+  type DatingUserId,
 } from '../domain/date-plan.js';
 import { DATE_PLANS_OPEN_PER_MATCH_UNIQUE, datePlans } from './schema.js';
 
@@ -17,7 +19,7 @@ type Row = typeof datePlans.$inferSelect;
 const PG_UNIQUE_VIOLATION = '23505';
 
 /** Lỗi pg nằm trong chuỗi `cause` (Drizzle bọc lỗi driver trong `DrizzleQueryError`). */
-function uniqueViolationConstraint(error: unknown): string | null {
+export function uniqueViolationConstraint(error: unknown): string | null {
   let current: unknown = error;
   for (let depth = 0; depth < 5 && typeof current === 'object' && current !== null; depth++) {
     const e = current as { code?: unknown; constraint?: unknown; cause?: unknown };
@@ -141,6 +143,30 @@ export class DrizzleDatePlanRepository implements DatePlanRepository {
       .where(eq(datePlans.matchId, matchId.toLowerCase()))
       .orderBy(desc(datePlans.proposedAt), desc(datePlans.id))
       .limit(1);
+    return row ? toDatePlan(row) : null;
+  }
+
+  async findForVoucherCheckInForUpdate(
+    tx: Tx,
+    input: { readonly userId: DatingUserId; readonly partnerId: DatingPartnerId; readonly at: Date },
+  ): Promise<DatePlan | null> {
+    const userId = input.userId.toLowerCase();
+    const partnerId = input.partnerId.toLowerCase();
+    const [row] = await asDbTx(tx)
+      .select()
+      .from(datePlans)
+      .where(
+        and(
+          or(eq(datePlans.inviterId, userId), eq(datePlans.inviteeId, userId)),
+          eq(datePlans.partnerId, partnerId),
+          inArray(datePlans.status, ['CONFIRMED', 'CHECKED_IN']),
+          lte(datePlans.startsAt, input.at),
+          gte(datePlans.endsAt, input.at),
+        ),
+      )
+      .orderBy(desc(datePlans.startsAt))
+      .limit(1)
+      .for('update');
     return row ? toDatePlan(row) : null;
   }
 }

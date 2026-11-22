@@ -40,7 +40,7 @@ hoặc `CLOSED_STOPPED` + cooldown; thông báo đẩy/SMS cho các mốc quan t
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| dating | application, infrastructure, presentation | P1 | 1d | BE-S7-01 | BE-S7-03 | TODO |
+| dating | application, infrastructure, presentation | P1 | 1d | BE-S7-01 | BE-S7-03 | DONE |
 
 **Mục tiêu:** Toggle "Check-in an toàn: gửi vị trí cho chuyên viên" (màn 12).
 
@@ -49,8 +49,8 @@ hoặc `CLOSED_STOPPED` + cooldown; thông báo đẩy/SMS cho các mốc quan t
 - Ngoài: Theo dõi vị trí liên tục.
 
 **Tiêu chí nghiệm thu**
-- [ ] AC1: Dữ liệu vị trí bị xoá sau 24h (job, FakeClock).
-- [ ] AC2: Không check-out quá hạn → tạo cảnh báo.
+- [x] AC1: Dữ liệu vị trí bị xoá sau 24h (job, FakeClock).
+- [x] AC2: Không check-out quá hạn → tạo cảnh báo.
 
 **Test bắt buộc:** Integration job.
 

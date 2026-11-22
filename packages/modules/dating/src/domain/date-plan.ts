@@ -10,6 +10,7 @@ import {
 } from '@tamgiao/kernel';
 import {
   DATE_CANCELLED,
+  DATE_CHECKED_IN,
   DATE_CONFIRMED,
   DATE_DECLINED,
   DATE_EXPIRED,
@@ -51,6 +52,12 @@ export type DateTransitionError = DomainError<'DATE_INVALID_TRANSITION'>;
 export type DateRespondError =
   DomainError<'NOT_PARTICIPANT' | 'DATE_NOT_INVITEE' | 'DATE_RESPONSE_EXPIRED'> | DateTransitionError;
 export type DateCancelError = DomainError<'NOT_PARTICIPANT' | 'CANCEL_TOO_LATE'> | DateTransitionError;
+/** Check-in an toàn (BE-S7-02): ngoài khung giờ hẹn → `DATE_CHECK_IN_WINDOW_CLOSED`. */
+export type DateCheckInError =
+  DomainError<'NOT_PARTICIPANT' | 'DATE_CHECK_IN_WINDOW_CLOSED'> | DateTransitionError;
+/** Nguồn check-in: người dùng bật "Check-in an toàn" / quán quét voucher (`VoucherRedeemed`). */
+export const CHECK_IN_SOURCES = ['MANUAL', 'VOUCHER'] as const;
+export type CheckInSource = (typeof CHECK_IN_SOURCES)[number];
 
 /** Snapshot đầy đủ để repository lưu / dựng lại aggregate (`toState` ↔ `restore`). */
 export interface DatePlanState {
@@ -195,6 +202,14 @@ export class DatePlan extends AggregateRoot<DatePlanId> {
     return this.state.startsAt;
   }
 
+  get endsAt(): Date {
+    return this.state.endsAt;
+  }
+
+  get partnerId(): DatingPartnerId {
+    return this.state.partnerId;
+  }
+
   /** Mốc cuối còn được huỷ lịch đã xác nhận. */
   get cancelDeadline(): Date {
     return addDuration(this.state.startsAt, { hours: -DATE_CANCEL_CUTOFF_HOURS });
@@ -264,6 +279,54 @@ export class DatePlan extends AggregateRoot<DatePlanId> {
     }
     this.state = { ...this.state, status: 'EXPIRED', respondedAt: now, updatedAt: now };
     this.record(DATE_EXPIRED, this.eventBase(), now);
+    return ok();
+  }
+
+  /** Thời điểm `at` nằm trong khung giờ hẹn `[startsAt, endsAt]` (đúng biên được tính là trong khung). */
+  isWithinDateWindow(at: Date): boolean {
+    return at.getTime() >= this.state.startsAt.getTime() && at.getTime() <= this.state.endsAt.getTime();
+  }
+
+  /**
+   * Kiểm tra một người check-in an toàn được không (BE-S7-02), không đổi trạng thái: người ngoài cặp →
+   * `NOT_PARTICIPANT` (trước, không lộ trạng thái) → lịch không ở `CONFIRMED | CHECKED_IN` →
+   * `DATE_INVALID_TRANSITION` → `at` ngoài khung giờ hẹn → `DATE_CHECK_IN_WINDOW_CLOSED`.
+   */
+  ensureCanCheckIn(userId: DatingUserId, at: Date): Result<void, DateCheckInError> {
+    if (!this.isParticipant(userId)) return fail('NOT_PARTICIPANT');
+    if (this.state.status !== 'CONFIRMED' && this.state.status !== 'CHECKED_IN') {
+      return invalidTransition('check_in', this.state.status);
+    }
+    if (!this.isWithinDateWindow(at)) {
+      return fail('DATE_CHECK_IN_WINDOW_CLOSED', {
+        startsAt: this.state.startsAt.toISOString(),
+        endsAt: this.state.endsAt.toISOString(),
+      });
+    }
+    return ok();
+  }
+
+  /**
+   * Người đầu tiên check-in (thủ công hoặc quét voucher) → `CONFIRMED → CHECKED_IN` + `DateCheckedIn`. Lịch đã
+   * `CHECKED_IN` (người thứ hai check-in) → no-op, không phát event. Luật được kiểm tra lại như `ensureCanCheckIn`.
+   */
+  markCheckedIn(userId: DatingUserId, source: CheckInSource, at: Date): Result<void, DateCheckInError> {
+    const allowed = this.ensureCanCheckIn(userId, at);
+    if (allowed.isErr()) return allowed;
+    if (this.state.status === 'CHECKED_IN') return ok();
+    this.state = { ...this.state, status: 'CHECKED_IN', updatedAt: at };
+    this.record(
+      DATE_CHECKED_IN,
+      {
+        ...this.eventBase(),
+        partnerId: this.state.partnerId,
+        startsAt: this.state.startsAt.toISOString(),
+        endsAt: this.state.endsAt.toISOString(),
+        checkedInBy: userId.toLowerCase(),
+        source,
+      },
+      at,
+    );
     return ok();
   }
 

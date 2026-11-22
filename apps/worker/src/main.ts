@@ -20,7 +20,7 @@ import {
   createVoucherExpiryJob,
   FakePaymentGateway,
 } from '@tamgiao/module-billing';
-import { createExpireDatePlanJob } from '@tamgiao/module-dating';
+import { createDatingWorker, createExpireDatePlanJob } from '@tamgiao/module-dating';
 import {
   ConsoleSmsSender,
   createDataExportPurgeJob,
@@ -36,6 +36,7 @@ import { PgBoss } from 'pg-boss';
 import { loadWorkerConfig } from './config.js';
 import { personalDataSources, registerAccountDeletionConsumers } from './data-rights.js';
 import { registerBillingRefundJobs } from './jobs/billing-refund.js';
+import { registerCheckInLocationPurgeJob, registerCheckInOverdueJob } from './jobs/date-check-in.js';
 import { registerDatePlanExpiryJob } from './jobs/date-plan-expiry.js';
 import { registerDataExportPurgeJob } from './jobs/data-export-purge.js';
 import { registerKycMediaRetentionJob } from './jobs/kyc-media-retention.js';
@@ -58,15 +59,15 @@ const baseLogger = createLogger({ service: 'worker', level: config.logLevel });
 const logger = withErrorReporting(baseLogger, errorReporter);
 const database = createDatabase(config.database.url);
 const uow = new DrizzleUnitOfWork(database.pool);
+const clock = new SystemClock();
+const encryptor = new LocalKeyEncryptor(
+  parseMasterKeyRing(config.crypto.masterKeys, config.crypto.masterKeyVersion),
+);
 
 const boss = new PgBoss({ connectionString: config.database.url });
 boss.on('error', (error) => logger.error({ err: error }, 'pg-boss error'));
 await boss.start();
 
-const clock = new SystemClock();
-const encryptor = new LocalKeyEncryptor(
-  parseMasterKeyRing(config.crypto.masterKeys, config.crypto.masterKeyVersion),
-);
 const storage = new S3ObjectStorage({ ...config.storage, presignGetTtlSeconds: PRESIGNED_URL_TTL_SECONDS });
 
 const bus = new EventBus();
@@ -119,6 +120,16 @@ const notificationWorker = createNotificationWorker({
 });
 notificationWorker.registerConsumers(bus);
 await registerNotificationSendJob({ boss, logger, sender: notificationWorker.sendNotification });
+
+// Dating (BE-S7-02): consumer VoucherRedeemed → check-in an toàn nguồn VOUCHER cho lịch hẹn đang diễn ra.
+const datingWorker = createDatingWorker({
+  uow,
+  clock,
+  scheduler: new PgBossScheduler(boss),
+  encryptor,
+});
+datingWorker.registerConsumers(bus);
+
 await registerConsumers({ boss, uow, bus, logger });
 for (const job of jobs) {
   await registerJob({ boss, uow, logger, ...job });
@@ -161,7 +172,11 @@ await registerLedgerReconciliationJob({
 await registerBillingRefundJobs({ boss, logger, billing: billingWorker });
 
 // Xoá nội dung file xuất dữ liệu quá hạn tải 24 giờ (BE-S7-06).
-await registerDataExportPurgeJob({ boss, logger, purger: createDataExportPurgeJob({ uow, clock, encryptor }) });
+await registerDataExportPurgeJob({
+  boss,
+  logger,
+  purger: createDataExportPurgeJob({ uow, clock, encryptor }),
+});
 
 // Hết hạn match (BE-S5-05): job `matching.expire-match` do API hẹn lúc `expiresAt` → `ExpireMatch` (idempotent).
 await registerMatchExpiryJob({
@@ -177,6 +192,20 @@ await registerDatePlanExpiryJob({
   uow,
   logger,
   expirer: createExpireDatePlanJob({ uow, clock }),
+});
+
+// Check-in an toàn (BE-S7-02): job cảnh báo quá hạn check-out + job dọn dẹp vị trí thô hết hạn lưu.
+await registerCheckInOverdueJob({
+  boss,
+  uow,
+  logger,
+  marker: datingWorker.markCheckInOverdue,
+});
+await registerCheckInLocationPurgeJob({
+  boss,
+  uow,
+  logger,
+  purger: datingWorker.purgeCheckInLocations,
 });
 
 const relay = new OutboxRelay({ uow, boss, bus, logger });

@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { DATE_PLAN_STATUS_NAMES } from './events.js';
+import { CHECK_IN_SOURCE_NAMES, DATE_PLAN_STATUS_NAMES } from './events.js';
 
 /**
  * DTO đặt lịch gặp mặt tại quán đối tác (BE-S7-01, màn "Đặt lịch Gặp mặt & Điểm hẹn An toàn"). Thời gian ISO 8601;
@@ -53,3 +53,36 @@ export type DatePlanDto = z.infer<typeof datePlanSchema>;
  */
 export const currentDatePlanResponseSchema = z.object({ datePlan: datePlanSchema.nullable() });
 export type CurrentDatePlanResponse = z.infer<typeof currentDatePlanResponseSchema>;
+
+/**
+ * `POST /me/dates/:id/check-in` (BE-S7-02) — toggle "Check-in an toàn: gửi vị trí cho chuyên viên". `location` tuỳ chọn
+ * (vị trí thô một lần, không theo dõi liên tục); chỉ nhận trong khung giờ hẹn, tự xoá sau
+ * `CHECK_IN_LOCATION_RETENTION_HOURS` giờ.
+ */
+export const checkInLocationSchema = z.object({
+  latitude: z.number().min(-90).max(90),
+  longitude: z.number().min(-180).max(180),
+  /** Bán kính sai số (mét) do thiết bị báo, tuỳ chọn. */
+  accuracyMeters: z.number().nonnegative().max(100_000).optional(),
+});
+/** Không gửi vị trí → body `{}`. */
+export const checkInBodySchema = z.object({ location: checkInLocationSchema.optional() });
+export type CheckInBody = z.infer<typeof checkInBodySchema>;
+
+/** Trạng thái check-in an toàn của người xem cho một lịch hẹn. Không trả lại vị trí. */
+export const safetyCheckInSchema = z.object({
+  id: z.uuid(),
+  datePlanId: z.uuid(),
+  source: z.enum(CHECK_IN_SOURCE_NAMES),
+  checkedInAt: z.iso.datetime(),
+  /** Quá mốc này chưa check-out → cảnh báo chuyên viên. */
+  overdueAt: z.iso.datetime(),
+  checkedOutAt: z.iso.datetime().nullable(),
+  overdueAlertedAt: z.iso.datetime().nullable(),
+  locationShared: z.boolean(),
+});
+export type SafetyCheckInDto = z.infer<typeof safetyCheckInSchema>;
+
+/** `GET /me/dates/:id/check-in` — `null` khi người xem chưa check-in lịch này. */
+export const myCheckInResponseSchema = z.object({ checkIn: safetyCheckInSchema.nullable() });
+export type MyCheckInResponse = z.infer<typeof myCheckInResponseSchema>;

@@ -21,4 +21,10 @@ export const DATING_ERROR_CODES = registerErrors('dating', {
     status: 409,
     title: 'Không thể thực hiện thao tác ở trạng thái hiện tại của lịch hẹn',
   },
+  /** BE-S7-02. `meta.startsAt`, `meta.endsAt`: chỉ check-in an toàn trong khung giờ hẹn. */
+  DATE_CHECK_IN_WINDOW_CLOSED: { status: 409, title: 'Chỉ check-in trong khung giờ hẹn' },
+  /** BE-S7-02. Người dùng đã check-in buổi hẹn này (thủ công hoặc qua quét voucher). */
+  DATE_ALREADY_CHECKED_IN: { status: 409, title: 'Bạn đã check-in buổi hẹn này' },
+  /** BE-S7-02. `meta.reason`: `NOT_CHECKED_IN` | `ALREADY_CHECKED_OUT`. */
+  DATE_NOT_CHECKED_IN: { status: 409, title: 'Bạn chưa check-in hoặc đã check-out buổi hẹn này' },
 });

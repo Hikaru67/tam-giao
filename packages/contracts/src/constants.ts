@@ -50,3 +50,7 @@ export const DATE_CANCEL_CUTOFF_HOURS = 4;
 export const DATING_FIRST_REMINDER_DAY = 7;
 /** Nhắc lần 2 (sắp hết giai đoạn tìm hiểu) vào ngày thứ ngần này (BE-S7-04). */
 export const DATING_FINAL_REMINDER_DAY = 12;
+/** Quá giờ kết thúc buổi hẹn ngần này phút mà người đã check-in an toàn chưa check-out → cảnh báo chuyên viên (BE-S7-02). */
+export const CHECK_IN_OVERDUE_MINUTES = 60;
+/** Vị trí thô gửi kèm check-in an toàn bị xoá sau ngần này giờ kể từ lúc ghi nhận (BE-S7-02). */
+export const CHECK_IN_LOCATION_RETENTION_HOURS = 24;

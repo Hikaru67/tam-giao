@@ -107,6 +107,8 @@ Khai báo tại `packages/contracts/src/constants.ts`. Không hardcode ở chỗ
 | `DATE_CANCEL_CUTOFF_HOURS` | 4 | Huỷ lịch hẹn đã xác nhận trước giờ bắt đầu ít nhất (BE-S7-01) |
 | `DATING_FIRST_REMINDER_DAY` | 7 | Nhắc "Mục tiêu: gặp mặt trước ngày 14" lần 1, ngày thứ 7 giai đoạn tìm hiểu (BE-S7-04) |
 | `DATING_FINAL_REMINDER_DAY` | 12 | Nhắc lần 2, sắp hết giai đoạn tìm hiểu (BE-S7-04) |
+| `CHECK_IN_OVERDUE_MINUTES` | 60 | Quá giờ kết thúc hẹn chưa check-out → cảnh báo chuyên viên (BE-S7-02) |
+| `CHECK_IN_LOCATION_RETENTION_HOURS` | 24 | Xoá vị trí thô của check-in an toàn sau khi ghi nhận (BE-S7-02) |
 
 ## 7. Vùng sở hữu file (tránh xung đột khi nhiều subagent chạy song song)
 

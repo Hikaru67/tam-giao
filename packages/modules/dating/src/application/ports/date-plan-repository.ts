@@ -1,5 +1,11 @@
 import type { DomainError, Result, Tx } from '@tamgiao/kernel';
-import type { DatePlan, DatePlanId, DatingMatchId } from '../../domain/date-plan.js';
+import type {
+  DatePlan,
+  DatePlanId,
+  DatingMatchId,
+  DatingPartnerId,
+  DatingUserId,
+} from '../../domain/date-plan.js';
 
 /** Lưu lịch mới vi phạm "mỗi match tối đa một lịch đang mở" (partial unique index, A10). */
 export type DatePlanSaveError = DomainError<'DATE_ALREADY_OPEN'>;
@@ -18,4 +24,13 @@ export interface DatePlanRepository {
   findOpenByMatch(tx: Tx, matchId: DatingMatchId): Promise<DatePlan | null>;
   /** Lịch mới đề xuất nhất của match (mọi trạng thái). */
   findLatestByMatch(tx: Tx, matchId: DatingMatchId): Promise<DatePlan | null>;
+  /**
+   * BE-S7-02 — lịch để đánh dấu check-in khi quán quét voucher: người dùng là một trong hai người, lịch ở quán
+   * `partnerId`, trạng thái `CONFIRMED | CHECKED_IN`, `startsAt <= at <= endsAt`. Khoá `FOR UPDATE`; nhiều lịch khớp
+   * (không xảy ra khi độc quyền 1-1) → lịch bắt đầu muộn nhất.
+   */
+  findForVoucherCheckInForUpdate(
+    tx: Tx,
+    input: { readonly userId: DatingUserId; readonly partnerId: DatingPartnerId; readonly at: Date },
+  ): Promise<DatePlan | null>;
 }
