@@ -8,4 +8,6 @@ export interface BannedUserRegistry {
   /** Idempotent: đánh dấu lại người đã bị khoá không đổi gì. */
   markBanned(tx: Tx, userId: string, bannedAt: Date): Promise<void>;
   isBanned(tx: Tx, userId: string): Promise<boolean>;
+  /** SĐT (blind index) từng thuộc một tài khoản đã xoá mà tài khoản đó bị khoá → `true` (chống lách khoá bằng xoá tài khoản). */
+  isBannedDeletedPhone(tx: Tx, phoneBidx: string): Promise<boolean>;
 }

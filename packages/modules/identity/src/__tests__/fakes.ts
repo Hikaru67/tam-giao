@@ -190,6 +190,7 @@ export class FakeBlindIndexer implements BlindIndexer {
 /** `BannedUserRegistry` in-memory (BE-S6-06). */
 export class InMemoryBannedUserRegistry implements BannedUserRegistry {
   readonly table = new MemoryTable<Date>();
+  readonly deletedPhones = new Map<string, string>();
 
   async markBanned(_tx: Tx, userId: string, bannedAt: Date): Promise<void> {
     if (!this.table.rows.has(userId)) this.table.rows.set(userId, bannedAt);
@@ -197,6 +198,11 @@ export class InMemoryBannedUserRegistry implements BannedUserRegistry {
 
   async isBanned(_tx: Tx, userId: string): Promise<boolean> {
     return this.table.rows.has(userId);
+  }
+
+  async isBannedDeletedPhone(_tx: Tx, phoneBidx: string): Promise<boolean> {
+    const userId = this.deletedPhones.get(phoneBidx);
+    return userId !== undefined && this.table.rows.has(userId);
   }
 }
 
