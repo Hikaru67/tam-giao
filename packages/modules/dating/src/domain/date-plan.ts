@@ -11,6 +11,7 @@ import {
 import {
   DATE_CANCELLED,
   DATE_CHECKED_IN,
+  DATE_COMPLETED,
   DATE_CONFIRMED,
   DATE_DECLINED,
   DATE_EXPIRED,
@@ -27,7 +28,7 @@ export type DatingPartnerId = string;
 
 /**
  * Vòng đời lịch hẹn: `PROPOSED → CONFIRMED → CHECKED_IN → COMPLETED`; `PROPOSED → DECLINED | EXPIRED`;
- * `CONFIRMED → CANCELLED`. `CHECKED_IN`/`COMPLETED` do BE-S7-02/BE-S7-04 hiện thực (đã có trong CHECK của DB).
+ * `CONFIRMED → CANCELLED`. `CHECKED_IN` do BE-S7-02 hiện thực; `COMPLETED` do BE-S7-04 hiện thực (đánh giá đầu tiên).
  */
 export const DATE_PLAN_STATUSES = [
   'PROPOSED',
@@ -324,6 +325,28 @@ export class DatePlan extends AggregateRoot<DatePlanId> {
         endsAt: this.state.endsAt.toISOString(),
         checkedInBy: userId.toLowerCase(),
         source,
+      },
+      at,
+    );
+    return ok();
+  }
+
+  /**
+   * Đánh giá đầu tiên của match (BE-S7-04) → `CONFIRMED | CHECKED_IN → COMPLETED` + `DateCompleted`.
+   * Lịch đã `COMPLETED` (đánh giá thứ hai) → no-op, không phát event.
+   * Các trạng thái khác → `DATE_INVALID_TRANSITION`.
+   */
+  markCompleted(at: Date): Result<void, DomainError<'DATE_INVALID_TRANSITION'>> {
+    if (this.state.status === 'COMPLETED') return ok();
+    if (this.state.status !== 'CONFIRMED' && this.state.status !== 'CHECKED_IN') {
+      return invalidTransition('complete', this.state.status);
+    }
+    this.state = { ...this.state, status: 'COMPLETED', updatedAt: at };
+    this.record(
+      DATE_COMPLETED,
+      {
+        ...this.eventBase(),
+        completedAt: at.toISOString(),
       },
       at,
     );

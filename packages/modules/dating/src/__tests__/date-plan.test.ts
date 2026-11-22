@@ -211,3 +211,61 @@ describe('DatePlan.expire', () => {
     expect(plan.status).toBe('CONFIRMED');
   });
 });
+
+describe('DatePlan.markCompleted', () => {
+  it('CONFIRMED → COMPLETED + 1 event DateCompleted có matchId và completedAt', () => {
+    const plan = confirmed();
+    const at = addDuration(STARTS, { hours: 1 });
+    const r = plan.markCompleted(at);
+    expect(r.isOk()).toBe(true);
+    expect(plan.status).toBe('COMPLETED');
+    expect(plan.toState().updatedAt).toEqual(at);
+    const events = plan.pullEvents();
+    expect(events).toHaveLength(1);
+    expect(events[0]?.type).toBe('DateCompleted');
+    expect(events[0]?.payload).toEqual({
+      datePlanId: plan.id,
+      matchId,
+      inviterId: inviter,
+      inviteeId: invitee,
+      completedAt: at.toISOString(),
+    });
+  });
+
+  it('CHECKED_IN → COMPLETED', () => {
+    const plan = confirmed();
+    expect(plan.markCheckedIn(inviter, 'MANUAL', STARTS).isOk()).toBe(true);
+    plan.pullEvents();
+    expect(plan.status).toBe('CHECKED_IN');
+    const at = addDuration(STARTS, { hours: 1 });
+    expect(plan.markCompleted(at).isOk()).toBe(true);
+    expect(plan.status).toBe('COMPLETED');
+    expect(plan.pullEvents().map((e) => e.type)).toEqual(['DateCompleted']);
+  });
+
+  it('COMPLETED → no-op không phát event', () => {
+    const plan = confirmed();
+    const at = addDuration(STARTS, { hours: 1 });
+    expect(plan.markCompleted(at).isOk()).toBe(true);
+    plan.pullEvents();
+    expect(plan.markCompleted(addDuration(at, { hours: 1 })).isOk()).toBe(true);
+    expect(plan.status).toBe('COMPLETED');
+    expect(plan.pullEvents()).toEqual([]);
+  });
+
+  it('PROPOSED, DECLINED, EXPIRED, CANCELLED → DATE_INVALID_TRANSITION', () => {
+    expect(codeOf(proposed().markCompleted(STARTS))).toBe('DATE_INVALID_TRANSITION');
+
+    const declinedPlan = proposed();
+    expect(declinedPlan.decline(invitee, addDuration(T0, { hours: 1 })).isOk()).toBe(true);
+    expect(codeOf(declinedPlan.markCompleted(STARTS))).toBe('DATE_INVALID_TRANSITION');
+
+    const expiredPlan = proposed();
+    expect(expiredPlan.expire(expiredPlan.expiresAt).isOk()).toBe(true);
+    expect(codeOf(expiredPlan.markCompleted(STARTS))).toBe('DATE_INVALID_TRANSITION');
+
+    const cancelledPlan = confirmed();
+    expect(cancelledPlan.cancel(inviter, cancelledPlan.cancelDeadline).isOk()).toBe(true);
+    expect(codeOf(cancelledPlan.markCompleted(STARTS))).toBe('DATE_INVALID_TRANSITION');
+  });
+});

@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { GetFeedbackDetail, ListAppearanceFlags } from '../application/feedback-admin.js';
 import { GetMyFeedback, SubmitFeedback } from '../application/submit-feedback.js';
 import type { FeedbackAnswers } from '../domain/date-feedback.js';
-import { DatePlan } from '../domain/date-plan.js';
+import { DatePlan, type DatePlanId } from '../domain/date-plan.js';
 import { InMemoryDatePlanRepository, PassThroughUnitOfWork } from './dating-fakes.js';
 import { InMemoryFeedbackRepository, RecordingAuditLogger } from './feedback-fakes.js';
 
@@ -87,6 +87,29 @@ describe('SubmitFeedback / GetMyFeedback (BE-S7-03)', () => {
       { matchId, datePlanId: planId, participantIds: [a, b], outcome: 'SUCCESS' },
     ]);
     expect(feedbacks.lockedMatches).toEqual([matchId, matchId]);
+  });
+
+  it('đánh giá đầu tiên → lịch chuyển COMPLETED có event DateCompleted; đánh giá thứ hai không phát lại', async () => {
+    const first = await send(a, commit);
+    expect(first.isOk()).toBe(true);
+    const storedPlan = await datePlans.findById(TX, planId as DatePlanId);
+    expect(storedPlan?.status).toBe('COMPLETED');
+    const completedEvents = datePlans.events.filter((e) => e.type === 'DateCompleted');
+    expect(completedEvents).toHaveLength(1);
+    expect(completedEvents[0]?.payload).toMatchObject({
+      datePlanId: planId,
+      matchId,
+      inviterId: a,
+      inviteeId: b,
+      completedAt: clock.now().toISOString(),
+    });
+
+    const second = await send(b, commit);
+    expect(second.isOk()).toBe(true);
+    const storedAfterSecond = await datePlans.findById(TX, planId as DatePlanId);
+    expect(storedAfterSecond?.status).toBe('COMPLETED');
+    const completedEventsAfter = datePlans.events.filter((e) => e.type === 'DateCompleted');
+    expect(completedEventsAfter).toHaveLength(1);
   });
 
   it('AC2: một bên B_STOP → FeedbackSubmitted{STOPPED} ngay; người kia vẫn gửi được, không phát lại', async () => {
