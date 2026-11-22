@@ -96,7 +96,7 @@ nhận hồ sơ → duyệt → app user chuyển "đã duyệt", voucher có h�
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| mobile | presentation | P0 | 1d | FE-S3-02 | FE-S3-03, FE-S3-08 | TODO |
+| mobile | presentation | P0 | 1d | FE-S3-02 | FE-S3-03, FE-S3-08 | DONE |
 
 **Mục tiêu:** Màn `h_s_ang_th_m_nh_h_ng_ch_1_1`.
 
@@ -106,7 +106,7 @@ nhận hồ sơ → duyệt → app user chuyển "đã duyệt", voucher có h�
 - Ngoài: QR voucher (FE-S5-02).
 
 **Tiêu chí nghiệm thu**
-- [ ] AC1: Push "đã duyệt" khi đang mở màn → màn tự cập nhật.
+- [x] AC1: Push "đã duyệt" khi đang mở màn → màn tự cập nhật.
 
 **Test bắt buộc:** Render theo từng trạng thái KYC/payment.
 

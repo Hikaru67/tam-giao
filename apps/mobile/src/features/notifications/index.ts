@@ -4,3 +4,4 @@ export * from './router.js';
 export * from './use-notification-settings.js';
 export * from './notification-settings-screen.js';
 export * from './push-registrar.js';
+export * from './use-foreground-notification.js';
