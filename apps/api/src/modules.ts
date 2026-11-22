@@ -216,6 +216,9 @@ export function buildModules({ config, uow, clock, scheduler, logger }: ModuleDe
     requireUser: userGuard,
     matching: matching.facade,
     partners: billing.partnerFacade,
+    // BE-S7-03: hàng chờ cờ "khác biệt eKYC" + xem đánh giá kín (audit).
+    requireAdmin: identity.requireAdmin,
+    auditLogger: identity.auditLogger,
   });
 
   return [identity, uploadModule, profile, verification, billing, matching, messaging, safety, notification, dating];

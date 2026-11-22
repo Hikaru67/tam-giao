@@ -66,7 +66,7 @@ hoặc `CLOSED_STOPPED` + cooldown; thông báo đẩy/SMS cho các mốc quan t
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| dating, matching | domain, application, infrastructure, presentation | P0 | 1.5d | BE-S7-01 | BE-S7-02 | TODO |
+| dating, matching | domain, application, infrastructure, presentation | P0 | 1.5d | BE-S7-01 | BE-S7-02 | IN_REVIEW |
 
 **Mục tiêu:** Phục vụ màn "Đánh giá sau Gặp mặt & Quyết định Hẹn hò".
 
@@ -75,9 +75,9 @@ hoặc `CLOSED_STOPPED` + cooldown; thông báo đẩy/SMS cho các mốc quan t
 - Ngoài: —
 
 **Tiêu chí nghiệm thu**
-- [ ] AC1: Cả hai chọn A → `CLOSED_SUCCESS`, slot giải phóng, không cooldown.
-- [ ] AC2: Một bên chọn B → `CLOSED_STOPPED` ngay, cả hai cooldown 7 ngày.
-- [ ] AC3: API của đối phương không trả bất kỳ trường feedback nào.
+- [x] AC1: Cả hai chọn A → `CLOSED_SUCCESS`, slot giải phóng, không cooldown.
+- [x] AC2: Một bên chọn B → `CLOSED_STOPPED` ngay, cả hai cooldown 7 ngày.
+- [x] AC3: API của đối phương không trả bất kỳ trường feedback nào.
 
 **Test bắt buộc:** Integration chuỗi event; HTTP kiểm tra rò rỉ dữ liệu.
 

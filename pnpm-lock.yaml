@@ -555,6 +555,9 @@ importers:
       '@tamgiao/module-billing':
         specifier: workspace:*
         version: link:../billing
+      '@tamgiao/module-identity':
+        specifier: workspace:*
+        version: link:../identity
       '@tamgiao/module-matching':
         specifier: workspace:*
         version: link:../matching

@@ -52,3 +52,48 @@ export const datePlans = dating.table(
     index('date_plans_match_idx').on(t.matchId, t.proposedAt),
   ],
 );
+
+/** Tên constraint — repository map vi phạm unique (23505) sang `FEEDBACK_ALREADY_SUBMITTED`. */
+export const FEEDBACKS_MATCH_AUTHOR_UNIQUE = 'feedbacks_match_author_uq';
+
+/**
+ * Bảng đánh giá kín BE-S7-03, chỉ chuyên viên đọc, stop_note là PII không log.
+ * `match_id`, `date_plan_id`, `author_id`, `subject_id` chỉ là tham chiếu sang module khác hoặc bảng khác — không khai FK (A3).
+ * Mỗi người tối đa một đánh giá / match (unique index `feedbacks_match_author_uq`, A10).
+ */
+export const feedbacks = dating.table(
+  'feedbacks',
+  {
+    id: uuid('id').primaryKey(),
+    matchId: uuid('match_id').notNull(),
+    datePlanId: uuid('date_plan_id').notNull(),
+    authorId: uuid('author_id').notNull(),
+    subjectId: uuid('subject_id').notNull(),
+    rating: integer('rating').notNull(),
+    profileMatch: text('profile_match').notNull(),
+    feeling: text('feeling').notNull(),
+    decision: text('decision').notNull(),
+    stopReasons: text('stop_reasons')
+      .array()
+      .notNull()
+      .default(sql`'{}'::text[]`),
+    stopNote: text('stop_note'),
+    submittedAt: timestamptz('submitted_at').notNull(),
+  },
+  (t) => [
+    uniqueIndex(FEEDBACKS_MATCH_AUTHOR_UNIQUE).on(t.matchId, t.authorId),
+    check('feedbacks_distinct_users_ck', sql`${t.authorId} <> ${t.subjectId}`),
+    check('feedbacks_rating_ck', sql`${t.rating} between 1 and 5`),
+    check('feedbacks_profile_match_ck', sql`${t.profileMatch} in ('FULL_MATCH', 'MOSTLY_MATCH', 'DIFFERENT')`),
+    check('feedbacks_feeling_ck', sql`${t.feeling} in ('DEEP_INTEREST', 'NEED_MORE_TIME', 'NOT_A_FIT')`),
+    check('feedbacks_decision_ck', sql`${t.decision} in ('A_COMMIT', 'B_STOP')`),
+    check(
+      'feedbacks_stop_details_ck',
+      sql`(${t.decision} = 'B_STOP') or (cardinality(${t.stopReasons}) = 0 and ${t.stopNote} is null)`,
+    ),
+    index('feedbacks_appearance_flag_idx')
+      .on(t.submittedAt, t.id)
+      .where(sql`${t.profileMatch} = 'DIFFERENT'`),
+  ],
+);
+

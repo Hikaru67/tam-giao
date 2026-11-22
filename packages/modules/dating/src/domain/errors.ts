@@ -25,3 +25,11 @@ export const DATING_REUSED_ERRORS = [
   'NOT_FOUND',
   'INVALID_ID',
 ] as const;
+
+/** Mã lỗi đánh giá kín sau gặp (BE-S7-03), đăng ký ở `@tamgiao/contracts` (`DATING_FEEDBACK_ERROR_CODES`). */
+export const DATING_FEEDBACK_ERRORS = [
+  'FEEDBACK_INVALID',
+  'FEEDBACK_NOT_ALLOWED',
+  'FEEDBACK_ALREADY_SUBMITTED',
+  'FEEDBACK_NOT_FOUND',
+] as const;

@@ -7,10 +7,12 @@ import {
   DATE_PROPOSED,
   errorRegistry,
 } from '@tamgiao/contracts';
+import * as contracts from '@tamgiao/contracts';
 import { describe, expect, it } from 'vitest';
+import * as domain from '../domain/date-feedback.js';
 import { DATE_PLAN_STATUSES } from '../domain/date-plan.js';
 import { DATING_EVENT_TYPES } from '../domain/date-plan-events.js';
-import { DATING_DOMAIN_ERRORS, DATING_REUSED_ERRORS } from '../domain/errors.js';
+import { DATING_DOMAIN_ERRORS, DATING_FEEDBACK_ERRORS, DATING_REUSED_ERRORS } from '../domain/errors.js';
 
 describe('mã lỗi dating', () => {
   it.each(DATING_DOMAIN_ERRORS)('%s đã đăng ký trong contracts bởi dating', (code) => {
@@ -49,5 +51,30 @@ describe('tên event / trạng thái dating khớp contracts', () => {
 
   it('trạng thái lịch hẹn', () => {
     expect([...DATE_PLAN_STATUSES]).toEqual([...DATE_PLAN_STATUS_NAMES]);
+  });
+});
+
+describe('đánh giá sau gặp (BE-S7-03) khớp contracts', () => {
+  it('mã lỗi feedback đăng ký bởi dating với đúng HTTP status', () => {
+    expect(DATING_FEEDBACK_ERRORS.map((c) => [c, errorRegistry.get(c)?.owner, errorRegistry.statusOf(c)])).toEqual([
+      ['FEEDBACK_INVALID', 'dating', 422],
+      ['FEEDBACK_NOT_ALLOWED', 'dating', 409],
+      ['FEEDBACK_ALREADY_SUBMITTED', 'dating', 409],
+      ['FEEDBACK_NOT_FOUND', 'dating', 404],
+    ]);
+  });
+
+  it('tên event, enum câu trả lời và giới hạn trùng với contracts', () => {
+    expect(domain.FEEDBACK_SUBMITTED).toBe(contracts.FEEDBACK_SUBMITTED);
+    expect([...domain.FEEDBACK_PROFILE_MATCHES]).toEqual([...contracts.FEEDBACK_PROFILE_MATCH_NAMES]);
+    expect([...domain.FEEDBACK_FEELINGS]).toEqual([...contracts.FEEDBACK_FEELING_NAMES]);
+    expect([...domain.FEEDBACK_DECISIONS]).toEqual([...contracts.FEEDBACK_DECISION_NAMES]);
+    expect([...domain.FEEDBACK_STOP_REASONS]).toEqual([...contracts.FEEDBACK_STOP_REASON_NAMES]);
+    expect([domain.FEEDBACK_RATING_MIN, domain.FEEDBACK_RATING_MAX, domain.FEEDBACK_NOTE_MAX_LENGTH]).toEqual([
+      contracts.FEEDBACK_RATING_MIN,
+      contracts.FEEDBACK_RATING_MAX,
+      contracts.FEEDBACK_NOTE_MAX_LENGTH,
+    ]);
+    expect(contracts.FEEDBACK_OUTCOME_NAMES).toEqual(['SUCCESS', 'STOPPED']);
   });
 });

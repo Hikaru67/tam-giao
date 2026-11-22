@@ -18,6 +18,8 @@ import { registerCandidateProfileConsumers } from './infrastructure/candidate-pr
 import { registerReportFiledConsumer } from './infrastructure/report-filed-consumer.js';
 import { registerUserBannedConsumer } from './infrastructure/user-banned-consumer.js';
 import { LockMatch } from './application/responses/lock-match.js';
+import { CloseMatch } from './application/use-cases/close-match.js';
+import { registerFeedbackSubmittedConsumer } from './infrastructure/feedback-submitted-consumer.js';
 import type { MatchingFacade } from './application/facade.js';
 import { MatchPairLookup } from './application/match-pair-lookup.js';
 import { DrizzleCandidateFinder } from './infrastructure/drizzle-candidate-finder.js';
@@ -97,8 +99,30 @@ export function createMatchingWorker(deps: MatchingWorkerDeps): MatchingWorker {
         matches: new DrizzleMatchRepository(new OutboxWriter()),
         lockMatch,
       });
+      // BE-S7-03: FeedbackSubmitted (dating) → CLOSED_SUCCESS / CLOSED_STOPPED (+ cooldown).
+      registerFeedbackSubmittedConsumer(bus, createCloseMatch(deps));
     },
   };
+}
+
+// ── Đóng match theo đánh giá sau gặp (BE-S7-03) ─────────────────────────────────────────────────────────
+export { MATCH_CLOSE_ON_FEEDBACK_SUBMITTED_CONSUMER } from './infrastructure/feedback-submitted-consumer.js';
+export type {
+  CloseMatch,
+  CloseMatchCommand,
+  CloseMatchOutcome,
+} from './application/use-cases/close-match.js';
+
+/** Use case đóng match theo `FeedbackSubmitted` (BE-S7-03) — consumer gọi `executeIn(tx, …)`. */
+export function createCloseMatch(deps: { readonly clock: Clock; readonly scheduler: Scheduler }): CloseMatch {
+  return new CloseMatch({
+    clock: deps.clock,
+    scheduler: deps.scheduler,
+    matches: new DrizzleMatchRepository(new OutboxWriter()),
+    activeSlots: new DrizzleActiveSlotRepository(),
+    pairHistory: new DrizzlePairHistoryRepository(),
+    cooldowns: new DrizzleCooldownRepository(),
+  });
 }
 
 // ── Khoá match khi có báo cáo vi phạm + facade cho safety (BE-S6-05) ───────────────────────────────────

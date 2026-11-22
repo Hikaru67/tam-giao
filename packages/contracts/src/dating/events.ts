@@ -61,3 +61,23 @@ export interface DateCancelledPayload extends DatePlanEventBase {
   readonly cancelledBy: string;
   readonly startsAt: string;
 }
+
+// ── Đánh giá kín sau gặp (BE-S7-03) ──────────────────────────────────────────────────────────────────────
+
+/** Kết quả quyết định của cặp sau buổi gặp (khớp `MatchCloseOutcome` của matching). */
+export const FEEDBACK_OUTCOME_NAMES = ['SUCCESS', 'STOPPED'] as const;
+export type FeedbackOutcomeName = (typeof FEEDBACK_OUTCOME_NAMES)[number];
+
+/**
+ * Quyết định của cặp đã chốt: cả hai gửi đánh giá chọn `A_COMMIT` → `SUCCESS`; có người chọn `B_STOP` → `STOPPED`
+ * (phát ngay khi người đó gửi, không chờ người còn lại). Mỗi match phát **tối đa một lần**. Matching đóng match
+ * (`CLOSED_SUCCESS` / `CLOSED_STOPPED` + cooldown). Payload **không** chứa nội dung đánh giá (sao, cảm xúc, lý do) và
+ * không cho biết ai chọn dừng.
+ */
+export const FEEDBACK_SUBMITTED = 'FeedbackSubmitted';
+export interface FeedbackSubmittedPayload {
+  readonly matchId: string;
+  readonly datePlanId: string;
+  readonly participantIds: readonly [string, string];
+  readonly outcome: FeedbackOutcomeName;
+}
