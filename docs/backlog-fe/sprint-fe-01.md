@@ -72,7 +72,7 @@ CI kiểm tra FE. Chưa có màn nghiệp vụ.
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| packages/api-client | infrastructure | P0 | 2d | FE-S1-01 | FE-S1-02, FE-S1-05 | TODO |
+| packages/api-client | infrastructure | P0 | 2d | FE-S1-01 | FE-S1-02, FE-S1-05 | DONE |
 
 **Mục tiêu:** Mọi app gọi BE qua một client có kiểu, parse bằng Zod của contracts, xử lý lỗi và phiên thống nhất (luật F1).
 
