@@ -18,7 +18,9 @@ export function createFakeFetch(
     const urlStr = typeof input === 'string' ? input : input.toString();
     const result = handler(urlStr, init);
     const status = result.status ?? 200;
-    const bodyStr = result.body !== undefined ? JSON.stringify(result.body) : '';
+    // Status 204/205/304 không được có body (Node ném TypeError) → body null; không có body cũng null.
+    const nullBodyStatus = status === 204 || status === 205 || status === 304;
+    const bodyStr = nullBodyStatus || result.body === undefined ? null : JSON.stringify(result.body);
 
     return new Response(bodyStr, {
       status,

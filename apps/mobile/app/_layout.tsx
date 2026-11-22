@@ -14,6 +14,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { apiClient, tokenStore } from '../src/session/api';
+import { SessionGate } from '../src/features/session/session-gate';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -43,10 +44,15 @@ export default function RootLayout() {
       <ApiClientProvider client={apiClient}>
         <TokenStoreProvider store={tokenStore}>
           <ToastProvider>
-            <Stack screenOptions={{ headerShown: false }}>
-              <Stack.Screen name="index" />
-              <Stack.Screen name="(auth)" />
-            </Stack>
+            <SessionGate>
+              <Stack screenOptions={{ headerShown: false }}>
+                <Stack.Screen name="index" />
+                <Stack.Screen name="(auth)" />
+                <Stack.Screen name="(onboarding)" />
+                <Stack.Screen name="(verification)" />
+                <Stack.Screen name="(main)" />
+              </Stack>
+            </SessionGate>
           </ToastProvider>
         </TokenStoreProvider>
       </ApiClientProvider>

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { OTP_TTL_SECONDS } from '@tamgiao/contracts/constants';
 import { formatVnPhoneDisplay } from '@tamgiao/ui-core';
 import { Button, OtpInput, Text } from '@tamgiao/ui-mobile';
+import { useQueryClient } from '@tanstack/react-query';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, View } from 'react-native';
 import { AUTH_COPY } from './copy.js';
@@ -22,6 +23,7 @@ export function maskPhoneForDisplay(phone: string): string {
 
 export function OtpScreen() {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const params = useLocalSearchParams<{ phone?: string; resendAfter?: string }>();
   const phone = params.phone ?? '';
   const initialResendAfter = Number(params.resendAfter) || OTP_TTL_SECONDS;
@@ -48,6 +50,7 @@ export function OtpScreen() {
 
     try {
       await verifyOtp.mutateAsync({ phone, code: otpCode });
+      await queryClient.invalidateQueries({ queryKey: ['me'] });
       router.replace('/');
     } catch (err) {
       const view = otpErrorView(err);

@@ -43,7 +43,7 @@ tài khoản và quyền dữ liệu.
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| mobile | presentation | P0 | 1d | FE-S2-01 | — | TODO |
+| mobile | presentation | P0 | 1d | FE-S2-01 | — | DONE |
 
 **Mục tiêu:** Mở app là vào đúng màn theo tiến độ (`GET /me`): hồ sơ → tiêu chí → thanh toán → eKYC → chờ duyệt → ghép.
 
