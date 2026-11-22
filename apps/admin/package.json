@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@tamgiao/contracts": "workspace:*",
+    "@tamgiao/ui-tokens": "workspace:*",
     "@tanstack/react-query": "5.107.1",
     "@tanstack/react-router": "1.170.46",
     "react": "19.3.0",

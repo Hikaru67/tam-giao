@@ -44,7 +44,7 @@ CI kiểm tra FE. Chưa có màn nghiệp vụ.
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| packages/ui-tokens | presentation | P0 | 1d | FE-S1-01 | FE-S1-03, FE-S1-05 | TODO |
+| packages/ui-tokens | presentation | P0 | 1d | FE-S1-01 | FE-S1-03, FE-S1-05 | DONE |
 
 **Mục tiêu:** Một nguồn token (màu, chữ, bo góc, khoảng cách) cho cả mobile và web, khớp thiết kế Stitch.
 

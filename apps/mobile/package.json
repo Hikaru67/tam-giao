@@ -10,7 +10,9 @@
     "test:native": "jest"
   },
   "dependencies": {
+    "@expo-google-fonts/be-vietnam-pro": "0.4.1",
     "@tamgiao/contracts": "workspace:*",
+    "@tamgiao/ui-tokens": "workspace:*",
     "@tanstack/react-query": "5.107.1",
     "expo": "58.0.26",
     "expo-constants": "58.0.16",
