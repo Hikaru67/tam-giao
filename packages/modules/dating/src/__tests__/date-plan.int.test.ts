@@ -6,7 +6,14 @@ import {
   problemSchema,
 } from '@tamgiao/contracts';
 import { DATE_RESPONSE_TTL_HOURS, VOUCHER_TTL_DAYS } from '@tamgiao/contracts/constants';
-import { createDatabase, deliverOnce, DrizzleUnitOfWork, EventBus, type Database } from '@tamgiao/db';
+import {
+  createDatabase,
+  deliverOnce,
+  DrizzleUnitOfWork,
+  EventBus,
+  LocalKeyEncryptor,
+  type Database,
+} from '@tamgiao/db';
 import { handleError, handleNotFound, requestContext, type AppEnv } from '@tamgiao/http';
 import { addDuration, FakeClock, newId, type DomainEvent } from '@tamgiao/kernel';
 import {
@@ -56,7 +63,8 @@ beforeAll(() => {
     c.set('auth', { userId, sessionId: newId() });
     return next();
   });
-  const module = createDatingModule({ uow, clock, scheduler, requireUser, matching, partners });
+  const encryptor = new LocalKeyEncryptor({ currentVersion: 1, keys: new Map([[1, Buffer.alloc(32, 7)]]) });
+  const module = createDatingModule({ uow, clock, scheduler, encryptor, requireUser, matching, partners });
   const logger = createLogger({ service: 'api', level: 'silent', destination: { write: () => undefined } });
   app = new Hono<AppEnv>();
   app.use('*', requestContext(logger));

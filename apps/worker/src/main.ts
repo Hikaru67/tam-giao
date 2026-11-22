@@ -20,7 +20,7 @@ import {
   createVoucherExpiryJob,
   FakePaymentGateway,
 } from '@tamgiao/module-billing';
-import { createExpireDatePlanJob } from '@tamgiao/module-dating';
+import { createDatingWorker, createExpireDatePlanJob } from '@tamgiao/module-dating';
 import { ConsoleSmsSender, createIdentityModule, createIdentityWorker } from '@tamgiao/module-identity';
 import { createExpireMatchJob, createMatchingWorker } from '@tamgiao/module-matching';
 import { createMessagingWorker } from '@tamgiao/module-messaging';
@@ -30,6 +30,7 @@ import { createKycMediaRetention } from '@tamgiao/module-verification';
 import { PgBoss } from 'pg-boss';
 import { loadWorkerConfig } from './config.js';
 import { registerBillingRefundJobs } from './jobs/billing-refund.js';
+import { registerCheckInLocationPurgeJob, registerCheckInOverdueJob } from './jobs/date-check-in.js';
 import { registerDatePlanExpiryJob } from './jobs/date-plan-expiry.js';
 import { registerKycMediaRetentionJob } from './jobs/kyc-media-retention.js';
 import { registerLedgerReconciliationJob } from './jobs/ledger-reconciliation.js';
@@ -46,6 +47,10 @@ const config = loadWorkerConfig();
 const logger = createLogger({ service: 'worker', level: config.logLevel });
 const database = createDatabase(config.database.url);
 const uow = new DrizzleUnitOfWork(database.pool);
+const clock = new SystemClock();
+const encryptor = new LocalKeyEncryptor(
+  parseMasterKeyRing(config.crypto.masterKeys, config.crypto.masterKeyVersion),
+);
 
 const boss = new PgBoss({ connectionString: config.database.url });
 boss.on('error', (error) => logger.error({ err: error }, 'pg-boss error'));
@@ -95,19 +100,26 @@ const notificationWorker = createNotificationWorker({
 });
 notificationWorker.registerConsumers(bus);
 await registerNotificationSendJob({ boss, logger, sender: notificationWorker.sendNotification });
+
+// Dating (BE-S7-02): consumer VoucherRedeemed → check-in an toàn nguồn VOUCHER cho lịch hẹn đang diễn ra.
+const datingWorker = createDatingWorker({
+  uow,
+  clock,
+  scheduler: new PgBossScheduler(boss),
+  encryptor,
+});
+datingWorker.registerConsumers(bus);
+
 await registerConsumers({ boss, uow, bus, logger });
 for (const job of jobs) {
   await registerJob({ boss, uow, logger, ...job });
 }
 
 // Job xoá ảnh eKYC hết thời hạn lưu (BE-S3-06): storage S3 + audit log của identity.
-const clock = new SystemClock();
 const identity = createIdentityModule({
   uow,
   clock,
-  encryptor: new LocalKeyEncryptor(
-    parseMasterKeyRing(config.crypto.masterKeys, config.crypto.masterKeyVersion),
-  ),
+  encryptor,
   blindIndexer: new HmacBlindIndexer(config.crypto.blindIndexKey),
   // Worker không gửi OTP; identity chỉ dùng để lấy `auditLogger`.
   smsSender: new ConsoleSmsSender(),
@@ -154,6 +166,20 @@ await registerDatePlanExpiryJob({
   uow,
   logger,
   expirer: createExpireDatePlanJob({ uow, clock }),
+});
+
+// Check-in an toàn (BE-S7-02): job cảnh báo quá hạn check-out + job dọn dẹp vị trí thô hết hạn lưu.
+await registerCheckInOverdueJob({
+  boss,
+  uow,
+  logger,
+  marker: datingWorker.markCheckInOverdue,
+});
+await registerCheckInLocationPurgeJob({
+  boss,
+  uow,
+  logger,
+  purger: datingWorker.purgeCheckInLocations,
 });
 
 const relay = new OutboxRelay({ uow, boss, bus, logger });

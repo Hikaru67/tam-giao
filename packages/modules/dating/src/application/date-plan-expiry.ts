@@ -1,11 +1,16 @@
 import type { ScheduledJob } from '@tamgiao/kernel';
 import type { DatePlan } from '../domain/date-plan.js';
+import { CHECK_IN_LOCATION_PURGE_QUEUE, CHECK_IN_OVERDUE_QUEUE } from './check-in-jobs.js';
 
 /** Hàng đợi job hết hạn xác nhận lịch hẹn (pg-boss). Worker đăng ký handler `ExpireDatePlan` (BE-S7-01). */
 export const DATE_PLAN_EXPIRY_QUEUE = 'dating.expire-date-plan';
 
 /** Hàng đợi API gửi job vào — tạo sẵn khi API khởi động (`startApiJobScheduler`). */
-export const DATING_SCHEDULED_QUEUES: readonly string[] = [DATE_PLAN_EXPIRY_QUEUE];
+export const DATING_SCHEDULED_QUEUES: readonly string[] = [
+  DATE_PLAN_EXPIRY_QUEUE,
+  CHECK_IN_OVERDUE_QUEUE,
+  CHECK_IN_LOCATION_PURGE_QUEUE,
+];
 
 /** Payload job — chỉ id, không PII. Khai báo `type` để gán được vào `ScheduledJob.payload`. */
 export type DatePlanExpiryPayload = {

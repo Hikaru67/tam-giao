@@ -7,6 +7,12 @@ export const DATE_CONFIRMED = 'DateConfirmed';
 export const DATE_DECLINED = 'DateDeclined';
 export const DATE_EXPIRED = 'DateExpired';
 export const DATE_CANCELLED = 'DateCancelled';
+/** BE-S7-02: lịch `CONFIRMED → CHECKED_IN` khi người đầu tiên check-in. */
+export const DATE_CHECKED_IN = 'DateCheckedIn';
+/** BE-S7-02: event của aggregate `SafetyCheckIn` (mỗi người một bản ghi check-in / lịch). */
+export const DATE_PARTICIPANT_CHECKED_IN = 'DateParticipantCheckedIn';
+export const DATE_PARTICIPANT_CHECKED_OUT = 'DateParticipantCheckedOut';
+export const DATE_CHECK_IN_OVERDUE = 'DateCheckInOverdue';
 
 export const DATING_EVENT_TYPES = [
   DATE_PROPOSED,
@@ -14,4 +20,8 @@ export const DATING_EVENT_TYPES = [
   DATE_DECLINED,
   DATE_EXPIRED,
   DATE_CANCELLED,
+  DATE_CHECKED_IN,
+  DATE_PARTICIPANT_CHECKED_IN,
+  DATE_PARTICIPANT_CHECKED_OUT,
+  DATE_CHECK_IN_OVERDUE,
 ] as const;

@@ -11,7 +11,18 @@ import {
 import type { BillingPartnerFacade } from '@tamgiao/module-billing/facade';
 import type { MatchingFacade, MatchPairStatus, OpenMatchSummary } from '@tamgiao/module-matching/facade';
 import type { DatePlanRepository, DatePlanSaveError } from '../application/ports/date-plan-repository.js';
+import type {
+  CheckInLocationStore,
+  SafetyCheckInRepository,
+} from '../application/ports/safety-check-in-repository.js';
 import { DatePlan, type DatePlanId, type DatePlanState } from '../domain/date-plan.js';
+import type { GeoPoint } from '../domain/geo-point.js';
+import {
+  SafetyCheckIn,
+  type AlreadyCheckedIn,
+  type SafetyCheckInId,
+  type SafetyCheckInState,
+} from '../domain/safety-check-in.js';
 
 /** UnitOfWork giả: chạy thẳng `work` (fake repository không có transaction thật). */
 export class PassThroughUnitOfWork implements UnitOfWork {
@@ -76,8 +87,94 @@ export class InMemoryDatePlanRepository implements DatePlanRepository {
     return s ? DatePlan.restore(s) : null;
   }
 
+  async findForVoucherCheckInForUpdate(
+    _tx: Tx,
+    input: { userId: string; partnerId: string; at: Date },
+  ): Promise<DatePlan | null> {
+    const userId = input.userId.toLowerCase();
+    const s = [...this.states.values()]
+      .filter(
+        (x) =>
+          (x.inviterId === userId || x.inviteeId === userId) &&
+          x.partnerId === input.partnerId.toLowerCase() &&
+          (x.status === 'CONFIRMED' || x.status === 'CHECKED_IN') &&
+          x.startsAt.getTime() <= input.at.getTime() &&
+          x.endsAt.getTime() >= input.at.getTime(),
+      )
+      .sort((a, b) => b.startsAt.getTime() - a.startsAt.getTime())[0];
+    return s ? DatePlan.restore(s) : null;
+  }
+
   eventTypes(): string[] {
     return this.events.map((e) => e.type);
+  }
+}
+
+/** Fake in-memory của `SafetyCheckInRepository` (unique (lịch, người) + version lạc quan như adapter Drizzle). */
+export class InMemorySafetyCheckInRepository implements SafetyCheckInRepository {
+  readonly states = new Map<string, SafetyCheckInState>();
+  readonly events: DomainEvent[] = [];
+
+  async save(_tx: Tx, checkIn: SafetyCheckIn): Promise<Result<void, AlreadyCheckedIn>> {
+    const pending = checkIn.pullEvents();
+    if (pending.length === 0) return ok();
+    const state = checkIn.toState();
+    const previous = state.version - pending.length;
+    if (previous === 0) {
+      const clash = [...this.states.values()].some(
+        (s) => s.datePlanId === state.datePlanId && s.userId === state.userId,
+      );
+      if (clash) return fail('DATE_ALREADY_CHECKED_IN', { datePlanId: state.datePlanId });
+    } else if (this.states.get(checkIn.id)?.version !== previous) {
+      throw new Error('version conflict');
+    }
+    this.states.set(checkIn.id, state);
+    this.events.push(...pending);
+    return ok();
+  }
+
+  async findByPlanAndUser(_tx: Tx, datePlanId: DatePlanId, userId: string): Promise<SafetyCheckIn | null> {
+    const id = userId.toLowerCase();
+    const s = [...this.states.values()].find((x) => x.datePlanId === datePlanId && x.userId === id);
+    return s ? SafetyCheckIn.restore(s) : null;
+  }
+
+  findByPlanAndUserForUpdate(tx: Tx, datePlanId: DatePlanId, userId: string): Promise<SafetyCheckIn | null> {
+    return this.findByPlanAndUser(tx, datePlanId, userId);
+  }
+
+  async findByIdForUpdate(_tx: Tx, id: SafetyCheckInId): Promise<SafetyCheckIn | null> {
+    const s = this.states.get(id);
+    return s ? SafetyCheckIn.restore(s) : null;
+  }
+
+  eventTypes(): string[] {
+    return this.events.map((e) => e.type);
+  }
+}
+
+/** Fake `CheckInLocationStore`: giữ vị trí trong bộ nhớ (test không cần mã hoá). */
+export class InMemoryCheckInLocationStore implements CheckInLocationStore {
+  readonly rows = new Map<string, { location: GeoPoint; recordedAt: Date; purgeAfter: Date }>();
+
+  async record(
+    _tx: Tx,
+    input: { checkInId: SafetyCheckInId; location: GeoPoint; recordedAt: Date; purgeAfter: Date },
+  ): Promise<void> {
+    if (this.rows.has(input.checkInId)) throw new Error('duplicate location');
+    const { location, recordedAt, purgeAfter } = input;
+    this.rows.set(input.checkInId, { location, recordedAt, purgeAfter });
+  }
+
+  async purgeExpired(_tx: Tx, now: Date): Promise<number> {
+    let purged = 0;
+    for (const [id, row] of this.rows) {
+      if (row.purgeAfter.getTime() <= now.getTime()) {
+        this.rows.delete(id);
+        purged += 1;
+      }
+    }
+    return purged;
   }
 }
 

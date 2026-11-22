@@ -1,14 +1,19 @@
 import {
+  CHECK_IN_SOURCE_NAMES,
   DATE_CANCELLED,
+  DATE_CHECK_IN_OVERDUE,
+  DATE_CHECKED_IN,
   DATE_CONFIRMED,
   DATE_DECLINED,
   DATE_EXPIRED,
+  DATE_PARTICIPANT_CHECKED_IN,
+  DATE_PARTICIPANT_CHECKED_OUT,
   DATE_PLAN_STATUS_NAMES,
   DATE_PROPOSED,
   errorRegistry,
 } from '@tamgiao/contracts';
 import { describe, expect, it } from 'vitest';
-import { DATE_PLAN_STATUSES } from '../domain/date-plan.js';
+import { CHECK_IN_SOURCES, DATE_PLAN_STATUSES } from '../domain/date-plan.js';
 import { DATING_EVENT_TYPES } from '../domain/date-plan-events.js';
 import { DATING_DOMAIN_ERRORS, DATING_REUSED_ERRORS } from '../domain/errors.js';
 
@@ -26,11 +31,15 @@ describe('mã lỗi dating', () => {
       ['DATE_NOT_INVITEE', 'dating', 403],
       ['DATE_RESPONSE_EXPIRED', 'dating', 409],
       ['DATE_INVALID_TRANSITION', 'dating', 409],
+      ['DATE_CHECK_IN_WINDOW_CLOSED', 'dating', 409],
+      ['DATE_ALREADY_CHECKED_IN', 'dating', 409],
+      ['DATE_NOT_CHECKED_IN', 'dating', 409],
       ['CANCEL_TOO_LATE', 'verification', 409],
       ['NOT_PARTICIPANT', 'matching', 403],
       ['PARTNER_NOT_FOUND', 'billing', 404],
       ['NOT_FOUND', 'common', 404],
       ['INVALID_ID', 'common', 400],
+      ['VALIDATION_FAILED', 'common', 422],
     ]);
   });
 });
@@ -44,7 +53,15 @@ describe('tên event / trạng thái dating khớp contracts', () => {
       DATE_DECLINED,
       DATE_EXPIRED,
       DATE_CANCELLED,
+      DATE_CHECKED_IN,
+      DATE_PARTICIPANT_CHECKED_IN,
+      DATE_PARTICIPANT_CHECKED_OUT,
+      DATE_CHECK_IN_OVERDUE,
     ]);
+  });
+
+  it('nguồn check-in', () => {
+    expect([...CHECK_IN_SOURCES]).toEqual([...CHECK_IN_SOURCE_NAMES]);
   });
 
   it('trạng thái lịch hẹn', () => {

@@ -209,10 +209,12 @@ export function buildModules({ config, uow, clock, scheduler, logger }: ModuleDe
 
   // Dating (Sprint 7): đặt lịch gặp tại quán đối tác (BE-S7-01) — match phải `DATING` (facade matching), quán đang
   // hoạt động (facade quán của billing). Hết hạn xác nhận chạy ở worker; voucher kích hoạt qua event `DateConfirmed`.
+  // Check-in an toàn (BE-S7-02): vị trí mã hoá qua `encryptor`.
   const dating = createDatingModule({
     uow,
     clock,
     scheduler,
+    encryptor,
     requireUser: userGuard,
     matching: matching.facade,
     partners: billing.partnerFacade,

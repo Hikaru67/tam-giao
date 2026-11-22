@@ -61,3 +61,60 @@ export interface DateCancelledPayload extends DatePlanEventBase {
   readonly cancelledBy: string;
   readonly startsAt: string;
 }
+
+/** Nguồn check-in an toàn (BE-S7-02): người dùng bật toggle / quán quét voucher (`VoucherRedeemed`). */
+export const CHECK_IN_SOURCE_NAMES = ['MANUAL', 'VOUCHER'] as const;
+export type CheckInSourceName = (typeof CHECK_IN_SOURCE_NAMES)[number];
+
+/**
+ * Người đầu tiên check-in → lịch `CONFIRMED → CHECKED_IN` (BE-S7-02). Phát một lần / lịch (người thứ hai check-in chỉ
+ * phát `DateParticipantCheckedIn`).
+ */
+export const DATE_CHECKED_IN = 'DateCheckedIn';
+export interface DateCheckedInPayload extends DatePlanEventBase {
+  readonly partnerId: string;
+  readonly startsAt: string;
+  readonly endsAt: string;
+  readonly checkedInBy: string;
+  readonly source: CheckInSourceName;
+}
+
+/** Trường chung của event check-in an toàn từng người (aggregate `SafetyCheckIn`, BE-S7-02). Không có vị trí. */
+export interface SafetyCheckInEventBase {
+  readonly checkInId: string;
+  readonly datePlanId: string;
+  readonly matchId: string;
+  readonly userId: string;
+}
+
+/**
+ * Một người check-in an toàn (BE-S7-02). `overdueAt` = giờ kết thúc + `CHECK_IN_OVERDUE_MINUTES`: quá mốc này chưa
+ * check-out → `DateCheckInOverdue`. `locationShared` = có gửi vị trí cho chuyên viên (vị trí không nằm trong event).
+ */
+export const DATE_PARTICIPANT_CHECKED_IN = 'DateParticipantCheckedIn';
+export interface DateParticipantCheckedInPayload extends SafetyCheckInEventBase {
+  readonly partnerId: string;
+  readonly source: CheckInSourceName;
+  readonly checkedInAt: string;
+  readonly overdueAt: string;
+  readonly locationShared: boolean;
+}
+
+/** Người đã check-in bấm check-out (BE-S7-02). `wasOverdue` = đã bị cảnh báo quá hạn trước đó (chuyên viên đóng cảnh báo). */
+export const DATE_PARTICIPANT_CHECKED_OUT = 'DateParticipantCheckedOut';
+export interface DateParticipantCheckedOutPayload extends SafetyCheckInEventBase {
+  readonly checkedOutAt: string;
+  readonly wasOverdue: boolean;
+}
+
+/**
+ * Cảnh báo chuyên viên (BE-S7-02): quá giờ kết thúc buổi hẹn + `CHECK_IN_OVERDUE_MINUTES` mà người đã check-in chưa
+ * check-out. Phát tối đa một lần / check-in (job idempotent).
+ */
+export const DATE_CHECK_IN_OVERDUE = 'DateCheckInOverdue';
+export interface DateCheckInOverduePayload extends SafetyCheckInEventBase {
+  readonly partnerId: string;
+  readonly checkedInAt: string;
+  readonly endsAt: string;
+  readonly overdueAt: string;
+}

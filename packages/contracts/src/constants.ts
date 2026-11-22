@@ -46,3 +46,7 @@ export const DATE_REMINDER_HOURS = 2;
 export const DATE_RESPONSE_TTL_HOURS = 24;
 /** Huỷ lịch hẹn đã xác nhận chỉ khi còn ít nhất ngần này giờ trước giờ bắt đầu (BE-S7-01). */
 export const DATE_CANCEL_CUTOFF_HOURS = 4;
+/** Quá giờ kết thúc buổi hẹn ngần này phút mà người đã check-in an toàn chưa check-out → cảnh báo chuyên viên (BE-S7-02). */
+export const CHECK_IN_OVERDUE_MINUTES = 60;
+/** Vị trí thô gửi kèm check-in an toàn bị xoá sau ngần này giờ kể từ lúc ghi nhận (BE-S7-02). */
+export const CHECK_IN_LOCATION_RETENTION_HOURS = 24;

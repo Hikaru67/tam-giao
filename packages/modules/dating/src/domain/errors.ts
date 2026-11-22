@@ -15,6 +15,10 @@ export const DATING_DOMAIN_ERRORS = [
   'DATE_NOT_INVITEE',
   'DATE_RESPONSE_EXPIRED',
   'DATE_INVALID_TRANSITION',
+  // BE-S7-02 — check-in an toàn
+  'DATE_CHECK_IN_WINDOW_CLOSED',
+  'DATE_ALREADY_CHECKED_IN',
+  'DATE_NOT_CHECKED_IN',
 ] as const;
 export type DatingDomainErrorCode = (typeof DATING_DOMAIN_ERRORS)[number];
 
@@ -24,4 +28,5 @@ export const DATING_REUSED_ERRORS = [
   'PARTNER_NOT_FOUND',
   'NOT_FOUND',
   'INVALID_ID',
+  'VALIDATION_FAILED',
 ] as const;

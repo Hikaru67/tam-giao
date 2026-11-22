@@ -105,6 +105,8 @@ Khai báo tại `packages/contracts/src/constants.ts`. Không hardcode ở chỗ
 | `DATE_REMINDER_HOURS` | 2 | Nhắc lịch hẹn trước giờ gặp (BE-S7-05) |
 | `DATE_RESPONSE_TTL_HOURS` | 24 | Người được mời xác nhận lịch hẹn, quá hạn → `EXPIRED` (BE-S7-01) |
 | `DATE_CANCEL_CUTOFF_HOURS` | 4 | Huỷ lịch hẹn đã xác nhận trước giờ bắt đầu ít nhất (BE-S7-01) |
+| `CHECK_IN_OVERDUE_MINUTES` | 60 | Quá giờ kết thúc hẹn chưa check-out → cảnh báo chuyên viên (BE-S7-02) |
+| `CHECK_IN_LOCATION_RETENTION_HOURS` | 24 | Xoá vị trí thô của check-in an toàn sau khi ghi nhận (BE-S7-02) |
 
 ## 7. Vùng sở hữu file (tránh xung đột khi nhiều subagent chạy song song)
 
