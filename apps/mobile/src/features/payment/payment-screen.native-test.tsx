@@ -349,4 +349,53 @@ describe('PaymentScreen (FE-S3-01)', () => {
 
     await screen.unmount();
   });
+
+  it('6. GET /me/payments trả SUCCEEDED → bấm payment-continue-kyc → mockPush được gọi với /(verification)/kyc', async () => {
+    const fakeFetch = createFakeFetch((url) => {
+      if (url === 'http://api.test/me/payments') {
+        return {
+          status: 200,
+          body: {
+            items: [
+              {
+                paymentId: '01952e46-953b-789a-b283-a9d701897d26',
+                orderId: 'ORD-SUCC-1',
+                status: 'SUCCEEDED',
+                amountVnd: 299000,
+                checkoutUrl: null,
+                qrData: null,
+                createdAt: '2026-11-22T00:00:00.000Z',
+                succeededAt: '2026-11-22T00:01:00.000Z',
+                failedAt: null,
+                refundedAt: null,
+              },
+            ],
+          },
+        };
+      }
+      return { status: 404 };
+    });
+
+    const client = createApiClient({
+      baseUrl: 'http://api.test',
+      tokenStore: createMemoryTokenStore(),
+      fetch: fakeFetch,
+    });
+    const queryClient = createTestQueryClient();
+
+    const screen = await renderWithProviders(<PaymentScreen />, { client, queryClient });
+
+    await waitFor(() => {
+      expect(screen.getByTestId('payment-continue-kyc')).toBeTruthy();
+    });
+
+    const continueBtn = screen.getByTestId('payment-continue-kyc');
+    await act(async () => {
+      await fireEvent.press(continueBtn);
+    });
+
+    expect(mockPush).toHaveBeenCalledWith('/(verification)/kyc');
+
+    await screen.unmount();
+  });
 });

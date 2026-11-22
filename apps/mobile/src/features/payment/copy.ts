@@ -35,6 +35,7 @@ export const PAYMENT_COPY = {
     retry: 'Thử thanh toán lại',
     resume: 'Tiếp tục thanh toán',
     checkAgain: 'Kiểm tra lại',
+    continueKyc: 'Tiếp tục nộp eKYC',
   },
   status: {
     polling: 'Đang kiểm tra giao dịch thanh toán...',

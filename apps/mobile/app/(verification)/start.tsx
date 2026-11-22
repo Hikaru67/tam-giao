@@ -1,5 +1,5 @@
-import { Redirect } from 'expo-router';
+import { VerificationStartScreen } from '../../src/features/kyc/index.js';
 
 export default function VerificationStartRoute() {
-  return <Redirect href="/(verification)/payment" />;
+  return <VerificationStartScreen />;
 }

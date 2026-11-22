@@ -190,9 +190,20 @@ export function PaymentScreen() {
                     : PAYMENT_COPY.status.succeeded}
               </Badge>
               {latest?.status === 'SUCCEEDED' ? (
-                <Text variant="body-sm" className="text-secondary text-center">
-                  {PAYMENT_COPY.status.nextStep}
-                </Text>
+                <>
+                  <Text variant="body-sm" className="text-secondary text-center">
+                    {PAYMENT_COPY.status.nextStep}
+                  </Text>
+                  <Button
+                    testID="payment-continue-kyc"
+                    variant="primary"
+                    size="lg"
+                    fullWidth
+                    onPress={() => router.push('/(verification)/kyc')}
+                  >
+                    {PAYMENT_COPY.cta.continueKyc}
+                  </Button>
+                </>
               ) : null}
             </Card>
           ) : null}

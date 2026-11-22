@@ -42,7 +42,7 @@ nhận hồ sơ → duyệt → app user chuyển "đã duyệt", voucher có h�
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| mobile | presentation | P0 | 2d | FE-S3-01 | FE-S3-06 | TODO |
+| mobile | presentation | P0 | 2d | FE-S3-01 | FE-S3-06 | DONE |
 
 **Mục tiêu:** Phần eKYC của màn `x_c_th_c_ekyc_…`.
 
