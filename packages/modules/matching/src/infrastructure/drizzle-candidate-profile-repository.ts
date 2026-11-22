@@ -23,6 +23,8 @@ export class DrizzleCandidateProfileRepository implements CandidateProfileReposi
       birthDate: p.birthDate,
       cityKey: p.cityKey,
       education: p.education,
+      ownReligion: p.religion,
+      ownChildrenPlan: p.childrenPlan,
       childrenPlan: c.childrenPlan,
       religion: c.religion,
       prefAgeMin: c.ageMin,

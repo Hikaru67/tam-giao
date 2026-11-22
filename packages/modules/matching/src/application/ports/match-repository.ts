@@ -17,4 +17,10 @@ export interface MatchRepository {
 
   /** Match đang mở (`OFFERED | AWAITING_RESPONSE | DATING | MET`) của người dùng, nếu có. */
   findOpenByUser(tx: Tx, userId: string): Promise<Match | null>;
+
+  /**
+   * Match gần nhất (theo `offered_at`, rồi `id`) giữa hai người, bất kể trạng thái và thứ tự `user_a`/`user_b`
+   * (BE-S6-05 — facade cho safety kiểm tra "đang/đã từng ghép"). Không có → `null`.
+   */
+  findLatestBetween(tx: Tx, userA: string, userB: string): Promise<Match | null>;
 }

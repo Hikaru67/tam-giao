@@ -9,7 +9,7 @@ import type {
   Religion,
   FINANCIAL_INDEPENDENCE,
 } from '../domain/preferences.js';
-import type { EducationLevel, Gender } from '../domain/profile.js';
+import type { EducationLevel, Gender, ProfileChildrenPlan, ProfileReligion } from '../domain/profile.js';
 
 /** Họ tên + ngày sinh (`YYYY-MM-DD`) người dùng đã khai. Chứa PII — nơi nhận không được log. */
 export interface ApplicantIdentity {
@@ -51,6 +51,12 @@ export interface MatchingProfile {
   readonly birthDate: string;
   readonly currentCity: string;
   readonly education: EducationLevel;
+  /**
+   * Tôn giáo / kế hoạch con cái **của chính người dùng** (BE-S6-07). `null` = hồ sơ hoàn tất trước BE-S6-07, chưa
+   * khai. Tôn giáo là dữ liệu nhạy cảm (NĐ 13) — nơi nhận không được log.
+   */
+  readonly religion: ProfileReligion | null;
+  readonly childrenPlan: ProfileChildrenPlan | null;
   readonly criteria: MatchingCriteria;
   readonly profileVersion: number;
   readonly preferencesVersion: number;

@@ -1,4 +1,10 @@
-import { KYC_APPROVED, KYC_REJECTED, PREFERENCES_UPDATED, PROFILE_COMPLETED } from '@tamgiao/contracts';
+import {
+  KYC_APPROVED,
+  KYC_REJECTED,
+  PREFERENCES_UPDATED,
+  PROFILE_COMPLETED,
+  PROFILE_UPDATED,
+} from '@tamgiao/contracts';
 import type { EventBus } from '@tamgiao/db';
 import type { DomainEvent, Tx } from '@tamgiao/kernel';
 import type {
@@ -8,6 +14,8 @@ import type {
 
 /** Tên consumer (duy nhất toàn hệ thống, `<module>.<việc>`) — đổi tên = consumer mới, event cũ bị xử lý lại. */
 export const CANDIDATE_ON_PROFILE_COMPLETED_CONSUMER = 'matching.candidate-on-profile-completed';
+/** Hồ sơ đã hoàn tất được sửa (vd hồ sơ cũ bổ sung tôn giáo / con cái — BE-S6-07). */
+export const CANDIDATE_ON_PROFILE_UPDATED_CONSUMER = 'matching.candidate-on-profile-updated';
 export const CANDIDATE_ON_PREFERENCES_UPDATED_CONSUMER = 'matching.candidate-on-preferences-updated';
 export const CANDIDATE_ON_KYC_APPROVED_CONSUMER = 'matching.candidate-on-kyc-approved';
 export const CANDIDATE_ON_KYC_REJECTED_CONSUMER = 'matching.candidate-on-kyc-rejected';
@@ -34,6 +42,7 @@ export interface CandidateProfileConsumers {
 export function registerCandidateProfileConsumers(bus: EventBus, consumers: CandidateProfileConsumers): void {
   const sync = (event: DomainEvent, tx: Tx) => consumers.syncProfile.handle(tx, { userId: userIdOf(event) });
   bus.on(PROFILE_COMPLETED, CANDIDATE_ON_PROFILE_COMPLETED_CONSUMER, sync);
+  bus.on(PROFILE_UPDATED, CANDIDATE_ON_PROFILE_UPDATED_CONSUMER, sync);
   bus.on(PREFERENCES_UPDATED, CANDIDATE_ON_PREFERENCES_UPDATED_CONSUMER, sync);
   bus.on(KYC_APPROVED, CANDIDATE_ON_KYC_APPROVED_CONSUMER, (event, tx) =>
     consumers.setVerification.handle(tx, { userId: userIdOf(event), verified: true }),

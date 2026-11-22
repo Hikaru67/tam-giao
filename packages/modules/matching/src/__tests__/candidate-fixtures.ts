@@ -29,6 +29,8 @@ export function candidate(
     birthDate: bornAged(30),
     cityKey: 'hà nội',
     education: 'bachelor',
+    religion: 'buddhism',
+    childrenPlan: 'want_children',
     ...rest,
     criteria: { ...baseCriteria, ...criteria },
   };

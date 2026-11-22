@@ -6,6 +6,7 @@ import { RequestOtp } from '../application/use-cases/request-otp.js';
 import { VerifyOtp } from '../application/use-cases/verify-otp.js';
 import {
   FakeBlindIndexer,
+  InMemoryBannedUserRegistry,
   FakeOtpSecrets,
   FakeUnitOfWork,
   InMemoryOtpChallengeRepository,
@@ -30,6 +31,7 @@ function setup() {
   const blindIndexer = new FakeBlindIndexer();
   const sessions = new InMemorySessionRepository();
   const issuer = new SessionIssuer(sessions, new FakeAccessTokenService(), new FakeRefreshTokenSecrets());
+  const bannedUsers = new InMemoryBannedUserRegistry();
   const uow = new FakeUnitOfWork([
     challenges.table,
     users.table,
@@ -39,8 +41,17 @@ function setup() {
     sessions.tokens,
   ]);
   const requestOtp = new RequestOtp({ uow, clock, challenges, rateLimiter, otpSecrets, sms, blindIndexer });
-  const verifyOtp = new VerifyOtp({ uow, clock, challenges, users, otpSecrets, blindIndexer, issuer });
-  return { clock, challenges, users, sessions, sms, requestOtp, verifyOtp };
+  const verifyOtp = new VerifyOtp({
+    uow,
+    clock,
+    challenges,
+    users,
+    otpSecrets,
+    blindIndexer,
+    issuer,
+    bannedUsers,
+  });
+  return { clock, challenges, users, sessions, sms, bannedUsers, requestOtp, verifyOtp };
 }
 
 let t: ReturnType<typeof setup>;
@@ -131,6 +142,20 @@ describe('RequestOtp', () => {
 });
 
 describe('VerifyOtp', () => {
+  it('tài khoản đã bị khoá (BE-S6-06) → ACCOUNT_BANNED, OTP bị tiêu thụ, không mở phiên', async () => {
+    await t.requestOtp.execute({ phone: PHONE, ip: IP });
+    const first = await t.verifyOtp.execute({ phone: PHONE, code: t.sms.lastCode() });
+    const userId = first.isOk() ? first.value.userId : '';
+    await t.bannedUsers.markBanned({} as never, userId, t.clock.now());
+
+    t.clock.advance({ minutes: 5 });
+    await t.requestOtp.execute({ phone: PHONE, ip: IP });
+    const code = t.sms.lastCode();
+    expect(errorOf(await t.verifyOtp.execute({ phone: PHONE, code }))?.code).toBe('ACCOUNT_BANNED');
+    expect(t.sessions.table.rows.size).toBe(1);
+    expect(errorOf(await t.verifyOtp.execute({ phone: PHONE, code }))?.code).toBe('OTP_INVALID');
+  });
+
   it('mã đúng lần đầu → tạo User + phát UserRegistered không chứa SĐT (AC1)', async () => {
     await t.requestOtp.execute({ phone: PHONE, ip: IP });
     const result = await t.verifyOtp.execute({ phone: '+84 912 345 678', code: t.sms.lastCode() });

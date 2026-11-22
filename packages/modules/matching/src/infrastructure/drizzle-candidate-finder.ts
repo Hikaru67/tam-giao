@@ -12,6 +12,8 @@ import {
   FINANCIAL_INDEPENDENCE,
   GENDERS,
   NOT_IMPORTANT,
+  PROFILE_CHILDREN_PLANS,
+  PROFILE_RELIGIONS,
   RELIGIONS,
   SMOKING_HABITS,
   SPORTS_HABITS,
@@ -62,6 +64,11 @@ export function toCandidateProfileFromRow(row: Row): CandidateProfile {
     birthDate,
     cityKey,
     education: oneOf(EDUCATION_LEVELS, row.education, 'education', id),
+    religion: row.ownReligion === null ? null : oneOf(PROFILE_RELIGIONS, row.ownReligion, 'ownReligion', id),
+    childrenPlan:
+      row.ownChildrenPlan === null
+        ? null
+        : oneOf(PROFILE_CHILDREN_PLANS, row.ownChildrenPlan, 'ownChildrenPlan', id),
     criteria: {
       ageMin: prefAgeMin,
       ageMax: prefAgeMax,
@@ -86,7 +93,8 @@ export function toCandidateProfileFromRow(row: Row): CandidateProfile {
 
 /**
  * `CandidateFinder` bằng một câu SQL trên read model (BE-S5-03): tự join `candidate_profiles` (s = người tìm,
- * c = ứng viên) và áp đúng luật `passesHardFilters` theo **cả hai chiều**, cộng các điều kiện loại:
+ * c = ứng viên) và áp đúng luật `passesHardFilters` theo **cả hai chiều**, cộng các điều kiện loại
+ * (tôn giáo / con cái: hồ sơ người kia ↔ tiêu chí của mình, BE-S6-07):
  * chưa xác thực / chưa đồng bộ hồ sơ, đang bận (`active_slots`), đang cooldown (`cooldowns.until > now`),
  * đã thử cặp (`pair_history`, cặp chuẩn hoá `least/greatest`). Tuổi = `age(ngày VN hiện tại, birth_date)`, cùng
  * cách tính với `ageAt`. Giới tính: chỉ ghép khác giới.
@@ -105,10 +113,19 @@ export class DrizzleCandidateFinder implements CandidateFinder {
     const c = alias(candidateProfiles, 'c');
     const today = vnDate(now);
     const ageOf = (birth: SQLWrapper) => sql`extract(year from age(${today}::date, ${birth}))`;
-    const flexibleChildren = sql.join(
+    const flexibleCriteria = sql.join(
       [NOT_IMPORTANT, 'open'].map((v) => sql`${v}`),
       sql`, `,
     );
+    // Tôn giáo / con cái — hồ sơ của `person` thoả tiêu chí của `chooser` (`religionAccepts`, `childrenPlanAccepts`).
+    type Chooser = { readonly religion: SQLWrapper; readonly childrenPlan: SQLWrapper };
+    type Person = { readonly ownReligion: SQLWrapper; readonly ownChildrenPlan: SQLWrapper };
+    const religionAccepts = (chooser: Chooser, person: Person) =>
+      sql`(${chooser.religion} = ${NOT_IMPORTANT} or ${person.ownReligion} is null
+            or ${chooser.religion} = ${person.ownReligion})`;
+    const childrenPlanAccepts = (chooser: Chooser, person: Person) =>
+      sql`(${chooser.childrenPlan} in (${flexibleCriteria}) or ${person.ownChildrenPlan} is null
+            or ${person.ownChildrenPlan} = 'open' or ${chooser.childrenPlan} = ${person.ownChildrenPlan})`;
 
     const rows = await db
       .select({ candidate: c })
@@ -127,10 +144,11 @@ export class DrizzleCandidateFinder implements CandidateFinder {
           // Khu vực — hai chiều (`null` = không giới hạn).
           sql`(${s.prefCityKey} is null or ${s.prefCityKey} = ${c.cityKey})`,
           sql`(${c.prefCityKey} is null or ${c.prefCityKey} = ${s.cityKey})`,
-          // Tôn giáo, kế hoạch con cái — so khớp đối xứng.
-          sql`(${s.religion} = ${NOT_IMPORTANT} or ${c.religion} = ${NOT_IMPORTANT} or ${s.religion} = ${c.religion})`,
-          sql`(${s.childrenPlan} in (${flexibleChildren}) or ${c.childrenPlan} in (${flexibleChildren})
-                or ${s.childrenPlan} = ${c.childrenPlan})`,
+          // Tôn giáo, kế hoạch con cái — hồ sơ người kia ↔ tiêu chí của mình, hai chiều.
+          religionAccepts(s, c),
+          religionAccepts(c, s),
+          childrenPlanAccepts(s, c),
+          childrenPlanAccepts(c, s),
           // Loại người đang bận / cooldown / đã thử cặp.
           sql`not exists (select 1 from ${activeSlots} where ${activeSlots.userId} = ${c.userId})`,
           sql`not exists (select 1 from ${cooldowns} where ${cooldowns.userId} = ${c.userId} and ${cooldowns.until} > ${now})`,

@@ -81,6 +81,16 @@ export const refreshTokens = identity.table(
   (t) => [index('refresh_tokens_session_id_idx').on(t.sessionId)],
 );
 
+/**
+ * Tài khoản app bị khoá vĩnh viễn (BE-S6-06) — dựng từ event `UserBanned` của safety (A3: không đọc bảng safety).
+ * Chỉ id + thời điểm; lý do khoá nằm ở `safety.user_bans`. `VerifyOtp` tra bảng này trước khi mở phiên. Không FK sang
+ * `users`: safety không kiểm tra được id tồn tại (A3) — id lạ chỉ là dòng vô hại, không làm consumer lỗi lặp.
+ */
+export const bannedUsers = identity.table('banned_users', {
+  userId: uuid('user_id').primaryKey(),
+  bannedAt: timestamptz('banned_at').notNull(),
+});
+
 /** Tài khoản cán bộ quản trị (BE-S2-03). */
 export const adminUsers = identity.table(
   'admin_users',
