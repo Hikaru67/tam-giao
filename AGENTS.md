@@ -101,6 +101,8 @@ Khai báo tại `packages/contracts/src/constants.ts`. Không hardcode ở chỗ
 | `INTERVIEW_CHANGE_CUTOFF_HOURS` | 2 | Huỷ/đổi lịch phỏng vấn trước giờ bắt đầu ít nhất (BE-S3-05) |
 | `MESSAGE_MAX_LENGTH` | 2_000 | Độ dài tối đa một tin chat, ký tự (BE-S6-01) |
 | `MESSAGE_RATE_LIMIT_PER_MINUTE` | 30 | Số tin tối đa / người / hội thoại trong 60 giây (BE-S6-01) |
+| `DATE_RESPONSE_TTL_HOURS` | 24 | Người được mời xác nhận lịch hẹn, quá hạn → `EXPIRED` (BE-S7-01) |
+| `DATE_CANCEL_CUTOFF_HOURS` | 4 | Huỷ lịch hẹn đã xác nhận trước giờ bắt đầu ít nhất (BE-S7-01) |
 
 ## 7. Vùng sở hữu file (tránh xung đột khi nhiều subagent chạy song song)
 

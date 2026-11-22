@@ -38,3 +38,7 @@ export const INTERVIEW_CHANGE_CUTOFF_HOURS = 2;
 export const MESSAGE_MAX_LENGTH = 2_000;
 /** Số tin tối đa một người gửi được trong 60 giây gần nhất của một hội thoại (BE-S6-01). */
 export const MESSAGE_RATE_LIMIT_PER_MINUTE = 30;
+/** Người được mời xác nhận lịch hẹn trong ngần này giờ kể từ lúc đề xuất, quá hạn → `EXPIRED` (BE-S7-01). */
+export const DATE_RESPONSE_TTL_HOURS = 24;
+/** Huỷ lịch hẹn đã xác nhận chỉ khi còn ít nhất ngần này giờ trước giờ bắt đầu (BE-S7-01). */
+export const DATE_CANCEL_CUTOFF_HOURS = 4;

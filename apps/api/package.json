@@ -16,6 +16,7 @@
     "@tamgiao/http": "workspace:*",
     "@tamgiao/kernel": "workspace:*",
     "@tamgiao/module-billing": "workspace:*",
+    "@tamgiao/module-dating": "workspace:*",
     "@tamgiao/module-identity": "workspace:*",
     "@tamgiao/module-matching": "workspace:*",
     "@tamgiao/module-messaging": "workspace:*",

@@ -9,6 +9,7 @@ import {
 import { requireUser, type AppEnv } from '@tamgiao/http';
 import type { Clock, Scheduler, UnitOfWork } from '@tamgiao/kernel';
 import { FakePaymentGateway, createBillingModule } from '@tamgiao/module-billing';
+import { createDatingModule } from '@tamgiao/module-dating';
 import { ConsoleSmsSender, createIdentityModule } from '@tamgiao/module-identity';
 import { createMatchingModule } from '@tamgiao/module-matching';
 import {
@@ -202,5 +203,16 @@ export function buildModules({ config, uow, clock, scheduler, logger }: ModuleDe
     messaging: messagingModule.facade,
   });
 
-  return [identity, uploadModule, profile, verification, billing, matching, messaging, safety];
+  // Dating (Sprint 7): đặt lịch gặp tại quán đối tác (BE-S7-01) — match phải `DATING` (facade matching), quán đang
+  // hoạt động (facade quán của billing). Hết hạn xác nhận chạy ở worker; voucher kích hoạt qua event `DateConfirmed`.
+  const dating = createDatingModule({
+    uow,
+    clock,
+    scheduler,
+    requireUser: userGuard,
+    matching: matching.facade,
+    partners: billing.partnerFacade,
+  });
+
+  return [identity, uploadModule, profile, verification, billing, matching, messaging, safety, dating];
 }
