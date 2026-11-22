@@ -1,10 +1,18 @@
 import { NOTIFICATION_CATEGORY_NAMES, NOTIFICATION_KIND_NAMES } from '@tamgiao/contracts';
+import {
+  DATING_DAYS,
+  DATING_FINAL_REMINDER_DAY,
+  DATING_FIRST_REMINDER_DAY,
+} from '@tamgiao/contracts/constants';
+import { addDuration } from '@tamgiao/kernel';
 import { describe, expect, it } from 'vitest';
 import {
   ALWAYS_ON_CATEGORIES,
+  DATING_REMINDER_KINDS,
   DEFAULT_NOTIFICATION_PREFERENCES,
   NOTIFICATION_CATEGORIES,
   NOTIFICATION_KINDS,
+  datingReminderTimes,
   isCategoryEnabled,
   isNotificationKind,
   reminderTime,
@@ -50,6 +58,21 @@ describe('template thông báo', () => {
     expect(isNotificationKind('MATCH_OFFERED')).toBe(true);
     expect(isNotificationKind('EMAIL')).toBe(false);
   });
+
+  it('template DATING_REMINDER_FIRST/FINAL có chứa "Mục tiêu: gặp mặt trước ngày 14", category DATE', () => {
+    for (const kind of DATING_REMINDER_KINDS) {
+      const t = templateFor(kind);
+      expect(t.category).toBe('DATE');
+      expect(t.smsFallback).toBe(false);
+      expect(t.body).toContain(`Mục tiêu: gặp mặt trước ngày ${DATING_DAYS}`);
+    }
+    expect(templateFor('DATING_REMINDER_FIRST').body).toContain(
+      `Hai bạn đã tìm hiểu được ${DATING_FIRST_REMINDER_DAY} ngày.`,
+    );
+    expect(templateFor('DATING_REMINDER_FINAL').body).toContain(
+      `Còn ${DATING_DAYS - DATING_FINAL_REMINDER_DAY} ngày.`,
+    );
+  });
 });
 
 describe('cài đặt nhận thông báo', () => {
@@ -83,5 +106,47 @@ describe('reminderTime', () => {
   it('mốc nhắc đã qua hoặc đúng bằng hiện tại → null', () => {
     expect(reminderTime(new Date('2026-06-01T10:00:00.000Z'), 2, now)).toBeNull();
     expect(reminderTime(new Date('2026-06-01T09:00:00.000Z'), 2, now)).toBeNull();
+  });
+});
+
+describe('datingReminderTimes', () => {
+  const startedAt = new Date('2026-06-01T08:00:00.000Z');
+  const normalExpiresAt = addDuration(startedAt, { days: DATING_DAYS });
+
+  it('trả 2 mốc đúng +7/+12 ngày', () => {
+    expect(datingReminderTimes(startedAt, normalExpiresAt)).toEqual([
+      {
+        kind: 'DATING_REMINDER_FIRST',
+        at: addDuration(startedAt, { days: DATING_FIRST_REMINDER_DAY }),
+      },
+      {
+        kind: 'DATING_REMINDER_FINAL',
+        at: addDuration(startedAt, { days: DATING_FINAL_REMINDER_DAY }),
+      },
+    ]);
+  });
+
+  it('khi expiresAt <= mốc thì bỏ mốc đó', () => {
+    const expiresAt12 = addDuration(startedAt, { days: DATING_FINAL_REMINDER_DAY });
+    expect(datingReminderTimes(startedAt, expiresAt12)).toEqual([
+      {
+        kind: 'DATING_REMINDER_FIRST',
+        at: addDuration(startedAt, { days: DATING_FIRST_REMINDER_DAY }),
+      },
+    ]);
+
+    const expiresAt10 = addDuration(startedAt, { days: 10 });
+    expect(datingReminderTimes(startedAt, expiresAt10)).toEqual([
+      {
+        kind: 'DATING_REMINDER_FIRST',
+        at: addDuration(startedAt, { days: DATING_FIRST_REMINDER_DAY }),
+      },
+    ]);
+
+    const expiresAt7 = addDuration(startedAt, { days: DATING_FIRST_REMINDER_DAY });
+    expect(datingReminderTimes(startedAt, expiresAt7)).toEqual([]);
+
+    const expiresAt5 = addDuration(startedAt, { days: 5 });
+    expect(datingReminderTimes(startedAt, expiresAt5)).toEqual([]);
   });
 });

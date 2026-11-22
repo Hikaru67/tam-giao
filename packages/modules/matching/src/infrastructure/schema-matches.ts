@@ -35,6 +35,8 @@ export const matches = matching.table(
     withdrawn: boolean('withdrawn').notNull().default(false),
     closeOutcome: text('close_outcome'),
     lockReason: text('lock_reason'),
+    /** Mã lý do đóng (vd `TIMEOUT` khi hết `DATING_DAYS` chưa gặp — BE-S7-04); `null` = đóng thủ công / chưa đóng. */
+    closeReason: text('close_reason'),
     updatedAt: timestamptz('updated_at').notNull(),
     version: integer('version').notNull(),
   },
@@ -45,6 +47,10 @@ export const matches = matching.table(
       sql`${t.status} in ('OFFERED', 'AWAITING_RESPONSE', 'DATING', 'MET', 'CLOSED_SUCCESS', 'CLOSED_STOPPED', 'EXPIRED', 'DECLINED', 'LOCKED')`,
     ),
     check('matches_close_outcome_ck', sql`${t.closeOutcome} in ('SUCCESS', 'STOPPED')`),
+    check(
+      'matches_close_reason_ck',
+      sql`${t.closeReason} is null or ${t.status} in ('CLOSED_SUCCESS', 'CLOSED_STOPPED')`,
+    ),
     check('matches_accepted_by_ck', sql`cardinality(${t.acceptedBy}) <= 2`),
     check('matches_version_ck', sql`${t.version} >= 1`),
     index('matches_user_a_idx').on(t.userA),

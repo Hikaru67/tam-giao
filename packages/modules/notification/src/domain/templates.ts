@@ -1,11 +1,14 @@
 import {
   DATE_REMINDER_HOURS,
   DATING_DAYS,
+  DATING_FINAL_REMINDER_DAY,
+  DATING_FIRST_REMINDER_DAY,
   OFFER_EXPIRY_REMINDER_HOURS,
   OFFER_TTL_HOURS,
   REFUND_SLA_HOURS,
   RESPONSE_TTL_HOURS,
 } from '@tamgiao/contracts/constants';
+import { addDuration } from '@tamgiao/kernel';
 
 /**
  * Template thông báo tiếng Việt theo loại (BE-S7-05). Luật bắt buộc: nội dung push hiện trên màn khoá nên **không chứa
@@ -27,6 +30,8 @@ export const NOTIFICATION_KINDS = [
   'REFUND_COMPLETED',
   'REPORT_RECEIVED',
   'REPORT_UPDATED',
+  'DATING_REMINDER_FIRST',
+  'DATING_REMINDER_FINAL',
 ] as const;
 export type NotificationKind = (typeof NOTIFICATION_KINDS)[number];
 
@@ -124,6 +129,18 @@ const TEMPLATES: { readonly [K in NotificationKind]: Omit<NotificationTemplate, 
     body: 'Mở ứng dụng để xem tình trạng xử lý.',
     smsFallback: false,
   },
+  DATING_REMINDER_FIRST: {
+    category: 'DATE',
+    title: 'Đã nửa chặng tìm hiểu',
+    body: `Hai bạn đã tìm hiểu được ${DATING_FIRST_REMINDER_DAY} ngày. Mục tiêu: gặp mặt trước ngày ${DATING_DAYS} — hãy hẹn một buổi gặp tại điểm hẹn an toàn.`,
+    smsFallback: false,
+  },
+  DATING_REMINDER_FINAL: {
+    category: 'DATE',
+    title: 'Sắp hết giai đoạn tìm hiểu',
+    body: `Còn ${DATING_DAYS - DATING_FINAL_REMINDER_DAY} ngày. Mục tiêu: gặp mặt trước ngày ${DATING_DAYS} — đặt lịch hẹn ngay trong ứng dụng.`,
+    smsFallback: false,
+  },
 };
 
 export function templateFor(kind: NotificationKind): NotificationTemplate {
@@ -173,4 +190,28 @@ const HOUR_MS = 3_600_000;
 export function reminderTime(deadline: Date, hours: number, now: Date): Date | null {
   const at = new Date(deadline.getTime() - hours * HOUR_MS);
   return at.getTime() > now.getTime() ? at : null;
+}
+
+/** Loại thông báo nhắc giai đoạn tìm hiểu (BE-S7-04) — huỷ cùng nhau khi match rời `DATING`. */
+export const DATING_REMINDER_KINDS = [
+  'DATING_REMINDER_FIRST',
+  'DATING_REMINDER_FINAL',
+] as const satisfies readonly NotificationKind[];
+
+/** Mốc nhắc giai đoạn tìm hiểu: ngày thứ N kể từ lúc bắt đầu DATING; bỏ mốc không còn trước hạn `expiresAt`. */
+export function datingReminderTimes(
+  startedAt: Date,
+  expiresAt: Date,
+): { readonly kind: NotificationKind; readonly at: Date }[] {
+  const candidates = [
+    {
+      kind: 'DATING_REMINDER_FIRST' as const,
+      at: addDuration(startedAt, { days: DATING_FIRST_REMINDER_DAY }),
+    },
+    {
+      kind: 'DATING_REMINDER_FINAL' as const,
+      at: addDuration(startedAt, { days: DATING_FINAL_REMINDER_DAY }),
+    },
+  ];
+  return candidates.filter((item) => item.at.getTime() < expiresAt.getTime());
 }

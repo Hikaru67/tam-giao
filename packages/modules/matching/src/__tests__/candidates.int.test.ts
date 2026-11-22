@@ -26,6 +26,8 @@ import {
   createMatchingWorker,
   MATCH_EXCLUDE_ON_USER_BANNED_CONSUMER,
   MATCH_LOCK_ON_REPORT_FILED_CONSUMER,
+  DATE_COMPLETED_EVENT,
+  MATCH_MET_ON_DATE_COMPLETED_CONSUMER,
 } from '../index.js';
 import { bornAged, candidate, NOW } from './candidate-fixtures.js';
 
@@ -317,7 +319,7 @@ describe('consumer read model matching.candidate_profiles', () => {
       )
     ).rows[0];
 
-  it('đăng ký đúng tên consumer cho 5 event read model (+ ReportFiled → khoá match, BE-S6-05)', () => {
+  it('đăng ký đúng tên consumer cho 5 event read model (+ ReportFiled → khoá match, BE-S6-05; DateCompleted → MET, BE-S7-04)', () => {
     expect(bus.list().map((s) => [s.eventType, s.consumer])).toEqual([
       [PROFILE_COMPLETED, CANDIDATE_ON_PROFILE_COMPLETED_CONSUMER],
       [PROFILE_UPDATED, CANDIDATE_ON_PROFILE_UPDATED_CONSUMER],
@@ -326,6 +328,7 @@ describe('consumer read model matching.candidate_profiles', () => {
       [KYC_REJECTED, CANDIDATE_ON_KYC_REJECTED_CONSUMER],
       [REPORT_FILED, MATCH_LOCK_ON_REPORT_FILED_CONSUMER],
       [USER_BANNED, MATCH_EXCLUDE_ON_USER_BANNED_CONSUMER],
+      [DATE_COMPLETED_EVENT, MATCH_MET_ON_DATE_COMPLETED_CONSUMER],
     ]);
   });
 

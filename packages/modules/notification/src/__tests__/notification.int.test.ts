@@ -2,7 +2,9 @@ import {
   KYC_APPROVED,
   KYC_REJECTED,
   MATCH_AWAITING_RESPONSE,
+  MATCH_CLOSED,
   MATCH_DECLINED,
+  MATCH_MET,
   MATCH_OFFERED,
   MATCH_STARTED_DATING,
   MESSAGE_SENT,
@@ -10,6 +12,11 @@ import {
   REPORT_FILED,
   REPORT_STATUS_CHANGED,
 } from '@tamgiao/contracts';
+import {
+  DATING_DAYS,
+  DATING_FINAL_REMINDER_DAY,
+  DATING_FIRST_REMINDER_DAY,
+} from '@tamgiao/contracts/constants';
 import { DrizzleUnitOfWork, EventBus, createDatabase, deliverOnce, type Database } from '@tamgiao/db';
 import {
   FakeClock,
@@ -23,7 +30,7 @@ import {
 import { resetDatabase, testDatabaseUrl } from '@tamgiao/testing';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import type { SmsMessage } from '../application/ports/sms.js';
-import { templateFor, type NotificationKind } from '../domain/templates.js';
+import { DATING_REMINDER_KINDS, templateFor, type NotificationKind } from '../domain/templates.js';
 import { DrizzleNotificationStore } from '../infrastructure/drizzle-notification-store.js';
 import { FakePushSender } from '../infrastructure/fake-push-sender.js';
 import {
@@ -456,6 +463,173 @@ describe('nhắc nhở hẹn giờ (còn 2h trước hết hạn gợi ý, trư�
     );
     await deliver(event(DATE_CONFIRMED_EVENT, { datePlanId: newId(), participantIds: [a, b] }));
     expect((await deliveriesOf()).filter((r) => r.kind === 'DATE_REMINDER')).toEqual([]);
+  });
+});
+
+describe('nhắc giai đoạn tìm hiểu ngày 7 và 12 (BE-S7-04)', () => {
+  const a = newId();
+  const b = newId();
+
+  it('MatchStartedDating (occurredAt = NOW, expiresAt = NOW + 14 ngày) → 2 dòng PENDING cho mỗi người và đúng số job; giao lại cùng event không trùng', async () => {
+    const matchId = newId();
+    const expiresAt = addDuration(T0, { days: DATING_DAYS });
+    const datingEvent = event(MATCH_STARTED_DATING, {
+      matchId,
+      participantIds: [a, b],
+      expiresAt: expiresAt.toISOString(),
+    });
+
+    await deliver(datingEvent);
+
+    const allDeliveries = await deliveriesOf(datingEvent.eventId);
+    const reminders = allDeliveries.filter((r) =>
+      (DATING_REMINDER_KINDS as readonly string[]).includes(r.kind),
+    );
+
+    // 2 người * 2 mốc = 4 dòng PENDING
+    expect(reminders).toHaveLength(4);
+    expect(reminders.every((r) => r.status === 'PENDING')).toBe(true);
+
+    const firstReminders = reminders.filter((r) => r.kind === 'DATING_REMINDER_FIRST');
+    expect(firstReminders).toHaveLength(2);
+    expect(firstReminders.map((r) => r.send_after)).toEqual([
+      addDuration(T0, { days: DATING_FIRST_REMINDER_DAY }),
+      addDuration(T0, { days: DATING_FIRST_REMINDER_DAY }),
+    ]);
+
+    const finalReminders = reminders.filter((r) => r.kind === 'DATING_REMINDER_FINAL');
+    expect(finalReminders).toHaveLength(2);
+    expect(finalReminders.map((r) => r.send_after)).toEqual([
+      addDuration(T0, { days: DATING_FINAL_REMINDER_DAY }),
+      addDuration(T0, { days: DATING_FINAL_REMINDER_DAY }),
+    ]);
+
+    // Đúng số job notification.send được hẹn với runAt tương ứng
+    const reminderJobs = scheduled.filter((j) =>
+      reminders.some((r) => r.id === (j.payload as { deliveryId: string }).deliveryId),
+    );
+    expect(reminderJobs).toHaveLength(4);
+    for (const job of reminderJobs) {
+      const row = reminders.find((r) => r.id === (job.payload as { deliveryId: string }).deliveryId)!;
+      expect(job.queue).toBe(NOTIFICATION_SEND_QUEUE);
+      expect(job.key).toBe(row.id);
+      expect(job.runAt).toEqual(row.send_after);
+    }
+
+    // Giao lại cùng event → không thêm dòng/job (mỗi mốc 1 lần — AC2)
+    const scheduledBefore = scheduled.length;
+    await handleDirectly(datingEvent);
+    const deliveriesAfter = await deliveriesOf(datingEvent.eventId);
+    expect(deliveriesAfter).toHaveLength(allDeliveries.length);
+    expect(scheduled.length).toBe(scheduledBefore);
+  });
+
+  it('gửi: chạy job send cho dòng FIRST → push đúng 1 lần, chạy lại job → không push trùng', async () => {
+    const matchId = newId();
+    const expiresAt = addDuration(T0, { days: DATING_DAYS });
+    const datingEvent = event(MATCH_STARTED_DATING, {
+      matchId,
+      participantIds: [a, b],
+      expiresAt: expiresAt.toISOString(),
+    });
+    await deliver(datingEvent);
+
+    await registerDevice(a, 'ExponentPushToken[a_dating]');
+    const rows = await deliveriesOf(datingEvent.eventId);
+    const firstReminderA = rows.find((r) => r.user_id === a && r.kind === 'DATING_REMINDER_FIRST');
+    if (!firstReminderA) throw new Error('missing reminder');
+
+    // Chưa tới hạn gửi (+7d)
+    expect(await send(firstReminderA.id)).toEqual({
+      kind: 'NOT_DUE',
+      sendAfter: addDuration(T0, { days: DATING_FIRST_REMINDER_DAY }),
+    });
+    expect(push.sent).toHaveLength(0);
+
+    // Tới ngày thứ 7
+    clock.set(addDuration(T0, { days: DATING_FIRST_REMINDER_DAY }));
+    const result = await send(firstReminderA.id);
+    expect(result).toMatchObject({
+      kind: 'SENT',
+      channel: 'PUSH',
+      pushedDevices: 1,
+      removedDevices: 0,
+    });
+    expect(push.sent).toHaveLength(1);
+    const template = templateFor('DATING_REMINDER_FIRST');
+    expect(push.sent[0]!.title).toBe(template.title);
+    expect(push.sent[0]!.body).toBe(template.body);
+    expect(push.sent[0]!.data).toEqual({
+      kind: 'DATING_REMINDER_FIRST',
+      deliveryId: firstReminderA.id,
+      matchId,
+    });
+
+    // Chạy lại job send → không push trùng
+    expect(await send(firstReminderA.id)).toEqual({ kind: 'ALREADY_DONE', status: 'SENT' });
+    expect(push.sent).toHaveLength(1);
+  });
+
+  it('MatchMet sau đó → dòng nhắc còn PENDING chuyển CANCELLED', async () => {
+    const matchId = newId();
+    const expiresAt = addDuration(T0, { days: DATING_DAYS });
+    await deliver(
+      event(MATCH_STARTED_DATING, {
+        matchId,
+        participantIds: [a, b],
+        expiresAt: expiresAt.toISOString(),
+      }),
+    );
+
+    const before = (await deliveriesOf()).filter((r) =>
+      (DATING_REMINDER_KINDS as readonly string[]).includes(r.kind),
+    );
+    expect(before).toHaveLength(4);
+    expect(before.every((r) => r.status === 'PENDING')).toBe(true);
+
+    const metAt = addDuration(T0, { days: 4 });
+    clock.set(metAt);
+    await deliver(event(MATCH_MET, { matchId, participantIds: [a, b] }, metAt));
+
+    const after = (await deliveriesOf()).filter((r) =>
+      (DATING_REMINDER_KINDS as readonly string[]).includes(r.kind),
+    );
+    expect(after).toHaveLength(4);
+    expect(after.every((r) => r.status === 'CANCELLED')).toBe(true);
+  });
+
+  it('MatchClosed sau đó → dòng nhắc còn PENDING chuyển CANCELLED', async () => {
+    const matchId = newId();
+    const expiresAt = addDuration(T0, { days: DATING_DAYS });
+    await deliver(
+      event(MATCH_STARTED_DATING, {
+        matchId,
+        participantIds: [a, b],
+        expiresAt: expiresAt.toISOString(),
+      }),
+    );
+
+    const closedAt = addDuration(T0, { days: 5 });
+    clock.set(closedAt);
+    await deliver(
+      event(
+        MATCH_CLOSED,
+        {
+          matchId,
+          participantIds: [a, b],
+          outcome: 'STOPPED',
+          fromStatus: 'DATING',
+          trigger: 'DATING_PERIOD_ENDED',
+        },
+        closedAt,
+      ),
+    );
+
+    const after = (await deliveriesOf()).filter((r) =>
+      (DATING_REMINDER_KINDS as readonly string[]).includes(r.kind),
+    );
+    expect(after).toHaveLength(4);
+    expect(after.every((r) => r.status === 'CANCELLED')).toBe(true);
   });
 });
 

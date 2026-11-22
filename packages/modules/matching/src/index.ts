@@ -16,6 +16,8 @@ import type { MatchResponseDeps } from './application/responses/respond-to-open-
 import { WithdrawIntro } from './application/responses/withdraw-intro.js';
 import { registerCandidateProfileConsumers } from './infrastructure/candidate-profile-consumers.js';
 import { registerReportFiledConsumer } from './infrastructure/report-filed-consumer.js';
+import { registerDateCompletedConsumer } from './infrastructure/date-completed-consumer.js';
+import { MarkMatchMet } from './application/responses/mark-match-met.js';
 import { registerUserBannedConsumer } from './infrastructure/user-banned-consumer.js';
 import { LockMatch } from './application/responses/lock-match.js';
 import type { MatchingFacade } from './application/facade.js';
@@ -56,6 +58,16 @@ export {
 
 export { MATCH_LOCK_ON_REPORT_FILED_CONSUMER } from './infrastructure/report-filed-consumer.js';
 export {
+  DATE_COMPLETED_EVENT,
+  MATCH_MET_ON_DATE_COMPLETED_CONSUMER,
+} from './infrastructure/date-completed-consumer.js';
+export type {
+  MarkMatchMet,
+  MarkMatchMetCommand,
+  MarkMatchMetOutcome,
+} from './application/responses/mark-match-met.js';
+export { MATCH_CLOSE_REASON_TIMEOUT } from './domain/match.js';
+export {
   MATCH_EXCLUDE_ON_USER_BANNED_CONSUMER,
   MATCH_LOCK_REASON_USER_BANNED,
 } from './infrastructure/user-banned-consumer.js';
@@ -74,7 +86,7 @@ export interface MatchingWorkerDeps {
 export interface MatchingWorker {
   /**
    * Đăng ký consumer của matching (worker gọi trước `registerConsumers`): read model `matching.candidate_profiles`
-   * (BE-S5-03) và `ReportFiled` → khoá match (BE-S6-05).
+   * (BE-S5-03), `ReportFiled` → khoá match (BE-S6-05), `DateCompleted` → `MET` (BE-S7-04).
    */
   registerConsumers(bus: EventBus): void;
 }
@@ -87,6 +99,14 @@ export function createMatchingWorker(deps: MatchingWorkerDeps): MatchingWorker {
     setVerification: new SetCandidateVerification({ clock: deps.clock, candidates }),
   };
   const lockMatch = createLockMatch(deps);
+  const markMatchMet = new MarkMatchMet({
+    clock: deps.clock,
+    scheduler: deps.scheduler,
+    matches: new DrizzleMatchRepository(new OutboxWriter()),
+    activeSlots: new DrizzleActiveSlotRepository(),
+    pairHistory: new DrizzlePairHistoryRepository(),
+    cooldowns: new DrizzleCooldownRepository(),
+  });
   return {
     registerConsumers: (bus) => {
       registerCandidateProfileConsumers(bus, consumers);
@@ -97,6 +117,8 @@ export function createMatchingWorker(deps: MatchingWorkerDeps): MatchingWorker {
         matches: new DrizzleMatchRepository(new OutboxWriter()),
         lockMatch,
       });
+      // BE-S7-04: DateCompleted (dating) → match MET (bỏ hạn DATING_DAYS).
+      registerDateCompletedConsumer(bus, markMatchMet);
     },
   };
 }

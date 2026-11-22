@@ -1,5 +1,4 @@
 import {
-  COOLDOWN_DAYS,
   DATING_DAYS,
   OFFER_TTL_HOURS,
   RESPONSE_TTL_HOURS,
@@ -223,7 +222,7 @@ describe('AcceptOffer / DeclineOffer / ExpireMatch (Postgres + pg-boss)', () => 
     });
   });
 
-  it('DATING hết 14 ngày → CLOSED_STOPPED + cooldown cả hai tới now + COOLDOWN_DAYS', async () => {
+  it('DATING hết 14 ngày chưa gặp → CLOSED_STOPPED lý do TIMEOUT, không cooldown (BE-S7-04 AC1)', async () => {
     const { matchId, a, b } = await proposed();
     const { commands } = matching(new FakeClock(NOW));
     await commands.acceptOffer.execute({ userId: a });
@@ -239,11 +238,25 @@ describe('AcceptOffer / DeclineOffer / ExpireMatch (Postgres + pg-boss)', () => 
       slots: 0,
       pairHistory: ['CLOSED_STOPPED'],
     });
-    const cooldowns = await query<{ user_id: string; until: Date }>(
-      'select user_id, until from matching.cooldowns order by user_id',
+    const [row] = await query<{ close_reason: string | null; closed_at: Date }>(
+      'select close_reason, closed_at from matching.matches where id = $1',
+      [matchId],
     );
-    const until = addDuration(end, { days: COOLDOWN_DAYS });
-    expect(cooldowns).toEqual([a, b].sort().map((user_id) => ({ user_id, until })));
+    expect(row).toEqual({ close_reason: 'TIMEOUT', closed_at: end });
+    expect(await query('select user_id from matching.cooldowns where user_id in ($1, $2)', [a, b])).toEqual([]);
+    const closed = await query<{ payload: unknown }>(
+      `select payload from platform.outbox where event_type = 'MatchClosed' and aggregate_id = $1`,
+      [matchId],
+    );
+    expect(closed.map((r) => r.payload)).toEqual([
+      {
+        matchId,
+        participantIds: [a, b],
+        outcome: 'STOPPED',
+        fromStatus: 'DATING',
+        trigger: 'DATING_PERIOD_ENDED',
+      },
+    ]);
   });
 
   it('AC4: A đồng ý ngay trước hạn vs job hết hạn đúng hạn, chạy đồng thời (lặp 30 lần) → một bên thắng, không trạng thái lai', async () => {

@@ -93,7 +93,7 @@ hoặc `CLOSED_STOPPED` + cooldown; thông báo đẩy/SMS cho các mốc quan t
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| matching | application, infrastructure | P0 | 1d | BE-S5-05, BE-S7-05 | BE-S7-03 | TODO |
+| matching | application, infrastructure | P0 | 1d | BE-S5-05, BE-S7-05 | BE-S7-03 | IN_REVIEW |
 
 **Mục tiêu:** Đóng vòng đời khi hết 14 ngày mà chưa gặp; nhắc người dùng hẹn gặp trước hạn.
 
