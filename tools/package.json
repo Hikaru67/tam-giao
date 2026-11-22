@@ -4,7 +4,8 @@
   "type": "module",
   "scripts": {
     "typecheck": "tsc -p tsconfig.json",
-    "seed:admin": "node --env-file-if-exists=../.env --import tsx scripts/seed-admin.ts"
+    "seed:admin": "node --env-file-if-exists=../.env --import tsx scripts/seed-admin.ts",
+    "smoke:staging": "node --import tsx scripts/smoke-staging.ts"
   },
   "devDependencies": {
     "@types/node": "22.20.5",

@@ -1,0 +1,21 @@
+# Build context của apps/*/Dockerfile (BE-S7-08) — chỉ gửi mã nguồn cần chạy.
+**/node_modules
+**/.turbo
+**/dist
+**/coverage
+**/*.tsbuildinfo
+.git
+.github
+.claude
+.env
+.env.*
+!.env.example
+design
+docs
+infra
+tools
+**/__tests__
+**/*.test.ts
+*.md
+**/*.log
+docker-compose.yml

@@ -55,6 +55,19 @@ const workerEnvSchema = z
     PUSH_PROVIDER: z.enum(['expo', 'fake']).default('fake'),
     /** Access token Expo ("Enhanced push security") — tuỳ chọn. */
     EXPO_ACCESS_TOKEN: z.string().min(1).optional(),
+    // Observability (BE-S7-08)
+    /** DSN Sentry; bỏ trống = không gửi lỗi đi đâu (no-op). */
+    SENTRY_DSN: z.url().optional(),
+    SENTRY_ENVIRONMENT: z.string().min(1).optional(),
+    /** Phiên bản đang chạy (git sha) — image Docker gán sẵn qua build arg. */
+    APP_RELEASE: z.string().min(1).optional(),
+    /** Cảnh báo khi số event outbox chưa relay lớn hơn ngưỡng này. */
+    OUTBOX_BACKLOG_MAX_EVENTS: z.coerce.number().int().min(1).default(500),
+    /** Cảnh báo khi event chưa relay cũ nhất quá số giây này. */
+    OUTBOX_BACKLOG_MAX_AGE_SECONDS: z.coerce.number().int().min(10).default(300),
+    OUTBOX_BACKLOG_CHECK_INTERVAL_SECONDS: z.coerce.number().int().min(5).max(3_600).default(60),
+    /** Đang tồn đọng thì nhắc lại sau bao nhiêu phút. */
+    OUTBOX_BACKLOG_REALERT_MINUTES: z.coerce.number().int().min(1).max(1_440).default(15),
   })
   .superRefine((e, ctx) => {
     if (e.NODE_ENV === 'production' && e.PAYMENT_GATEWAY === 'fake') {
@@ -90,6 +103,17 @@ const workerEnvSchema = z
     },
     payment: { gateway: e.PAYMENT_GATEWAY, webhookSecret: e.PAYMENT_WEBHOOK_SECRET },
     push: { provider: e.PUSH_PROVIDER, expoAccessToken: e.EXPO_ACCESS_TOKEN },
+    observability: {
+      sentry: { dsn: e.SENTRY_DSN, environment: e.SENTRY_ENVIRONMENT ?? e.NODE_ENV, release: e.APP_RELEASE },
+      outboxBacklog: {
+        thresholds: {
+          maxUnpublished: e.OUTBOX_BACKLOG_MAX_EVENTS,
+          maxAgeSeconds: e.OUTBOX_BACKLOG_MAX_AGE_SECONDS,
+        },
+        checkIntervalMs: e.OUTBOX_BACKLOG_CHECK_INTERVAL_SECONDS * 1_000,
+        realertAfterMs: e.OUTBOX_BACKLOG_REALERT_MINUTES * 60_000,
+      },
+    },
   }));
 
 export type WorkerConfig = z.output<typeof workerEnvSchema>;

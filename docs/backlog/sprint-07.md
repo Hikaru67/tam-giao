@@ -197,7 +197,7 @@ hoặc `CLOSED_STOPPED` + cooldown; thông báo đẩy/SMS cho các mốc quan t
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| repo | devops | P1 | 1.5d | Sprint 6 | BE-S7-07 | TODO |
+| repo | devops | P1 | 1.5d | Sprint 6 | BE-S7-07 | IN_REVIEW |
 
 **Mục tiêu:** Có môi trường staging để FE và QA dùng.
 
