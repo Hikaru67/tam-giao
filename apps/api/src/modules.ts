@@ -218,5 +218,16 @@ export function buildModules({ config, uow, clock, scheduler, logger }: ModuleDe
     partners: billing.partnerFacade,
   });
 
-  return [identity, uploadModule, profile, verification, billing, matching, messaging, safety, notification, dating];
+  return [
+    identity,
+    uploadModule,
+    profile,
+    verification,
+    billing,
+    matching,
+    messaging,
+    safety,
+    notification,
+    dating,
+  ];
 }

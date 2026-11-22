@@ -35,9 +35,7 @@ export interface ProposeDateCommand {
 }
 
 export type ProposeDateError =
-  | DomainError<'MATCH_NOT_DATING' | 'PARTNER_NOT_FOUND' | 'INVALID_ID'>
-  | DateTimeInvalid
-  | DatePlanSaveError;
+  DomainError<'MATCH_NOT_DATING' | 'PARTNER_NOT_FOUND' | 'INVALID_ID'> | DateTimeInvalid | DatePlanSaveError;
 
 /**
  * Người mời đề xuất lịch gặp (BE-S7-01, `POST /me/dates`). Thứ tự: match đang mở của người dùng phải `DATING`

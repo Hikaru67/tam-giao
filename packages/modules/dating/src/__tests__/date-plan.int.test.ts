@@ -199,9 +199,12 @@ describe('POST /me/dates (đề xuất lịch)', () => {
     expect(statuses.filter((s) => s === 201)).toHaveLength(1);
     expect(statuses.filter((s) => s === 409)).toHaveLength(5);
     for (const r of results) {
-      if (r.status === 'fulfilled' && r.value.status === 409) expect(await code(r.value)).toBe('DATE_ALREADY_OPEN');
+      if (r.status === 'fulfilled' && r.value.status === 409)
+        expect(await code(r.value)).toBe('DATE_ALREADY_OPEN');
     }
-    expect((await sql(`select 1 from dating.date_plans where match_id = $1`, [pair.matchId])).rowCount).toBe(1);
+    expect((await sql(`select 1 from dating.date_plans where match_id = $1`, [pair.matchId])).rowCount).toBe(
+      1,
+    );
     expect(scheduler.jobs).toHaveLength(1);
   });
 
@@ -213,7 +216,17 @@ describe('POST /me/dates (đề xuất lịch)', () => {
         `insert into dating.date_plans (id, match_id, inviter_id, invitee_id, partner_id, starts_at, ends_at, status,
            proposed_at, expires_at, updated_at, version)
          values ($1, $2, $3, $4, $5, $6, $7, 'CONFIRMED', $8, $9, $8, 2)`,
-        [newId(), pair.matchId, pair.b, pair.a, pair.partnerId, STARTS, ENDS, T0, addDuration(T0, { hours: 1 })],
+        [
+          newId(),
+          pair.matchId,
+          pair.b,
+          pair.a,
+          pair.partnerId,
+          STARTS,
+          ENDS,
+          T0,
+          addDuration(T0, { hours: 1 }),
+        ],
       ),
     ).rejects.toMatchObject({ code: '23505', constraint: 'date_plans_open_per_match_uq' });
   });
@@ -257,7 +270,9 @@ describe('xác nhận → DateConfirmed → voucher ACTIVE (AC2)', () => {
       payload: row.payload,
     };
     expect(await deliverOnce(uow, voucherSub(), event)).toBe(true);
-    const vouchers = await sql(`select id, status, activated_at from billing.vouchers order by issued_at, id`);
+    const vouchers = await sql(
+      `select id, status, activated_at from billing.vouchers order by issued_at, id`,
+    );
     expect(vouchers.rows.find((v) => v.id === voucherId)).toMatchObject({ status: 'ACTIVE' });
     expect(vouchers.rows.find((v) => v.id === inviteeVoucher)).toMatchObject({ status: 'RESERVED' });
     const activated = await sql(
@@ -291,16 +306,24 @@ describe('hết hạn xác nhận (AC3)', () => {
     const id = await proposed(pair);
     const expirer = createExpireDatePlanJob({ uow, clock });
 
-    expect(await expirer.execute({ datePlanId: id })).toEqual({ kind: 'NOT_YET_EXPIRED', status: 'PROPOSED' });
+    expect(await expirer.execute({ datePlanId: id })).toEqual({
+      kind: 'NOT_YET_EXPIRED',
+      status: 'PROPOSED',
+    });
     clock.advance({ hours: DATE_RESPONSE_TTL_HOURS });
     const late = await post(`/me/dates/${id}/confirm`, pair.b);
     expect([late.status, await code(late)]).toEqual([409, 'DATE_RESPONSE_EXPIRED']);
 
     expect(await expirer.execute({ datePlanId: id })).toEqual({ kind: 'EXPIRED' });
-    expect(await expirer.execute({ datePlanId: id })).toEqual({ kind: 'ALREADY_RESOLVED', status: 'EXPIRED' });
+    expect(await expirer.execute({ datePlanId: id })).toEqual({
+      kind: 'ALREADY_RESOLVED',
+      status: 'EXPIRED',
+    });
     expect((await outboxOf(id)).map((e) => e.event_type)).toEqual(['DateProposed', 'DateExpired']);
 
-    const current = currentDatePlanResponseSchema.parse(await (await get('/me/dates/current', pair.b)).json());
+    const current = currentDatePlanResponseSchema.parse(
+      await (await get('/me/dates/current', pair.b)).json(),
+    );
     expect(current.datePlan).toMatchObject({ id, status: 'EXPIRED', myRole: 'INVITEE' });
 
     const next = await post('/me/dates', pair.b, proposeBody(pair, addDuration(STARTS, { days: 1 })));
@@ -322,7 +345,10 @@ describe('huỷ lịch / từ chối', () => {
     clock.set(addDuration(STARTS, { hours: -4 }));
     const ok = await post(`/me/dates/${id}/cancel`, first.b);
     expect(ok.status).toBe(200);
-    expect(datePlanSchema.parse(await ok.json())).toMatchObject({ status: 'CANCELLED', cancelledBy: first.b });
+    expect(datePlanSchema.parse(await ok.json())).toMatchObject({
+      status: 'CANCELLED',
+      cancelledBy: first.b,
+    });
     expect((await outboxOf(id)).map((e) => e.event_type)).toEqual([
       'DateProposed',
       'DateConfirmed',

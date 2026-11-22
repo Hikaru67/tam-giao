@@ -76,7 +76,10 @@ describe('DatePlan.propose', () => {
 
   it('giờ bắt đầu không sau now → DATE_TIME_INVALID STARTS_IN_PAST', () => {
     const r = propose({ startsAt: T0, endsAt: addDuration(T0, { hours: 1 }) });
-    expect(r.isErr() && r.error).toEqual({ code: 'DATE_TIME_INVALID', details: { reason: 'STARTS_IN_PAST' } });
+    expect(r.isErr() && r.error).toEqual({
+      code: 'DATE_TIME_INVALID',
+      details: { reason: 'STARTS_IN_PAST' },
+    });
   });
 
   it('giờ kết thúc không sau giờ bắt đầu → DATE_TIME_INVALID ENDS_BEFORE_START', () => {

@@ -12,7 +12,9 @@ export interface DatePlanExpirer {
 }
 
 /** Payload job do `datePlanExpiryJob` tạo: `{datePlanId}`. Sai dạng → lỗi lập trình (throw → retry → dead-letter). */
-export function parseDatePlanExpiryPayload(payload: Readonly<Record<string, unknown>>): DatePlanExpiryPayload {
+export function parseDatePlanExpiryPayload(
+  payload: Readonly<Record<string, unknown>>,
+): DatePlanExpiryPayload {
   const { datePlanId } = payload;
   if (typeof datePlanId !== 'string') throw new Error(`${DATE_PLAN_EXPIRY_QUEUE}: payload thiếu datePlanId`);
   return { datePlanId };
@@ -28,9 +30,15 @@ export async function runDatePlanExpiry(
   const parsed = parseDatePlanExpiryPayload(payload);
   const outcome = await expirer.executeIn(tx, parsed);
   if (outcome.kind === 'NOT_FOUND') {
-    logger.warn({ job: DATE_PLAN_EXPIRY_QUEUE, datePlanId: parsed.datePlanId }, 'date plan not found, job skipped');
+    logger.warn(
+      { job: DATE_PLAN_EXPIRY_QUEUE, datePlanId: parsed.datePlanId },
+      'date plan not found, job skipped',
+    );
   } else {
-    logger.info({ job: DATE_PLAN_EXPIRY_QUEUE, datePlanId: parsed.datePlanId, ...outcome }, 'date plan expiry handled');
+    logger.info(
+      { job: DATE_PLAN_EXPIRY_QUEUE, datePlanId: parsed.datePlanId, ...outcome },
+      'date plan expiry handled',
+    );
   }
   return outcome;
 }

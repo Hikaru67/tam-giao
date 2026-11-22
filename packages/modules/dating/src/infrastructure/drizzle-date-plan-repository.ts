@@ -126,7 +126,10 @@ export class DrizzleDatePlanRepository implements DatePlanRepository {
       .select()
       .from(datePlans)
       .where(
-        and(eq(datePlans.matchId, matchId.toLowerCase()), inArray(datePlans.status, [...OPEN_DATE_PLAN_STATUSES])),
+        and(
+          eq(datePlans.matchId, matchId.toLowerCase()),
+          inArray(datePlans.status, [...OPEN_DATE_PLAN_STATUSES]),
+        ),
       );
     return row ? toDatePlan(row) : null;
   }

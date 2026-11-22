@@ -19,12 +19,7 @@ import { createDateRoutes } from './presentation/date-routes.js';
 export type { DatePlanId, DatePlanStatus } from './domain/date-plan.js';
 export type { DatePlanView } from './application/date-plan-views.js';
 export type { ProposeDate, ProposeDateCommand, ProposeDateError } from './application/propose-date.js';
-export type {
-  CancelDate,
-  ConfirmDate,
-  DatePlanCommand,
-  DeclineDate,
-} from './application/respond-to-date.js';
+export type { CancelDate, ConfirmDate, DatePlanCommand, DeclineDate } from './application/respond-to-date.js';
 export type { ExpireDatePlan, ExpireDatePlanOutcome } from './application/expire-date-plan.js';
 export {
   DATE_PLAN_EXPIRY_QUEUE,

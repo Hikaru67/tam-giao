@@ -204,10 +204,16 @@ describe('ExpireDatePlan (AC3)', () => {
   it('quá 24h → EXPIRED + DateExpired; chạy lại → ALREADY_RESOLVED; đề xuất lịch mới được', async () => {
     const h = harness();
     const id = await proposedId(h);
-    expect(await h.expire.execute({ datePlanId: id })).toEqual({ kind: 'NOT_YET_EXPIRED', status: 'PROPOSED' });
+    expect(await h.expire.execute({ datePlanId: id })).toEqual({
+      kind: 'NOT_YET_EXPIRED',
+      status: 'PROPOSED',
+    });
     h.clock.advance({ hours: DATE_RESPONSE_TTL_HOURS });
     expect(await h.expire.execute({ datePlanId: id })).toEqual({ kind: 'EXPIRED' });
-    expect(await h.expire.execute({ datePlanId: id })).toEqual({ kind: 'ALREADY_RESOLVED', status: 'EXPIRED' });
+    expect(await h.expire.execute({ datePlanId: id })).toEqual({
+      kind: 'ALREADY_RESOLVED',
+      status: 'EXPIRED',
+    });
     expect(h.datePlans.eventTypes()).toEqual(['DateProposed', 'DateExpired']);
 
     const again = await propose(h, h.a, { startsAt: addDuration(STARTS, { days: 1 }) });
@@ -219,7 +225,10 @@ describe('ExpireDatePlan (AC3)', () => {
     const id = await proposedId(h);
     await h.confirmDate.execute({ userId: h.b, datePlanId: id });
     h.clock.advance({ days: 2 });
-    expect(await h.expire.execute({ datePlanId: id })).toEqual({ kind: 'ALREADY_RESOLVED', status: 'CONFIRMED' });
+    expect(await h.expire.execute({ datePlanId: id })).toEqual({
+      kind: 'ALREADY_RESOLVED',
+      status: 'CONFIRMED',
+    });
     expect(await h.expire.execute({ datePlanId: newId() })).toEqual({ kind: 'NOT_FOUND' });
     await expect(h.expire.execute({ datePlanId: 'bad' })).rejects.toThrow(/datePlanId/);
   });

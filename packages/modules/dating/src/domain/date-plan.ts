@@ -40,13 +40,16 @@ export const DATE_PLAN_STATUSES = [
 export type DatePlanStatus = (typeof DATE_PLAN_STATUSES)[number];
 
 /** Lịch "đang mở" — mỗi match tối đa một lịch ở các trạng thái này (partial unique index ở DB, A10). */
-export const OPEN_DATE_PLAN_STATUSES = ['PROPOSED', 'CONFIRMED', 'CHECKED_IN'] as const satisfies readonly DatePlanStatus[];
+export const OPEN_DATE_PLAN_STATUSES = [
+  'PROPOSED',
+  'CONFIRMED',
+  'CHECKED_IN',
+] as const satisfies readonly DatePlanStatus[];
 
 export type DateTimeInvalid = DomainError<'DATE_TIME_INVALID'>;
 export type DateTransitionError = DomainError<'DATE_INVALID_TRANSITION'>;
 export type DateRespondError =
-  | DomainError<'NOT_PARTICIPANT' | 'DATE_NOT_INVITEE' | 'DATE_RESPONSE_EXPIRED'>
-  | DateTransitionError;
+  DomainError<'NOT_PARTICIPANT' | 'DATE_NOT_INVITEE' | 'DATE_RESPONSE_EXPIRED'> | DateTransitionError;
 export type DateCancelError = DomainError<'NOT_PARTICIPANT' | 'CANCEL_TOO_LATE'> | DateTransitionError;
 
 /** Snapshot đầy đủ để repository lưu / dựng lại aggregate (`toState` ↔ `restore`). */
