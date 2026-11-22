@@ -33,6 +33,10 @@ jobs:
       - name: Install
         run: pnpm install --frozen-lockfile
 
+      # Chặn lỗ hổng mức high/critical trong dependency chạy production.
+      - name: Dependency audit
+        run: pnpm audit --prod --audit-level=high
+
       - name: Typecheck
         run: pnpm typecheck
 
@@ -43,7 +47,17 @@ jobs:
         run: pnpm format:check
 
       - name: Unit tests
-        run: pnpm test
+        shell: bash
+        run: |
+          set -o pipefail
+          pnpm test 2>&1 | tee unit-test.log
 
       - name: Integration tests (Postgres via Testcontainers)
-        run: pnpm test:int
+        shell: bash
+        run: |
+          set -o pipefail
+          pnpm test:int 2>&1 | tee int-test.log
+
+      # AGENTS.md mục 5 — không log PII.
+      - name: Scan test logs for PII
+        run: pnpm --filter @tamgiao/tools scan:pii ../unit-test.log ../int-test.log

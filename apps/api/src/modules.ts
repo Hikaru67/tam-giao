@@ -8,19 +8,25 @@ import {
   parseMasterKeyRing,
 } from '@tamgiao/db';
 import { requireUser, type AppEnv } from '@tamgiao/http';
-import type { Clock, Scheduler, UnitOfWork } from '@tamgiao/kernel';
+import type { Clock, ObjectStorage, Scheduler, UnitOfWork } from '@tamgiao/kernel';
 import { createDatingModule } from '@tamgiao/module-dating';
 import {
   BILLING_ERASE_ON_ACCOUNT_DELETION_CONSUMER,
   FakePaymentGateway,
   createBillingModule,
 } from '@tamgiao/module-billing';
-import { ConsoleSmsSender, createIdentityModule, type AccountDeletionStep } from '@tamgiao/module-identity';
+import {
+  ConsoleSmsSender,
+  createIdentityModule,
+  type AccountDeletionStep,
+  type SmsSender,
+} from '@tamgiao/module-identity';
 import { MATCH_ERASE_ON_ACCOUNT_DELETION_CONSUMER, createMatchingModule } from '@tamgiao/module-matching';
 import {
   MESSAGING_ERASE_ON_ACCOUNT_DELETION_CONSUMER,
   RedisMessageBroadcaster,
   createMessagingModule,
+  type MessageBroadcaster,
   type UpgradableServer,
 } from '@tamgiao/module-messaging';
 import {
@@ -67,6 +73,17 @@ export interface ModuleDeps {
   /** Ghi job hẹn giờ cùng transaction (`PgBossScheduler` — xem `job-scheduler.ts`). */
   readonly scheduler: Scheduler;
   readonly logger: Logger;
+  /**
+   * Thay adapter hạ tầng bên ngoài (SMS, object storage, Redis pub/sub) — để test dựng đúng composition thật của API
+   * với Fake (test meta route admin, test IDOR — BE-S7-07). Bỏ trống = adapter thật theo `config`.
+   */
+  readonly adapters?: ModuleAdapterOverrides;
+}
+
+export interface ModuleAdapterOverrides {
+  readonly smsSender?: SmsSender;
+  readonly storage?: ObjectStorage;
+  readonly broadcaster?: MessageBroadcaster & { close(): Promise<void> };
 }
 
 /**
@@ -85,12 +102,21 @@ export const ACCOUNT_DELETION_STEPS: readonly AccountDeletionStep[] = [
 ];
 
 /** Nối hạ tầng dùng chung vào từng module (thứ tự = thứ tự phụ thuộc giữa các module). */
-export function buildModules({ config, uow, clock, scheduler, logger }: ModuleDeps): readonly ApiModule[] {
+export function buildModules({
+  config,
+  uow,
+  clock,
+  scheduler,
+  logger,
+  adapters = {},
+}: ModuleDeps): readonly ApiModule[] {
   const encryptor = new LocalKeyEncryptor(
     parseMasterKeyRing(config.crypto.masterKeys, config.crypto.masterKeyVersion),
   );
   const blindIndexer = new HmacBlindIndexer(config.crypto.blindIndexKey);
-  const storage = new S3ObjectStorage({ ...config.storage, presignGetTtlSeconds: PRESIGNED_URL_TTL_SECONDS });
+  const storage =
+    adapters.storage ??
+    new S3ObjectStorage({ ...config.storage, presignGetTtlSeconds: PRESIGNED_URL_TTL_SECONDS });
 
   const identity = createIdentityModule({
     uow,
@@ -98,7 +124,7 @@ export function buildModules({ config, uow, clock, scheduler, logger }: ModuleDe
     encryptor,
     blindIndexer,
     // `SMS_PROVIDER` hiện chỉ có `console` (D4) — config đã chặn giá trị này ở production.
-    smsSender: new ConsoleSmsSender(),
+    smsSender: adapters.smsSender ?? new ConsoleSmsSender(),
     authSecret: config.auth.secret,
     // Quyền dữ liệu cá nhân (BE-S7-06): xuất dữ liệu + xoá tài khoản; tiến độ xoá theo consumer của từng module (worker).
     dataRights: { storage, accountDeletionSteps: ACCOUNT_DELETION_STEPS },
@@ -192,10 +218,12 @@ export function buildModules({ config, uow, clock, scheduler, logger }: ModuleDe
   // Messaging (Sprint 6): hội thoại mở/đóng ở worker theo event matching (BE-S6-01). WS `/ws` + Redis pub/sub đa
   // instance, `GET /me/conversations/:id/messages?after=` (BE-S6-02); bộ lọc nội dung (`screener`) ở BE-S6-03.
   // Handshake WS xác thực bằng cùng `authenticateUser` với guard REST.
-  const broadcaster = new RedisMessageBroadcaster({
-    url: config.redis.url,
-    onError: (error) => logger.warn({ err: error }, 'messaging redis error'),
-  });
+  const broadcaster =
+    adapters.broadcaster ??
+    new RedisMessageBroadcaster({
+      url: config.redis.url,
+      onError: (error) => logger.warn({ err: error }, 'messaging redis error'),
+    });
   const messagingModule = createMessagingModule({
     uow,
     clock,

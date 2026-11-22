@@ -25,7 +25,16 @@ describe('api config', () => {
       nodeEnv: 'development',
       logLevel: 'info',
       port: 3000,
-      http: { corsOrigins: [], bodyLimitBytes: 1_048_576, trustProxy: false },
+      http: {
+        corsOrigins: [],
+        bodyLimitBytes: 1_048_576,
+        trustProxy: false,
+        rateLimit: {
+          enabled: true,
+          store: 'redis',
+          limits: { globalPerMinute: 600, otpPerMinute: 10, loginPerMinute: 10, dataRightsPerHour: 10 },
+        },
+      },
       database: { url: 'postgres://tamgiao@localhost:5433/tamgiao' },
       redis: { url: 'redis://localhost:6380' },
       storage: {
@@ -106,6 +115,12 @@ describe('api config', () => {
       [{ NODE_ENV: 'production' }, ['SMS_PROVIDER', 'EKYC_PROVIDER', 'PAYMENT_GATEWAY']],
       [{ PAYMENT_WEBHOOK_SECRET: 'short' }, ['PAYMENT_WEBHOOK_SECRET']],
       [{ EKYC_MAX_ATTEMPTS: '0' }, ['EKYC_MAX_ATTEMPTS']],
+      // BE-S7-07: store rate limit in-memory đếm riêng từng instance → cấm ở production.
+      [
+        { NODE_ENV: 'production', RATE_LIMIT_STORE: 'memory' },
+        ['SMS_PROVIDER', 'EKYC_PROVIDER', 'RATE_LIMIT_STORE', 'PAYMENT_GATEWAY'],
+      ],
+      [{ RATE_LIMIT_GLOBAL_PER_MINUTE: '0' }, ['RATE_LIMIT_GLOBAL_PER_MINUTE']],
     ] as const) {
       try {
         parseApiConfig({ ...base, ...override });

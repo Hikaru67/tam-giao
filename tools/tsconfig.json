@@ -4,6 +4,6 @@
     "allowJs": true,
     "checkJs": false
   },
-  "include": ["eslint-plugin/**/*", "scripts/**/*"],
+  "include": ["eslint-plugin/**/*", "scripts/**/*", "security/**/*"],
   "exclude": ["lint-fixtures"]
 }
