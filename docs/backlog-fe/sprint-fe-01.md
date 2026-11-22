@@ -154,7 +154,7 @@ CI kiểm tra FE. Chưa có màn nghiệp vụ.
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| repo | devops | P0 | 0.5d | FE-S1-01 | FE-S1-04, FE-S1-07 | TODO |
+| repo | devops | P0 | 0.5d | FE-S1-01 | FE-S1-04, FE-S1-07 | DONE |
 
 **Mục tiêu:** PR có FE được kiểm tra tự động như BE.
 

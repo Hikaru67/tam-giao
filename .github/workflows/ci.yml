@@ -16,7 +16,7 @@ jobs:
   verify:
     name: typecheck · lint · test
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
     env:
       # Testcontainers dùng Docker có sẵn trên runner; tắt Ryuk để dọn container nhanh hơn trên CI tạm thời.
       TESTCONTAINERS_RYUK_DISABLED: 'true'
@@ -51,6 +51,16 @@ jobs:
         run: |
           set -o pipefail
           pnpm test 2>&1 | tee unit-test.log
+
+      # FE-S1-06: build thật app web (admin, partner — partner sinh service worker PWA).
+      - name: Build web apps (admin, partner)
+        run: pnpm --filter @tamgiao/admin --filter @tamgiao/partner build
+
+      # FE-S1-06: bundle JS mobile (Metro) — bắt lỗi resolve/import mà typecheck không thấy (vd @tamgiao/contracts `.js`).
+      - name: Bundle mobile app (Expo, iOS + Android)
+        run: |
+          pnpm --filter @tamgiao/mobile exec expo export --platform ios --output-dir "$RUNNER_TEMP/expo-ios"
+          pnpm --filter @tamgiao/mobile exec expo export --platform android --output-dir "$RUNNER_TEMP/expo-android"
 
       - name: Integration tests (Postgres via Testcontainers)
         shell: bash
