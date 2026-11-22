@@ -31,3 +31,6 @@ apps/mobile/ios/
 apps/mobile/android/
 dev-dist/
 
+
+# dev FE (FE-S1-05): log api local có SĐT test
+.run/

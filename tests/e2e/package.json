@@ -2,6 +2,10 @@
   "name": "@tamgiao/e2e",
   "private": true,
   "type": "module",
+  "exports": {
+    ".": "./src/lib/index.ts",
+    "./lib": "./src/lib/index.ts"
+  },
   "scripts": {
     "typecheck": "tsc -p tsconfig.json",
     "e2e": "node --import tsx src/full-flow.ts",

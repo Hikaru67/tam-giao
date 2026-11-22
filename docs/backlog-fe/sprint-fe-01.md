@@ -127,7 +127,7 @@ CI kiểm tra FE. Chưa có màn nghiệp vụ.
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| repo, tests/e2e | devops | P0 | 1d | FE-S1-01 | FE-S1-02, FE-S1-03 | TODO |
+| repo, tests/e2e | devops | P0 | 1d | FE-S1-01 | FE-S1-02, FE-S1-03 | DONE |
 
 **Mục tiêu:** Dev FE dựng được dữ liệu ở mọi giai đoạn (mới đăng ký, đã duyệt, đang ghép, đang hẹn) trong 1 lệnh.
 

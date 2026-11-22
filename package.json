@@ -16,6 +16,8 @@
     "test:int": "vitest run --project int --passWithNoTests",
     "test:watch": "vitest --project unit",
     "dev": "turbo run dev",
+    "dev:fe": "sh tools/scripts/dev-fe.sh",
+    "seed:fe": "pnpm --filter @tamgiao/tools seed:fe",
     "build": "turbo run build",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
