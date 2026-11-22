@@ -223,7 +223,7 @@ hoặc `CLOSED_STOPPED` + cooldown; thông báo đẩy/SMS cho các mốc quan t
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| repo | devops | P1 | 1.5d | BE-S7-08 | — | TODO |
+| repo | devops | P1 | 1.5d | BE-S7-08 | — | IN_REVIEW |
 
 **Mục tiêu:** Xác nhận hệ thống chạy đúng toàn luồng 14 bước và chịu được tải beta.
 
