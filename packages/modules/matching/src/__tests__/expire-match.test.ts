@@ -58,7 +58,7 @@ describe('ExpireMatch (job matching.expire-match)', () => {
     expect(h.pairHistory.get(h.a, h.b)?.outcome).toBe('EXPIRED');
   });
 
-  it('DATING hết 14 ngày → CLOSED_STOPPED + cooldown cả hai tới now + COOLDOWN_DAYS; chạy lại → no-op', async () => {
+  it('DATING hết 14 ngày chưa gặp → CLOSED_STOPPED lý do TIMEOUT, không cooldown phạt; chạy lại → no-op (BE-S7-04)', async () => {
     await h.acceptOffer.execute({ userId: h.a });
     await h.acceptOffer.execute({ userId: h.b });
     h.clock.set(addDuration(NOW, { days: DATING_DAYS }));
@@ -68,9 +68,13 @@ describe('ExpireMatch (job matching.expire-match)', () => {
       kind: 'CLOSED_STOPPED',
       fromStatus: 'DATING',
     });
-    const until = addDuration(now, { days: COOLDOWN_DAYS });
-    expect(h.cooldowns.untilByUser.get(h.a.toLowerCase())).toEqual(until);
-    expect(h.cooldowns.untilByUser.get(h.b.toLowerCase())).toEqual(until);
+    expect(h.matches.states.get(matchId)).toMatchObject({
+      status: 'CLOSED_STOPPED',
+      closeOutcome: 'STOPPED',
+      closeReason: 'TIMEOUT',
+      closedAt: now,
+    });
+    expect(h.cooldowns.untilByUser.size).toBe(0);
     expect(h.activeSlots.slots.size).toBe(0);
     expect(h.pairHistory.get(h.a, h.b)?.outcome).toBe('CLOSED_STOPPED');
 
@@ -79,7 +83,7 @@ describe('ExpireMatch (job matching.expire-match)', () => {
       kind: 'ALREADY_CLOSED',
       status: 'CLOSED_STOPPED',
     });
-    expect(h.cooldowns.untilByUser.get(h.a.toLowerCase())).toEqual(until);
+    expect(h.cooldowns.untilByUser.size).toBe(0);
     expect(h.eventTypes(matchId)).toEqual([
       'MatchOffered',
       'MatchAwaitingResponse',

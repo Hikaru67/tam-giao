@@ -1,4 +1,9 @@
-import { MATCH_CLOSED, MATCH_LOCKED, MATCH_STARTED_DATING } from '@tamgiao/contracts';
+import {
+  ACCOUNT_DELETION_REQUESTED,
+  MATCH_CLOSED,
+  MATCH_LOCKED,
+  MATCH_STARTED_DATING,
+} from '@tamgiao/contracts';
 import { MESSAGE_RATE_LIMIT_PER_MINUTE } from '@tamgiao/contracts/constants';
 import { createDatabase, deliverOnce, DrizzleUnitOfWork, EventBus, type Database } from '@tamgiao/db';
 import { FakeClock, addDuration, fail, newId, type DomainEvent } from '@tamgiao/kernel';
@@ -10,6 +15,7 @@ import {
   OPEN_CONVERSATION_ON_MATCH_STARTED_DATING_CONSUMER,
   createMessagingModule,
   createMessagingWorker,
+  MESSAGING_ERASE_ON_ACCOUNT_DELETION_CONSUMER,
 } from '../index.js';
 import { InMemoryMessageBroadcaster } from './messaging-fakes.js';
 
@@ -113,6 +119,7 @@ describe('consumer mở/đóng hội thoại theo event matching', () => {
       [MATCH_STARTED_DATING, OPEN_CONVERSATION_ON_MATCH_STARTED_DATING_CONSUMER],
       [MATCH_CLOSED, CLOSE_CONVERSATION_ON_MATCH_CLOSED_CONSUMER],
       [MATCH_LOCKED, CLOSE_CONVERSATION_ON_MATCH_LOCKED_CONSUMER],
+      [ACCOUNT_DELETION_REQUESTED, MESSAGING_ERASE_ON_ACCOUNT_DELETION_CONSUMER],
     ]);
   });
 

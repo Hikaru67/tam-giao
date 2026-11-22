@@ -99,4 +99,19 @@ describe('MatchPairLookup (facade findLatestMatchBetween)', () => {
     expect(await facade.findLatestMatchBetween(h.a, h.a)).toBeNull();
     expect(await facade.findLatestMatchBetween(h.a, 'not-a-uuid')).toBeNull();
   });
+
+  it('findOpenMatchForUser (BE-S7-01): match mở của từng người trong cặp; đóng / người lạ / id sai → null', async () => {
+    const h = createResponseHarness();
+    const facade = new MatchPairLookup({ uow: new PassThroughUnitOfWork(), matches: h.matches });
+    const matchId = await h.propose();
+
+    const expected = { matchId, status: 'OFFERED', participantIds: [h.a, h.b] };
+    expect(await facade.findOpenMatchForUser(h.a)).toEqual(expected);
+    expect(await facade.findOpenMatchForUser(h.b)).toEqual(expected);
+    expect(await facade.findOpenMatchForUser(newId())).toBeNull();
+    expect(await facade.findOpenMatchForUser('not-a-uuid')).toBeNull();
+
+    await h.declineOffer.execute({ userId: h.a, reason: null });
+    expect(await facade.findOpenMatchForUser(h.a)).toBeNull();
+  });
 });

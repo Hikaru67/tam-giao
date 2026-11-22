@@ -1,0 +1,37 @@
+# Luật cảnh báo Prometheus mẫu (BE-S7-08) cho metric của apps/api (`GET /metrics`, bearer METRICS_TOKEN).
+# Cảnh báo outbox tồn đọng còn được worker gửi trực tiếp qua Sentry/log (OutboxBacklogMonitor) — không phụ thuộc
+# việc đã dựng Prometheus hay chưa. Ngưỡng ở đây nên khớp OUTBOX_BACKLOG_MAX_EVENTS / OUTBOX_BACKLOG_MAX_AGE_SECONDS.
+groups:
+  - name: tamgiao-api
+    rules:
+      - alert: OutboxBacklogHigh
+        expr: max(outbox_unpublished_events) > 500 or max(outbox_oldest_unpublished_age_seconds) > 300
+        for: 5m
+        labels: { severity: warning }
+        annotations:
+          summary: 'Outbox tồn đọng ({{ $value }}) — worker relay có thể đã dừng'
+          runbook: docs/runbooks/observability.md#outbox-tồn-đọng
+
+      - alert: ApiHighErrorRate
+        expr: |
+          sum(rate(http_server_errors_total[5m]))
+            / clamp_min(sum(rate(http_request_duration_seconds_count[5m])), 1) > 0.02
+        for: 10m
+        labels: { severity: warning }
+        annotations:
+          summary: 'Tỉ lệ 5xx > 2% trong 10 phút'
+
+      - alert: ApiLatencyP95High
+        expr: |
+          histogram_quantile(0.95, sum by (le) (rate(http_request_duration_seconds_bucket{route!="/ws"}[5m]))) > 0.3
+        for: 10m
+        labels: { severity: warning }
+        annotations:
+          summary: 'p95 độ trễ API > 300ms'
+
+      - alert: JobQueueBacklog
+        expr: sum by (queue) (job_queue_depth{state=~"created|retry"}) > 1000
+        for: 15m
+        labels: { severity: warning }
+        annotations:
+          summary: 'Hàng đợi {{ $labels.queue }} tồn {{ $value }} job'

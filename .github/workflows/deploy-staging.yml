@@ -1,0 +1,177 @@
+# Deploy staging (BE-S7-08): CI xanh trên `main` → build + push image api/worker → migrate (advisory lock) →
+# rollout → chờ /ready → smoke test (health + OTP với SMS giả) → xuất bản OpenAPI.
+#
+# Hạ tầng chưa chốt (D5) nên không gắn nhà cung cấp nào: registry là bất kỳ registry OCI nào (`vars.REGISTRY`),
+# máy staging là bất kỳ máy Linux nào có Docker Compose truy cập qua SSH. Cách dựng máy + file compose mẫu:
+# docs/runbooks/staging-deploy.md.
+#
+# Cấu hình (Settings → Environments → staging):
+#   vars:    REGISTRY (vd ghcr.io, registry.example.vn), IMAGE_REPOSITORY (vd my-org/tamgiao),
+#            STAGING_API_URL (vd https://api.staging.example.vn), STAGING_DEPLOY_DIR (vd /opt/tamgiao)
+#   secrets: REGISTRY_USERNAME, REGISTRY_PASSWORD, STAGING_SSH_HOST, STAGING_SSH_USER, STAGING_SSH_KEY,
+#            STAGING_SSH_KNOWN_HOSTS, METRICS_TOKEN (tuỳ chọn, để kiểm tra /metrics)
+name: Deploy staging
+
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+
+# Không chạy chồng 2 lần deploy; lần sau xếp hàng chờ lần trước xong (không huỷ giữa chừng lúc đang migrate).
+concurrency:
+  group: deploy-staging
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+env:
+  # Commit được deploy: commit CI vừa chạy xanh (workflow_run) hoặc commit của lần chạy tay.
+  DEPLOY_SHA: ${{ github.event.workflow_run.head_sha || github.sha }}
+
+jobs:
+  build:
+    name: build & push (${{ matrix.app }})
+    # workflow_run chạy cả khi CI đỏ → chỉ deploy khi CI xanh và là push lên main.
+    if: github.event_name == 'workflow_dispatch' || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push')
+    runs-on: ubuntu-latest
+    environment: staging
+    timeout-minutes: 20
+    strategy:
+      matrix:
+        app: [api, worker]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.DEPLOY_SHA }}
+
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ${{ vars.REGISTRY }}
+          username: ${{ secrets.REGISTRY_USERNAME }}
+          password: ${{ secrets.REGISTRY_PASSWORD }}
+
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: apps/${{ matrix.app }}/Dockerfile
+          push: true
+          build-args: APP_RELEASE=${{ env.DEPLOY_SHA }}
+          tags: |
+            ${{ vars.REGISTRY }}/${{ vars.IMAGE_REPOSITORY }}-${{ matrix.app }}:${{ env.DEPLOY_SHA }}
+            ${{ vars.REGISTRY }}/${{ vars.IMAGE_REPOSITORY }}-${{ matrix.app }}:staging
+          cache-from: type=gha,scope=${{ matrix.app }}
+          cache-to: type=gha,scope=${{ matrix.app }},mode=max
+
+  deploy:
+    name: migrate & rollout
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: staging
+      url: ${{ vars.STAGING_API_URL }}/docs
+    timeout-minutes: 15
+    steps:
+      - name: SSH key
+        env:
+          SSH_KEY: ${{ secrets.STAGING_SSH_KEY }}
+          SSH_KNOWN_HOSTS: ${{ secrets.STAGING_SSH_KNOWN_HOSTS }}
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$SSH_KEY" > ~/.ssh/id_deploy
+          printf '%s\n' "$SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/id_deploy ~/.ssh/known_hosts
+
+      - name: Pull, migrate (advisory lock), rollout
+        env:
+          SSH_TARGET: ${{ secrets.STAGING_SSH_USER }}@${{ secrets.STAGING_SSH_HOST }}
+          DEPLOY_DIR: ${{ vars.STAGING_DEPLOY_DIR }}
+          REGISTRY: ${{ vars.REGISTRY }}
+          REGISTRY_USERNAME: ${{ secrets.REGISTRY_USERNAME }}
+          REGISTRY_PASSWORD: ${{ secrets.REGISTRY_PASSWORD }}
+        run: |
+          remote() { ssh -i ~/.ssh/id_deploy -o BatchMode=yes "$SSH_TARGET" "$@"; }
+          # Mật khẩu registry đi qua stdin (không nằm trên dòng lệnh / process list của máy staging).
+          printf '%s' "$REGISTRY_PASSWORD" | remote "docker login '$REGISTRY' -u '$REGISTRY_USERNAME' --password-stdin"
+          remote "DEPLOY_DIR='$DEPLOY_DIR' IMAGE_TAG='$DEPLOY_SHA' sh -s" <<'REMOTE'
+          set -eu
+          cd "$DEPLOY_DIR"
+          export IMAGE_TAG
+          docker compose pull api worker migrate
+          # Migration chạy một lần trước rollout; src/migrate.ts giữ advisory lock nên deploy chồng nhau vẫn an toàn.
+          docker compose run --rm migrate
+          docker compose up -d --remove-orphans api worker
+          docker image prune -f >/dev/null
+          REMOTE
+
+      - name: Wait for /ready
+        env:
+          API_URL: ${{ vars.STAGING_API_URL }}
+        run: |
+          for i in $(seq 1 40); do
+            if curl -fsS "$API_URL/ready" >/dev/null; then echo "ready after $i tries"; exit 0; fi
+            sleep 5
+          done
+          echo "::error::/ready không xanh sau 200 giây"
+          exit 1
+
+  smoke:
+    name: smoke test & publish OpenAPI
+    needs: deploy
+    runs-on: ubuntu-latest
+    environment: staging
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.DEPLOY_SHA }}
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - name: Install (tools only)
+        run: pnpm install --frozen-lockfile --filter "@tamgiao/tools..."
+
+      - name: SSH key (đọc log SMS giả của API)
+        env:
+          SSH_KEY: ${{ secrets.STAGING_SSH_KEY }}
+          SSH_KNOWN_HOSTS: ${{ secrets.STAGING_SSH_KNOWN_HOSTS }}
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$SSH_KEY" > ~/.ssh/id_deploy
+          printf '%s\n' "$SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/id_deploy ~/.ssh/known_hosts
+
+      - name: Smoke test (health + ready + OTP với Fake SMS)
+        env:
+          SMOKE_BASE_URL: ${{ vars.STAGING_API_URL }}
+          SMOKE_OTP_COMMAND: >-
+            ssh -i ~/.ssh/id_deploy -o BatchMode=yes ${{ secrets.STAGING_SSH_USER }}@${{ secrets.STAGING_SSH_HOST }}
+            "cd '${{ vars.STAGING_DEPLOY_DIR }}' && docker compose logs --no-log-prefix --since 5m api"
+        run: pnpm --filter @tamgiao/tools smoke:staging
+
+      - name: Metrics endpoint
+        env:
+          METRICS_TOKEN: ${{ secrets.METRICS_TOKEN }}
+          API_URL: ${{ vars.STAGING_API_URL }}
+        run: |
+          if [ -z "$METRICS_TOKEN" ]; then echo "METRICS_TOKEN chưa cấu hình — bỏ qua"; exit 0; fi
+          curl -fsS -H "authorization: Bearer $METRICS_TOKEN" "$API_URL/metrics" | grep -E '^outbox_unpublished_events '
+
+      - name: Export OpenAPI
+        env:
+          API_URL: ${{ vars.STAGING_API_URL }}
+        run: curl -fsS "$API_URL/openapi.json" -o openapi.json
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: openapi-${{ env.DEPLOY_SHA }}
+          path: openapi.json

@@ -22,8 +22,8 @@ export interface MatchTransitionEffectsDeps {
  * - Vào bất kỳ trạng thái đóng nào (`DECLINED`, `EXPIRED`, `CLOSED_STOPPED`, `CLOSED_SUCCESS`, `LOCKED`) → trả active
  *   slot của hai người (ARCHITECTURE mục 5: "đóng match = xoá 2 dòng") + ghi `pair_history` với outcome = trạng thái
  *   cuối (cặp không bao giờ được đề xuất lại).
- * - `CLOSED_STOPPED` (dừng tìm hiểu hoặc hết `DATING_DAYS`) → thêm cooldown cho **cả hai** người tới
- *   `now + COOLDOWN_DAYS`.
+ * - `CLOSED_STOPPED` do dừng tìm hiểu (`Match.appliesCooldown`) → thêm cooldown cho **cả hai** người tới
+ *   `now + COOLDOWN_DAYS`. Hết `DATING_DAYS` chưa gặp (`closeReason = TIMEOUT`, BE-S7-04) → không cooldown phạt.
  *
  * Mọi thao tác đều idempotent (release lặp lại, record ghi đè, cooldown giữ `until` lớn hơn, job khoá theo version).
  */
@@ -49,7 +49,7 @@ export async function applyMatchTransitionEffects(
   const [first, second] = match.participants;
   await deps.activeSlots.release(tx, match.id);
   await deps.pairHistory.record(tx, first, second, status, match.id, now);
-  if (status === 'CLOSED_STOPPED') {
+  if (match.appliesCooldown()) {
     const until = addDuration(now, { days: COOLDOWN_DAYS });
     await deps.cooldowns.start(tx, first, until, now);
     await deps.cooldowns.start(tx, second, until, now);

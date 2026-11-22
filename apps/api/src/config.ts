@@ -28,6 +28,18 @@ const apiEnvSchema = z
     API_BODY_LIMIT_BYTES: z.coerce.number().int().min(1_024).max(10_485_760).default(1_048_576),
     /** Chỉ bật khi API đứng sau reverse proxy tin cậy (lấy IP client từ `x-forwarded-for`). */
     TRUST_PROXY: envBoolean.default(false),
+    // Rate limit tầng HTTP theo IP (BE-S7-07) — ngưỡng vận hành, không phải luật nghiệp vụ.
+    RATE_LIMIT_ENABLED: envBoolean.default(true),
+    /** `redis` = đếm chung mọi instance (dùng `REDIS_URL`); `memory` = mỗi instance đếm riêng (chỉ dev/test). */
+    RATE_LIMIT_STORE: z.enum(['redis', 'memory']).default('redis'),
+    /** Số request tối đa / IP / phút cho mọi route (trừ /health, /ready, /metrics). */
+    RATE_LIMIT_GLOBAL_PER_MINUTE: z.coerce.number().int().min(1).default(600),
+    /** Yêu cầu/xác thực OTP (đăng nhập, xác nhận xoá tài khoản) / IP / phút. */
+    RATE_LIMIT_OTP_PER_MINUTE: z.coerce.number().int().min(1).default(10),
+    /** Đăng nhập admin + nhân viên quán / IP / phút. */
+    RATE_LIMIT_LOGIN_PER_MINUTE: z.coerce.number().int().min(1).default(10),
+    /** Yêu cầu xuất dữ liệu + xoá tài khoản / IP / giờ. */
+    RATE_LIMIT_DATA_RIGHTS_PER_HOUR: z.coerce.number().int().min(1).default(10),
     DATABASE_URL: envPostgresUrl,
     /** Redis cho pub/sub chat realtime giữa các instance API (BE-S6-02): `redis://` hoặc `rediss://` (TLS). */
     REDIS_URL: z.url({ protocol: /^rediss?$/ }),
@@ -59,6 +71,20 @@ const apiEnvSchema = z
     PAYMENT_WEBHOOK_SECRET: z.string().min(16),
     /** URL cổng chuyển người dùng về sau khi thanh toán (deep link hoặc trang web của app). */
     PAYMENT_RETURN_URL: z.url().default('tamgiao://payments/return'),
+    // Observability (BE-S7-08)
+    /** DSN Sentry; bỏ trống = không gửi lỗi đi đâu (no-op). */
+    SENTRY_DSN: z.url().optional(),
+    /** Tên môi trường gắn vào lỗi (`staging`…); mặc định = NODE_ENV. */
+    SENTRY_ENVIRONMENT: z.string().min(1).optional(),
+    /** Phiên bản đang chạy (git sha) — image Docker gán sẵn qua build arg. */
+    APP_RELEASE: z.string().min(1).optional(),
+    METRICS_ENABLED: envBoolean.default(true),
+    /** Có giá trị → `GET /metrics` yêu cầu `Authorization: Bearer <METRICS_TOKEN>` (≥ 16 ký tự). */
+    METRICS_TOKEN: z.string().min(16).optional(),
+    /** `GET /openapi.json` + `GET /docs`; mặc định bật trừ production. */
+    OPENAPI_ENABLED: envBoolean.optional(),
+    /** URL công khai của API ghi vào `servers` của OpenAPI (vd https://api.staging.example.com). */
+    PUBLIC_API_URL: envHttpUrl.optional(),
   })
   .superRefine((e, ctx) => {
     if (e.NODE_ENV === 'production' && e.SMS_PROVIDER === 'console') {
@@ -68,6 +94,10 @@ const apiEnvSchema = z
     if (e.NODE_ENV === 'production' && e.EKYC_PROVIDER === 'fake') {
       // FakeEkycProvider luôn "đạt" → không được chạy ở production.
       ctx.addIssue({ code: 'custom', path: ['EKYC_PROVIDER'], message: 'fake không dùng ở production' });
+    }
+    if (e.NODE_ENV === 'production' && e.RATE_LIMIT_STORE === 'memory') {
+      // Store in-memory đếm riêng từng instance → giới hạn không đúng khi scale ngang.
+      ctx.addIssue({ code: 'custom', path: ['RATE_LIMIT_STORE'], message: 'memory không dùng ở production' });
     }
     if (e.NODE_ENV === 'production' && e.PAYMENT_GATEWAY === 'fake') {
       // FakePaymentGateway không thu tiền thật và có endpoint giả lập thanh toán → không được chạy ở production.
@@ -85,6 +115,16 @@ const apiEnvSchema = z
         .filter(Boolean),
       bodyLimitBytes: e.API_BODY_LIMIT_BYTES,
       trustProxy: e.TRUST_PROXY,
+      rateLimit: {
+        enabled: e.RATE_LIMIT_ENABLED,
+        store: e.RATE_LIMIT_STORE,
+        limits: {
+          globalPerMinute: e.RATE_LIMIT_GLOBAL_PER_MINUTE,
+          otpPerMinute: e.RATE_LIMIT_OTP_PER_MINUTE,
+          loginPerMinute: e.RATE_LIMIT_LOGIN_PER_MINUTE,
+          dataRightsPerHour: e.RATE_LIMIT_DATA_RIGHTS_PER_HOUR,
+        },
+      },
     },
     database: { url: e.DATABASE_URL },
     redis: { url: e.REDIS_URL },
@@ -113,6 +153,15 @@ const apiEnvSchema = z
       gateway: e.PAYMENT_GATEWAY,
       webhookSecret: e.PAYMENT_WEBHOOK_SECRET,
       returnUrl: e.PAYMENT_RETURN_URL,
+    },
+    observability: {
+      sentry: { dsn: e.SENTRY_DSN, environment: e.SENTRY_ENVIRONMENT ?? e.NODE_ENV, release: e.APP_RELEASE },
+      metrics: { enabled: e.METRICS_ENABLED, token: e.METRICS_TOKEN },
+      openApi: {
+        enabled: e.OPENAPI_ENABLED ?? e.NODE_ENV !== 'production',
+        serverUrl: e.PUBLIC_API_URL,
+      },
+      release: e.APP_RELEASE ?? 'dev',
     },
   }));
 

@@ -91,9 +91,23 @@ export class InMemoryUserRepository implements UserRepository {
   readonly table = new MemoryTable<UserState>();
   readonly events = new MemoryTable<DomainEvent>();
 
+  /** userId → thời điểm tài khoản bị xoá (BE-S7-06) — không còn tra được theo SĐT. */
+  readonly deleted = new MemoryTable<Date>();
+
   async findByPhone(_tx: Tx, phone: PhoneNumber): Promise<User | null> {
-    const state = [...this.table.rows.values()].find((u) => u.phone.equals(phone));
+    const state = [...this.table.rows.values()].find(
+      (u) => u.phone.equals(phone) && !this.deleted.rows.has(u.id),
+    );
     return state ? User.restore(state) : null;
+  }
+
+  async findActiveById(_tx: Tx, id: UserId): Promise<User | null> {
+    const state = this.table.rows.get(id);
+    return state && !this.deleted.rows.has(id) ? User.restore(state) : null;
+  }
+
+  async anonymize(_tx: Tx, id: UserId, now: Date): Promise<void> {
+    this.deleted.rows.set(id, now);
   }
 
   async save(_tx: Tx, user: User): Promise<void> {
@@ -176,6 +190,7 @@ export class FakeBlindIndexer implements BlindIndexer {
 /** `BannedUserRegistry` in-memory (BE-S6-06). */
 export class InMemoryBannedUserRegistry implements BannedUserRegistry {
   readonly table = new MemoryTable<Date>();
+  readonly deletedPhones = new Map<string, string>();
 
   async markBanned(_tx: Tx, userId: string, bannedAt: Date): Promise<void> {
     if (!this.table.rows.has(userId)) this.table.rows.set(userId, bannedAt);
@@ -183,6 +198,11 @@ export class InMemoryBannedUserRegistry implements BannedUserRegistry {
 
   async isBanned(_tx: Tx, userId: string): Promise<boolean> {
     return this.table.rows.has(userId);
+  }
+
+  async isBannedDeletedPhone(_tx: Tx, phoneBidx: string): Promise<boolean> {
+    const userId = this.deletedPhones.get(phoneBidx);
+    return userId !== undefined && this.table.rows.has(userId);
   }
 }
 

@@ -11,13 +11,19 @@ import { FakeClock } from '@tamgiao/kernel';
 import { testDatabaseUrl } from '@tamgiao/testing';
 import { Hono } from 'hono';
 import { createIdentityModule } from '../index.js';
+import { FakeObjectStorage } from './data-rights-fakes.js';
 import { RecordingSmsSender } from './fakes.js';
+
+/** Bước xoá dữ liệu giả lập cho test tiến độ (consumer thật nằm ở các module khác). */
+export const HARNESS_DELETION_STEPS = [{ module: 'profile', consumer: 'profile.erase-on-account-deletion' }];
 
 /** Dựng module identity thật trên Postgres của lượt test + Hono app giống apps/api (trace, logger, lỗi). */
 export function createIdentityHarness() {
   const database: Database = createDatabase(testDatabaseUrl(), { maxConnections: 10 });
   const clock = new FakeClock(new Date('2026-11-16T08:00:00.000Z'));
   const sms = new RecordingSmsSender();
+  const storage = new FakeObjectStorage(() => clock.now());
+  const encryptor = new LocalKeyEncryptor({ currentVersion: 1, keys: new Map([[1, Buffer.alloc(32, 7)]]) });
   const logLines: string[] = [];
   const logger = createLogger({
     service: 'api',
@@ -28,10 +34,11 @@ export function createIdentityHarness() {
   const module = createIdentityModule({
     uow: new DrizzleUnitOfWork(database.pool),
     clock,
-    encryptor: new LocalKeyEncryptor({ currentVersion: 1, keys: new Map([[1, Buffer.alloc(32, 7)]]) }),
+    encryptor,
     blindIndexer: new HmacBlindIndexer(Buffer.alloc(32, 9)),
     smsSender: sms,
     authSecret: Buffer.alloc(32, 11),
+    dataRights: { storage, accountDeletionSteps: HARNESS_DELETION_STEPS },
   });
 
   const app = new Hono<AppEnv>();
@@ -47,7 +54,7 @@ export function createIdentityHarness() {
       body: JSON.stringify(body),
     });
 
-  return { database, clock, sms, logLines, module, app, post };
+  return { database, clock, sms, storage, encryptor, logLines, module, app, post };
 }
 
 export type IdentityHarness = ReturnType<typeof createIdentityHarness>;

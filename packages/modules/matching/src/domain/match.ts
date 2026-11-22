@@ -55,6 +55,12 @@ export const MATCH_CLOSE_TRIGGERS = ['MANUAL', 'DATING_PERIOD_ENDED'] as const;
 export type MatchCloseTrigger = (typeof MATCH_CLOSE_TRIGGERS)[number];
 
 /**
+ * Mã lý do đóng khi hết `DATING_DAYS` mà chưa gặp (BE-S7-04) — lưu `matches.close_reason`. Đóng do hết hạn **không**
+ * kéo theo cooldown phạt (khác "dừng tìm hiểu" chủ động / feedback B). Mã phân loại, không PII.
+ */
+export const MATCH_CLOSE_REASON_TIMEOUT = 'TIMEOUT';
+
+/**
  * Snapshot điểm tương hợp lúc đề xuất (dữ liệu thuần, không phụ thuộc `CompatibilityScorer` của BE-S5-03):
  * tổng 0–100 và điểm từng trụ cột (key → 0–100). Giữ nguyên để màn hình hiển thị đúng con số đã gửi.
  */
@@ -102,6 +108,11 @@ export interface MatchState {
   readonly closeOutcome: MatchCloseOutcome | null;
   /** Mã lý do khoá (vd `REPORT_FILED`) — mã phân loại, không PII. */
   readonly lockReason: string | null;
+  /**
+   * Mã lý do đóng khi `CLOSED_SUCCESS | CLOSED_STOPPED` nếu có (vd `TIMEOUT` = hết `DATING_DAYS` chưa gặp, BE-S7-04);
+   * `null` = đóng thủ công. Mã phân loại, không PII.
+   */
+  readonly closeReason: string | null;
   readonly updatedAt: Date;
   readonly version: number;
 }
@@ -146,7 +157,7 @@ const assertScore = (value: number, field: string): void => {
  * - DATING
  *   - markMet                   → MET                 (bỏ hạn)
  *   - close(STOPPED)            → CLOSED_STOPPED      ; close(SUCCESS) → INVALID_TRANSITION (chưa gặp)
- *   - expire (now ≥ expiresAt)  → CLOSED_STOPPED      (hết DATING_DAYS — ARCHITECTURE mục 5)
+ *   - expire (now ≥ expiresAt)  → CLOSED_STOPPED      (hết DATING_DAYS chưa gặp, closeReason TIMEOUT, không cooldown)
  *   - lock                      → LOCKED
  * - MET
  *   - close(SUCCESS)            → CLOSED_SUCCESS
@@ -223,6 +234,7 @@ export class Match extends AggregateRoot<MatchId> {
         withdrawn: false,
         closeOutcome: null,
         lockReason: null,
+        closeReason: null,
         updatedAt: now,
       },
       0,
@@ -275,6 +287,18 @@ export class Match extends AggregateRoot<MatchId> {
 
   get closeOutcome(): MatchCloseOutcome | null {
     return this.state.closeOutcome;
+  }
+
+  get closeReason(): string | null {
+    return this.state.closeReason;
+  }
+
+  /**
+   * Đóng ở trạng thái này có kéo theo cooldown `COOLDOWN_DAYS` cho cả hai không: chỉ `CLOSED_STOPPED` do dừng tìm hiểu
+   * (thủ công / feedback B). Hết `DATING_DAYS` chưa gặp (`TIMEOUT`, BE-S7-04) → không phạt cooldown.
+   */
+  appliesCooldown(): boolean {
+    return this.state.status === 'CLOSED_STOPPED' && this.state.closeReason !== MATCH_CLOSE_REASON_TIMEOUT;
   }
 
   isParticipant(userId: MatchUserId): boolean {
@@ -387,8 +411,8 @@ export class Match extends AggregateRoot<MatchId> {
   /**
    * Job hết hạn (idempotent):
    * - OFFERED / AWAITING_RESPONSE, `now >= expiresAt` → EXPIRED, phát `MatchExpired`.
-   * - DATING, `now >= expiresAt` (hết `DATING_DAYS`) → CLOSED_STOPPED, phát `MatchClosed{STOPPED, DATING_PERIOD_ENDED}`
-   *   (ARCHITECTURE mục 5: "stop / hết 14 ngày → CLOSED_STOPPED").
+   * - DATING, `now >= expiresAt` (hết `DATING_DAYS` mà chưa `MET`) → CLOSED_STOPPED, `closeReason = TIMEOUT`, phát
+   *   `MatchClosed{STOPPED, DATING_PERIOD_ENDED}` (ARCHITECTURE mục 5; BE-S7-04: không cooldown phạt — `appliesCooldown`).
    * - Chưa tới hạn → `NOT_YET_EXPIRED` (vd job cũ của OFFERED chạy khi match đã sang AWAITING_RESPONSE với hạn mới).
    * - MET (không có hạn, job cũ của DATING) và mọi trạng thái đóng → `ok()` no-op, không event.
    */
@@ -401,7 +425,7 @@ export class Match extends AggregateRoot<MatchId> {
     }
 
     if (status === 'DATING') {
-      this.toClosed('STOPPED', 'DATING_PERIOD_ENDED', now);
+      this.toClosed('STOPPED', 'DATING_PERIOD_ENDED', now, MATCH_CLOSE_REASON_TIMEOUT);
       return ok();
     }
 
@@ -497,7 +521,12 @@ export class Match extends AggregateRoot<MatchId> {
     );
   }
 
-  private toClosed(outcome: MatchCloseOutcome, trigger: MatchCloseTrigger, now: Date): void {
+  private toClosed(
+    outcome: MatchCloseOutcome,
+    trigger: MatchCloseTrigger,
+    now: Date,
+    reason: string | null = null,
+  ): void {
     const fromStatus = this.state.status;
     this.state = {
       ...this.state,
@@ -505,6 +534,7 @@ export class Match extends AggregateRoot<MatchId> {
       expiresAt: null,
       closedAt: now,
       closeOutcome: outcome,
+      closeReason: reason,
       updatedAt: now,
     };
     this.record(

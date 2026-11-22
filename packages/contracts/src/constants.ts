@@ -38,3 +38,19 @@ export const INTERVIEW_CHANGE_CUTOFF_HOURS = 2;
 export const MESSAGE_MAX_LENGTH = 2_000;
 /** Số tin tối đa một người gửi được trong 60 giây gần nhất của một hội thoại (BE-S6-01). */
 export const MESSAGE_RATE_LIMIT_PER_MINUTE = 30;
+/** Nhắc "gợi ý sắp hết hạn" khi còn ngần này giờ trước hạn phản hồi gợi ý (BE-S7-05). */
+export const OFFER_EXPIRY_REMINDER_HOURS = 2;
+/** Nhắc lịch hẹn gặp mặt trước giờ hẹn ngần này giờ (BE-S7-05). */
+export const DATE_REMINDER_HOURS = 2;
+/** Người được mời xác nhận lịch hẹn trong ngần này giờ kể từ lúc đề xuất, quá hạn → `EXPIRED` (BE-S7-01). */
+export const DATE_RESPONSE_TTL_HOURS = 24;
+/** Huỷ lịch hẹn đã xác nhận chỉ khi còn ít nhất ngần này giờ trước giờ bắt đầu (BE-S7-01). */
+export const DATE_CANCEL_CUTOFF_HOURS = 4;
+/** Nhắc "Mục tiêu: gặp mặt trước ngày `DATING_DAYS`" lần 1 vào ngày thứ ngần này của giai đoạn tìm hiểu (BE-S7-04). */
+export const DATING_FIRST_REMINDER_DAY = 7;
+/** Nhắc lần 2 (sắp hết giai đoạn tìm hiểu) vào ngày thứ ngần này (BE-S7-04). */
+export const DATING_FINAL_REMINDER_DAY = 12;
+/** Quá giờ kết thúc buổi hẹn ngần này phút mà người đã check-in an toàn chưa check-out → cảnh báo chuyên viên (BE-S7-02). */
+export const CHECK_IN_OVERDUE_MINUTES = 60;
+/** Vị trí thô gửi kèm check-in an toàn bị xoá sau ngần này giờ kể từ lúc ghi nhận (BE-S7-02). */
+export const CHECK_IN_LOCATION_RETENTION_HOURS = 24;

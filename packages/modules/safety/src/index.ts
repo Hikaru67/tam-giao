@@ -110,3 +110,10 @@ export function createSafetyModule(deps: SafetyModuleDeps): SafetyModule {
   );
   return { name: 'safety', routes, commands };
 }
+
+/** Quyền dữ liệu cá nhân (BE-S7-06): consumer khi xoá tài khoản (giữ báo cáo ẩn danh) + nguồn dữ liệu cho file xuất. */
+export {
+  SAFETY_ERASE_ON_ACCOUNT_DELETION_CONSUMER,
+  createSafetyPersonalDataSource,
+  registerSafetyAccountDeletionConsumer,
+} from './infrastructure/account-data.js';

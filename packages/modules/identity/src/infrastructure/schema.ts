@@ -10,6 +10,7 @@ import {
   jsonb,
   pgSchema,
   text,
+  uniqueIndex,
   uuid,
 } from 'drizzle-orm/pg-core';
 
@@ -24,6 +25,11 @@ export const users = identity.table('users', {
   phoneBidx: text('phone_bidx').notNull().unique('users_phone_bidx_uq'),
   version: integer('version').notNull(),
   createdAt: timestamptz('created_at').notNull(),
+  /**
+   * Thời điểm tài khoản bị xoá theo yêu cầu (BE-S7-06). Khi xoá: `phone_enc` = rỗng, `phone_bidx` = `deleted:<id>` (SĐT
+   * đăng ký lại thành tài khoản mới) — trừ tài khoản đang bị khoá vĩnh viễn: giữ `phone_bidx` để vẫn chặn đăng nhập.
+   */
+  deletedAt: timestamptz('deleted_at'),
 });
 
 /** Mỗi SĐT (theo blind index) chỉ có một challenge: yêu cầu OTP mới ghi đè cái cũ. */
@@ -90,6 +96,21 @@ export const bannedUsers = identity.table('banned_users', {
   userId: uuid('user_id').primaryKey(),
   bannedAt: timestamptz('banned_at').notNull(),
 });
+
+/**
+ * Lưu blind index SĐT của tài khoản đã xoá (BE-S7-06) nhằm chống lách lệnh khoá tài khoản.
+ * Theo Nghị định 13/2023: xử lý dựa trên lợi ích chính đáng hợp pháp; chỉ lưu HMAC blind index,
+ * không giải ngược được, không lưu SĐT rõ hay ciphertext.
+ */
+export const deletedPhoneIndexes = identity.table(
+  'deleted_phone_indexes',
+  {
+    userId: uuid('user_id').primaryKey(),
+    phoneBidx: text('phone_bidx').notNull(),
+    deletedAt: timestamptz('deleted_at').notNull(),
+  },
+  (t) => [index('deleted_phone_indexes_phone_bidx_idx').on(t.phoneBidx)],
+);
 
 /** Tài khoản cán bộ quản trị (BE-S2-03). */
 export const adminUsers = identity.table(
@@ -158,3 +179,49 @@ export const auditLogs = identity.table(
     index('audit_logs_target_idx').on(t.targetType, t.targetId, t.occurredAt.desc()),
   ],
 );
+
+/**
+ * Yêu cầu xuất dữ liệu cá nhân (BE-S7-06). `payload_enc` = file JSON đã dựng, mã hoá qua `Encryptor` (context
+ * `identity.data_exports.payload:<id>`); job định kỳ đặt NULL khi quá `expires_at`. Mỗi người tối đa một yêu cầu
+ * `PENDING` (partial unique index — A10).
+ */
+export const dataExports = identity.table(
+  'data_exports',
+  {
+    id: uuid('id').primaryKey(),
+    userId: uuid('user_id').notNull(),
+    status: text('status').notNull(),
+    requestedAt: timestamptz('requested_at').notNull(),
+    readyAt: timestamptz('ready_at'),
+    expiresAt: timestamptz('expires_at'),
+    payloadEnc: bytea('payload_enc'),
+    version: integer('version').notNull(),
+  },
+  (t) => [
+    check('data_exports_status_ck', sql`${t.status} in ('PENDING', 'READY')`),
+    check(
+      'data_exports_ready_ck',
+      sql`(${t.status} = 'READY') = (${t.readyAt} is not null and ${t.expiresAt} is not null)`,
+    ),
+    check('data_exports_payload_ck', sql`${t.payloadEnc} is null or ${t.status} = 'READY'`),
+    uniqueIndex('data_exports_pending_per_user_uq')
+      .on(t.userId)
+      .where(sql`${t.status} = 'PENDING'`),
+    index('data_exports_user_id_idx').on(t.userId, t.requestedAt),
+    index('data_exports_expires_at_idx')
+      .on(t.expiresAt)
+      .where(sql`${t.payloadEnc} is not null`),
+  ],
+);
+
+/**
+ * Yêu cầu xoá tài khoản (BE-S7-06) — mỗi người một yêu cầu (`user_id` unique, A10). `event_id` = id của
+ * `AccountDeletionRequested`: tiến độ từng module = consumer đã ghi `platform.processed_events` cho event này.
+ */
+export const accountDeletions = identity.table('account_deletions', {
+  id: uuid('id').primaryKey(),
+  userId: uuid('user_id').notNull().unique('account_deletions_user_id_uq'),
+  eventId: uuid('event_id').notNull(),
+  requestedAt: timestamptz('requested_at').notNull(),
+  version: integer('version').notNull(),
+});

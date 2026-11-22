@@ -1,4 +1,10 @@
-export { createRequireAdmin, type AdminAuthenticator, type RequireAdmin } from './admin-auth.js';
+export {
+  adminGuardMark,
+  createRequireAdmin,
+  type AdminAuthenticator,
+  type AdminGuardMark,
+  type RequireAdmin,
+} from './admin-auth.js';
 export { bearerToken, requireUser, type UserAuthenticator } from './auth.js';
 export {
   requestContext,

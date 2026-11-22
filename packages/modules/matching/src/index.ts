@@ -16,8 +16,13 @@ import type { MatchResponseDeps } from './application/responses/respond-to-open-
 import { WithdrawIntro } from './application/responses/withdraw-intro.js';
 import { registerCandidateProfileConsumers } from './infrastructure/candidate-profile-consumers.js';
 import { registerReportFiledConsumer } from './infrastructure/report-filed-consumer.js';
+import { registerAccountDeletionConsumer } from './infrastructure/account-data.js';
+import { registerDateCompletedConsumer } from './infrastructure/date-completed-consumer.js';
+import { MarkMatchMet } from './application/responses/mark-match-met.js';
 import { registerUserBannedConsumer } from './infrastructure/user-banned-consumer.js';
 import { LockMatch } from './application/responses/lock-match.js';
+import { CloseMatch } from './application/use-cases/close-match.js';
+import { registerFeedbackSubmittedConsumer } from './infrastructure/feedback-submitted-consumer.js';
 import type { MatchingFacade } from './application/facade.js';
 import { MatchPairLookup } from './application/match-pair-lookup.js';
 import { DrizzleCandidateFinder } from './infrastructure/drizzle-candidate-finder.js';
@@ -56,6 +61,21 @@ export {
 
 export { MATCH_LOCK_ON_REPORT_FILED_CONSUMER } from './infrastructure/report-filed-consumer.js';
 export {
+  MATCH_ERASE_ON_ACCOUNT_DELETION_CONSUMER,
+  MATCH_LOCK_REASON_ACCOUNT_DELETED,
+  createMatchingPersonalDataSource,
+} from './infrastructure/account-data.js';
+export {
+  DATE_COMPLETED_EVENT,
+  MATCH_MET_ON_DATE_COMPLETED_CONSUMER,
+} from './infrastructure/date-completed-consumer.js';
+export type {
+  MarkMatchMet,
+  MarkMatchMetCommand,
+  MarkMatchMetOutcome,
+} from './application/responses/mark-match-met.js';
+export { MATCH_CLOSE_REASON_TIMEOUT } from './domain/match.js';
+export {
   MATCH_EXCLUDE_ON_USER_BANNED_CONSUMER,
   MATCH_LOCK_REASON_USER_BANNED,
 } from './infrastructure/user-banned-consumer.js';
@@ -74,7 +94,7 @@ export interface MatchingWorkerDeps {
 export interface MatchingWorker {
   /**
    * Đăng ký consumer của matching (worker gọi trước `registerConsumers`): read model `matching.candidate_profiles`
-   * (BE-S5-03) và `ReportFiled` → khoá match (BE-S6-05).
+   * (BE-S5-03), `ReportFiled` → khoá match (BE-S6-05), `DateCompleted` → `MET` (BE-S7-04).
    */
   registerConsumers(bus: EventBus): void;
 }
@@ -87,6 +107,14 @@ export function createMatchingWorker(deps: MatchingWorkerDeps): MatchingWorker {
     setVerification: new SetCandidateVerification({ clock: deps.clock, candidates }),
   };
   const lockMatch = createLockMatch(deps);
+  const markMatchMet = new MarkMatchMet({
+    clock: deps.clock,
+    scheduler: deps.scheduler,
+    matches: new DrizzleMatchRepository(new OutboxWriter()),
+    activeSlots: new DrizzleActiveSlotRepository(),
+    pairHistory: new DrizzlePairHistoryRepository(),
+    cooldowns: new DrizzleCooldownRepository(),
+  });
   return {
     registerConsumers: (bus) => {
       registerCandidateProfileConsumers(bus, consumers);
@@ -97,8 +125,37 @@ export function createMatchingWorker(deps: MatchingWorkerDeps): MatchingWorker {
         matches: new DrizzleMatchRepository(new OutboxWriter()),
         lockMatch,
       });
+      // BE-S7-06: AccountDeletionRequested (identity) → đóng match đang mở + xoá read model ứng viên.
+      registerAccountDeletionConsumer(bus, {
+        matches: new DrizzleMatchRepository(new OutboxWriter()),
+        lockMatch,
+      });
+      // BE-S7-04: DateCompleted (dating) → match MET (bỏ hạn DATING_DAYS).
+      registerDateCompletedConsumer(bus, markMatchMet);
+      // BE-S7-03: FeedbackSubmitted (dating) → CLOSED_SUCCESS / CLOSED_STOPPED (+ cooldown).
+      registerFeedbackSubmittedConsumer(bus, createCloseMatch(deps));
     },
   };
+}
+
+// ── Đóng match theo đánh giá sau gặp (BE-S7-03) ─────────────────────────────────────────────────────────
+export { MATCH_CLOSE_ON_FEEDBACK_SUBMITTED_CONSUMER } from './infrastructure/feedback-submitted-consumer.js';
+export type {
+  CloseMatch,
+  CloseMatchCommand,
+  CloseMatchOutcome,
+} from './application/use-cases/close-match.js';
+
+/** Use case đóng match theo `FeedbackSubmitted` (BE-S7-03) — consumer gọi `executeIn(tx, …)`. */
+export function createCloseMatch(deps: { readonly clock: Clock; readonly scheduler: Scheduler }): CloseMatch {
+  return new CloseMatch({
+    clock: deps.clock,
+    scheduler: deps.scheduler,
+    matches: new DrizzleMatchRepository(new OutboxWriter()),
+    activeSlots: new DrizzleActiveSlotRepository(),
+    pairHistory: new DrizzlePairHistoryRepository(),
+    cooldowns: new DrizzleCooldownRepository(),
+  });
 }
 
 // ── Khoá match khi có báo cáo vi phạm + facade cho safety (BE-S6-05) ───────────────────────────────────
@@ -108,7 +165,12 @@ export {
   type LockMatchCommand,
   type LockMatchOutcome,
 } from './application/responses/lock-match.js';
-export type { MatchBetweenSummary, MatchingFacade, MatchPairStatus } from './application/facade.js';
+export type {
+  MatchBetweenSummary,
+  MatchingFacade,
+  MatchPairStatus,
+  OpenMatchSummary,
+} from './application/facade.js';
 
 /** Use case khoá match (BE-S6-05) — consumer `ReportFiled` gọi `executeIn(tx, …)`. */
 export function createLockMatch(deps: { readonly clock: Clock; readonly scheduler: Scheduler }): LockMatch {

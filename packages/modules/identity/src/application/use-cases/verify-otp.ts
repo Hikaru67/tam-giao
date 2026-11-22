@@ -46,7 +46,8 @@ export interface VerifyOtpDeps {
 
 /**
  * Xác thực OTP; lần đầu thành công của một SĐT thì tạo `User` (phát `UserRegistered`). Thành công → mở phiên đăng nhập,
- * trừ tài khoản đã bị khoá vĩnh viễn (BE-S6-06) → `ACCOUNT_BANNED` (OTP vẫn bị tiêu thụ, không mở phiên).
+ * trừ tài khoản đã bị khoá vĩnh viễn (BE-S6-06) hoặc SĐT của tài khoản đã xoá từng bị khoá → `ACCOUNT_BANNED`
+ * (OTP vẫn bị tiêu thụ, không mở phiên).
  */
 export class VerifyOtp {
   constructor(private readonly deps: VerifyOtpDeps) {}
@@ -73,6 +74,9 @@ export class VerifyOtp {
       let user = await users.findByPhone(tx, phone);
       const isNewUser = user === null;
       if (!user) {
+        if (await bannedUsers.isBannedDeletedPhone(tx, phoneIndex)) {
+          return ok(fail('ACCOUNT_BANNED'));
+        }
         user = User.register(phone, now);
         await users.save(tx, user);
       } else if (await bannedUsers.isBanned(tx, user.id)) {

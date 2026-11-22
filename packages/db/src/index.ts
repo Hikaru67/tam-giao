@@ -28,6 +28,11 @@ export { EventBus, consumerQueue, type EventHandler, type Subscription } from '.
 export { OutboxRelay, deliverOnce, registerConsumers } from './outbox/outbox-relay.js';
 export { S3ObjectStorage, type S3ObjectStorageConfig } from './storage/s3-object-storage.js';
 export {
+  UPLOADS_ERASE_ON_ACCOUNT_DELETION_CONSUMER,
+  eraseUploadsOfOwner,
+  registerUploadErasureConsumer,
+} from './storage/upload-erasure.js';
+export {
   UPLOAD_CONTENT_TYPES,
   UPLOAD_MAX_BYTES,
   UploadService,

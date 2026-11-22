@@ -20,36 +20,60 @@ import {
   createVoucherExpiryJob,
   FakePaymentGateway,
 } from '@tamgiao/module-billing';
-import { ConsoleSmsSender, createIdentityModule, createIdentityWorker } from '@tamgiao/module-identity';
+import { createDatingWorker, createExpireDatePlanJob } from '@tamgiao/module-dating';
+import {
+  ConsoleSmsSender,
+  createDataExportPurgeJob,
+  createIdentityModule,
+  createIdentityWorker,
+} from '@tamgiao/module-identity';
 import { createExpireMatchJob, createMatchingWorker } from '@tamgiao/module-matching';
 import { createMessagingWorker } from '@tamgiao/module-messaging';
+import { createNotificationWorker, ExpoPushSender, FakePushSender } from '@tamgiao/module-notification';
 import { createMatchingProfileReader } from '@tamgiao/module-profile';
 import { createKycMediaRetention } from '@tamgiao/module-verification';
 import { PgBoss } from 'pg-boss';
 import { loadWorkerConfig } from './config.js';
+import { personalDataSources, registerAccountDeletionConsumers } from './data-rights.js';
 import { registerBillingRefundJobs } from './jobs/billing-refund.js';
+import { registerCheckInLocationPurgeJob, registerCheckInOverdueJob } from './jobs/date-check-in.js';
+import { registerDatePlanExpiryJob } from './jobs/date-plan-expiry.js';
+import { registerDataExportPurgeJob } from './jobs/data-export-purge.js';
 import { registerKycMediaRetentionJob } from './jobs/kyc-media-retention.js';
 import { registerLedgerReconciliationJob } from './jobs/ledger-reconciliation.js';
 import { registerMatchExpiryJob } from './jobs/match-expiry.js';
+import { registerNotificationSendJob } from './jobs/notification-send.js';
 import { registerVoucherExpiryJob } from './jobs/voucher-expiry.js';
 import { registerWorkers } from './registry.js';
+import { createErrorReporter, withErrorReporting } from './observability/error-reporter.js';
+import { OutboxBacklogMonitor, readOutboxBacklog } from './observability/outbox-backlog-monitor.js';
 
 /** Composition root của worker: relay outbox → hàng đợi consumer, và chạy job hẹn giờ. */
 const SHUTDOWN_TIMEOUT_MS = 15_000;
 const RELAY_INTERVAL_MS = 1_000;
 
 const config = loadWorkerConfig();
-const logger = createLogger({ service: 'worker', level: config.logLevel });
+// Sentry (BE-S7-08): no-op khi thiếu SENTRY_DSN; logger.error/fatal (job lỗi, relay lỗi…) được báo kèm, đã scrub PII.
+const errorReporter = createErrorReporter({ ...config.observability.sentry, service: 'worker' });
+const baseLogger = createLogger({ service: 'worker', level: config.logLevel });
+const logger = withErrorReporting(baseLogger, errorReporter);
 const database = createDatabase(config.database.url);
 const uow = new DrizzleUnitOfWork(database.pool);
+const clock = new SystemClock();
+const encryptor = new LocalKeyEncryptor(
+  parseMasterKeyRing(config.crypto.masterKeys, config.crypto.masterKeyVersion),
+);
 
 const boss = new PgBoss({ connectionString: config.database.url });
 boss.on('error', (error) => logger.error({ err: error }, 'pg-boss error'));
 await boss.start();
 
+const storage = new S3ObjectStorage({ ...config.storage, presignGetTtlSeconds: PRESIGNED_URL_TTL_SECONDS });
+
 const bus = new EventBus();
 const jobs = registerWorkers(bus);
 // Billing (BE-S4-04): consumer KycRejected (hoàn tiền) + KycApproved (đặt hạn voucher), job hoàn tiền bên dưới.
+// BE-S7-01: consumer DateConfirmed (dating) → kích hoạt voucher của người mời.
 // Fake trong worker là instance khác với API → không biết giao dịch do API tạo; `acceptUnknownRefunds` để hoàn
 // được ở dev. Config đã cấm `fake` ở production.
 const billingWorker = createBillingWorker({
@@ -72,26 +96,55 @@ createMatchingWorker({
 createMessagingWorker({ clock: new SystemClock() }).registerConsumers(bus);
 // Identity (BE-S6-06): UserBanned (safety) → chặn đăng nhập + thu hồi mọi phiên. Matching xử lý cùng event ở trên
 // (loại khỏi ứng viên + khoá match đang mở).
-createIdentityWorker({ clock: new SystemClock() }).registerConsumers(bus);
+// BE-S7-06: DataExportRequested → dựng file xuất dữ liệu từ nguồn của mọi module.
+createIdentityWorker({
+  clock: new SystemClock(),
+  dataExport: { encryptor, sources: personalDataSources({ encryptor }) },
+}).registerConsumers(bus);
+// BE-S7-06: AccountDeletionRequested → mỗi module tự xoá/ẩn danh dữ liệu của mình (matching + messaging đăng ký ở trên).
+registerAccountDeletionConsumers(bus, { clock, encryptor, storage });
+// Notification (BE-S7-05): consumer event → `notification.deliveries` + hẹn job `notification.send` (push Expo; SMS thay
+// thế cho thông báo giao dịch). SMS dùng lại adapter của identity (D4); chưa có facade identity tra SĐT nên `phones`
+// bỏ trống → chưa gửi SMS thay thế (xem báo cáo BE-S7-05).
+const notificationWorker = createNotificationWorker({
+  uow,
+  clock: new SystemClock(),
+  scheduler: new PgBossScheduler(boss),
+  push:
+    config.push.provider === 'expo'
+      ? new ExpoPushSender(
+          config.push.expoAccessToken === undefined ? {} : { accessToken: config.push.expoAccessToken },
+        )
+      : new FakePushSender(),
+  sms: new ConsoleSmsSender(),
+});
+notificationWorker.registerConsumers(bus);
+await registerNotificationSendJob({ boss, logger, sender: notificationWorker.sendNotification });
+
+// Dating (BE-S7-02): consumer VoucherRedeemed → check-in an toàn nguồn VOUCHER cho lịch hẹn đang diễn ra.
+const datingWorker = createDatingWorker({
+  uow,
+  clock,
+  scheduler: new PgBossScheduler(boss),
+  encryptor,
+});
+datingWorker.registerConsumers(bus);
+
 await registerConsumers({ boss, uow, bus, logger });
 for (const job of jobs) {
   await registerJob({ boss, uow, logger, ...job });
 }
 
 // Job xoá ảnh eKYC hết thời hạn lưu (BE-S3-06): storage S3 + audit log của identity.
-const clock = new SystemClock();
 const identity = createIdentityModule({
   uow,
   clock,
-  encryptor: new LocalKeyEncryptor(
-    parseMasterKeyRing(config.crypto.masterKeys, config.crypto.masterKeyVersion),
-  ),
+  encryptor,
   blindIndexer: new HmacBlindIndexer(config.crypto.blindIndexKey),
   // Worker không gửi OTP; identity chỉ dùng để lấy `auditLogger`.
   smsSender: new ConsoleSmsSender(),
   authSecret: config.auth.secret,
 });
-const storage = new S3ObjectStorage({ ...config.storage, presignGetTtlSeconds: PRESIGNED_URL_TTL_SECONDS });
 await registerKycMediaRetentionJob({
   boss,
   logger,
@@ -118,6 +171,13 @@ await registerLedgerReconciliationJob({
 // Hoàn tiền (BE-S4-04): job từng khoản (retry backoff) + điều phối REFUND_PENDING + cảnh báo SLA.
 await registerBillingRefundJobs({ boss, logger, billing: billingWorker });
 
+// Xoá nội dung file xuất dữ liệu quá hạn tải 24 giờ (BE-S7-06).
+await registerDataExportPurgeJob({
+  boss,
+  logger,
+  purger: createDataExportPurgeJob({ uow, clock, encryptor }),
+});
+
 // Hết hạn match (BE-S5-05): job `matching.expire-match` do API hẹn lúc `expiresAt` → `ExpireMatch` (idempotent).
 await registerMatchExpiryJob({
   boss,
@@ -126,8 +186,41 @@ await registerMatchExpiryJob({
   expirer: createExpireMatchJob({ uow, clock, scheduler: new PgBossScheduler(boss) }),
 });
 
+// Hết hạn xác nhận lịch hẹn (BE-S7-01): job `dating.expire-date-plan` do API hẹn lúc `expiresAt` → `ExpireDatePlan`.
+await registerDatePlanExpiryJob({
+  boss,
+  uow,
+  logger,
+  expirer: createExpireDatePlanJob({ uow, clock }),
+});
+
+// Check-in an toàn (BE-S7-02): job cảnh báo quá hạn check-out + job dọn dẹp vị trí thô hết hạn lưu.
+await registerCheckInOverdueJob({
+  boss,
+  uow,
+  logger,
+  marker: datingWorker.markCheckInOverdue,
+});
+await registerCheckInLocationPurgeJob({
+  boss,
+  uow,
+  logger,
+  purger: datingWorker.purgeCheckInLocations,
+});
+
 const relay = new OutboxRelay({ uow, boss, bus, logger });
 relay.start(RELAY_INTERVAL_MS);
+
+// Cảnh báo outbox tồn đọng (BE-S7-08). Dùng logger gốc: monitor tự gửi cảnh báo, tránh báo trùng qua logger.error.
+const backlogMonitor = new OutboxBacklogMonitor({
+  read: () => readOutboxBacklog(database.pool),
+  thresholds: config.observability.outboxBacklog.thresholds,
+  realertAfterMs: config.observability.outboxBacklog.realertAfterMs,
+  reporter: errorReporter,
+  logger: baseLogger,
+  clock,
+});
+backlogMonitor.start(config.observability.outboxBacklog.checkIntervalMs);
 logger.info({ consumers: bus.list().length, jobs: jobs.length }, 'worker started');
 
 let shuttingDown = false;
@@ -141,9 +234,11 @@ async function shutdown(signal: string): Promise<void> {
   }, SHUTDOWN_TIMEOUT_MS);
   force.unref();
 
+  backlogMonitor.stop();
   await relay.stop();
   await boss.stop({ graceful: true, timeout: SHUTDOWN_TIMEOUT_MS - 2_000 });
   await database.close();
+  await errorReporter.flush(2_000);
   logger.info('shutdown complete');
   process.exit(0);
 }

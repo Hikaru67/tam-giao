@@ -6,30 +6,37 @@
   "scripts": {
     "dev": "node --env-file-if-exists=../../.env --import tsx --watch src/main.ts",
     "start": "node --env-file-if-exists=../../.env --import tsx src/main.ts",
+    "migrate": "node --env-file-if-exists=../../.env --import tsx src/migrate.ts",
     "typecheck": "tsc -p tsconfig.json"
   },
   "dependencies": {
     "@hono/node-server": "2.1.8",
+    "@sentry/node": "11.10.0",
     "@tamgiao/config": "workspace:*",
     "@tamgiao/contracts": "workspace:*",
     "@tamgiao/db": "workspace:*",
     "@tamgiao/http": "workspace:*",
     "@tamgiao/kernel": "workspace:*",
     "@tamgiao/module-billing": "workspace:*",
+    "@tamgiao/module-dating": "workspace:*",
     "@tamgiao/module-identity": "workspace:*",
     "@tamgiao/module-matching": "workspace:*",
     "@tamgiao/module-messaging": "workspace:*",
+    "@tamgiao/module-notification": "workspace:*",
     "@tamgiao/module-profile": "workspace:*",
     "@tamgiao/module-safety": "workspace:*",
     "@tamgiao/module-verification": "workspace:*",
     "hono": "4.13.18",
+    "ioredis": "5.11.1",
     "pg-boss": "12.38.2",
+    "prom-client": "15.1.3",
+    "tsx": "4.23.15",
     "zod": "4.6.7"
   },
   "devDependencies": {
     "@tamgiao/testing": "workspace:*",
     "@types/node": "22.20.5",
-    "tsx": "4.23.15",
+    "testcontainers": "12.2.1",
     "typescript": "5.9.3",
     "vitest": "3.2.7"
   }

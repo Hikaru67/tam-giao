@@ -407,11 +407,13 @@ describe('Hết hạn — quy ước biên now >= expiresAt (AC2)', () => {
     expect(payloadOf(m.pullEvents())).toMatchObject({ fromStatus: 'AWAITING_RESPONSE', acceptedBy: [A] });
   });
 
-  it('expire ở DATING (hết DATING_DAYS) → CLOSED_STOPPED + MatchClosed{STOPPED, DATING_PERIOD_ENDED}', () => {
+  it('expire ở DATING (hết DATING_DAYS) → CLOSED_STOPPED lý do TIMEOUT, không cooldown + MatchClosed{STOPPED, DATING_PERIOD_ENDED}', () => {
     const m = reach('DATING');
     expect(m.expire(addDuration(ACCEPT_B_AT, { days: DATING_DAYS })).ok).toBe(true);
     expect(m.status).toBe('CLOSED_STOPPED');
     expect(m.closeOutcome).toBe('STOPPED');
+    expect(m.closeReason).toBe('TIMEOUT');
+    expect(m.appliesCooldown()).toBe(false);
     const events = m.pullEvents();
     expect(events.map((e) => e.type)).toEqual(['MatchClosed']);
     expect(payloadOf(events)).toEqual({
@@ -546,6 +548,8 @@ describe('markMet / close / lock', () => {
     expect(m.close(outcome, ACTION_AT).ok).toBe(true);
     expect(m.status).toBe(toStatus);
     expect(m.closeOutcome).toBe(outcome);
+    expect(m.closeReason).toBeNull();
+    expect(m.appliesCooldown()).toBe(toStatus === 'CLOSED_STOPPED');
     expect(m.toState().closedAt).toEqual(ACTION_AT);
     expect(payloadOf(m.pullEvents())).toEqual({
       matchId: m.id,

@@ -13,7 +13,7 @@ hoặc `CLOSED_STOPPED` + cooldown; thông báo đẩy/SMS cho các mốc quan t
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| dating | domain, application, infrastructure, presentation | P0 | 2d | Sprint 5, BE-S4-05, BE-S4-06 | BE-S7-05, BE-S7-06 | TODO |
+| dating | domain, application, infrastructure, presentation | P0 | 2d | Sprint 5, BE-S4-05, BE-S4-06 | BE-S7-05, BE-S7-06 | DONE |
 
 **Mục tiêu:** Phục vụ màn "Đặt lịch Gặp mặt & Điểm hẹn An toàn".
 
@@ -22,9 +22,9 @@ hoặc `CLOSED_STOPPED` + cooldown; thông báo đẩy/SMS cho các mốc quan t
 - Ngoài: Đặt bàn qua API quán.
 
 **Tiêu chí nghiệm thu**
-- [ ] AC1: Match không ở `DATING` → `MATCH_NOT_DATING`.
-- [ ] AC2: Xác nhận → voucher của người mời chuyển `ACTIVE` (qua event, idempotent).
-- [ ] AC3: Quá 24h không xác nhận → `EXPIRED`, có thể đề xuất lịch mới.
+- [x] AC1: Match không ở `DATING` → `MATCH_NOT_DATING`.
+- [x] AC2: Xác nhận → voucher của người mời chuyển `ACTIVE` (qua event, idempotent).
+- [x] AC3: Quá 24h không xác nhận → `EXPIRED`, có thể đề xuất lịch mới.
 
 **Test bắt buộc:** Unit domain; integration chuỗi `DateConfirmed` → `VoucherActivated`.
 
@@ -40,7 +40,7 @@ hoặc `CLOSED_STOPPED` + cooldown; thông báo đẩy/SMS cho các mốc quan t
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| dating | application, infrastructure, presentation | P1 | 1d | BE-S7-01 | BE-S7-03 | TODO |
+| dating | application, infrastructure, presentation | P1 | 1d | BE-S7-01 | BE-S7-03 | DONE |
 
 **Mục tiêu:** Toggle "Check-in an toàn: gửi vị trí cho chuyên viên" (màn 12).
 
@@ -49,8 +49,8 @@ hoặc `CLOSED_STOPPED` + cooldown; thông báo đẩy/SMS cho các mốc quan t
 - Ngoài: Theo dõi vị trí liên tục.
 
 **Tiêu chí nghiệm thu**
-- [ ] AC1: Dữ liệu vị trí bị xoá sau 24h (job, FakeClock).
-- [ ] AC2: Không check-out quá hạn → tạo cảnh báo.
+- [x] AC1: Dữ liệu vị trí bị xoá sau 24h (job, FakeClock).
+- [x] AC2: Không check-out quá hạn → tạo cảnh báo.
 
 **Test bắt buộc:** Integration job.
 
@@ -66,7 +66,7 @@ hoặc `CLOSED_STOPPED` + cooldown; thông báo đẩy/SMS cho các mốc quan t
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| dating, matching | domain, application, infrastructure, presentation | P0 | 1.5d | BE-S7-01 | BE-S7-02 | TODO |
+| dating, matching | domain, application, infrastructure, presentation | P0 | 1.5d | BE-S7-01 | BE-S7-02 | DONE |
 
 **Mục tiêu:** Phục vụ màn "Đánh giá sau Gặp mặt & Quyết định Hẹn hò".
 
@@ -75,9 +75,9 @@ hoặc `CLOSED_STOPPED` + cooldown; thông báo đẩy/SMS cho các mốc quan t
 - Ngoài: —
 
 **Tiêu chí nghiệm thu**
-- [ ] AC1: Cả hai chọn A → `CLOSED_SUCCESS`, slot giải phóng, không cooldown.
-- [ ] AC2: Một bên chọn B → `CLOSED_STOPPED` ngay, cả hai cooldown 7 ngày.
-- [ ] AC3: API của đối phương không trả bất kỳ trường feedback nào.
+- [x] AC1: Cả hai chọn A → `CLOSED_SUCCESS`, slot giải phóng, không cooldown.
+- [x] AC2: Một bên chọn B → `CLOSED_STOPPED` ngay, cả hai cooldown 7 ngày.
+- [x] AC3: API của đối phương không trả bất kỳ trường feedback nào.
 
 **Test bắt buộc:** Integration chuỗi event; HTTP kiểm tra rò rỉ dữ liệu.
 
@@ -93,7 +93,7 @@ hoặc `CLOSED_STOPPED` + cooldown; thông báo đẩy/SMS cho các mốc quan t
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| matching | application, infrastructure | P0 | 1d | BE-S5-05, BE-S7-05 | BE-S7-03 | TODO |
+| matching | application, infrastructure | P0 | 1d | BE-S5-05, BE-S7-05 | BE-S7-03 | DONE |
 
 **Mục tiêu:** Đóng vòng đời khi hết 14 ngày mà chưa gặp; nhắc người dùng hẹn gặp trước hạn.
 
@@ -119,7 +119,7 @@ hoặc `CLOSED_STOPPED` + cooldown; thông báo đẩy/SMS cho các mốc quan t
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| notification | application, infrastructure, presentation | P0 | 2d | Sprint 1 | BE-S7-01, BE-S7-06 | TODO |
+| notification | application, infrastructure, presentation | P0 | 2d | Sprint 1 | BE-S7-01, BE-S7-06 | DONE |
 
 **Mục tiêu:** Người dùng không bỏ lỡ gợi ý 24h, phản hồi, lịch hẹn, cảnh báo an toàn.
 
@@ -145,7 +145,7 @@ hoặc `CLOSED_STOPPED` + cooldown; thông báo đẩy/SMS cho các mốc quan t
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| identity (điều phối) | application, infrastructure, presentation | P0 | 1.5d | Sprint 6 | BE-S7-01, BE-S7-05 | TODO |
+| identity (điều phối) | application, infrastructure, presentation | P0 | 1.5d | Sprint 6 | BE-S7-01, BE-S7-05 | DONE |
 
 **Mục tiêu:** Đáp ứng quyền của chủ thể dữ liệu theo Nghị định 13/2023.
 
@@ -171,7 +171,7 @@ hoặc `CLOSED_STOPPED` + cooldown; thông báo đẩy/SMS cho các mốc quan t
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| api, repo | devops, presentation | P0 | 2d | BE-S7-01…06 | BE-S7-08 | TODO |
+| api, repo | devops, presentation | P0 | 2d | BE-S7-01…06 | BE-S7-08 | DONE |
 
 **Mục tiêu:** Giảm rủi ro trước khi mở beta.
 
@@ -180,8 +180,8 @@ hoặc `CLOSED_STOPPED` + cooldown; thông báo đẩy/SMS cho các mốc quan t
 - Ngoài: Pentest bên thứ ba.
 
 **Tiêu chí nghiệm thu**
-- [ ] AC1: Test tự động fail nếu có route admin không gắn `requireAdmin`.
-- [ ] AC2: Không route `/me/*` nào trả dữ liệu của user khác (test IDOR theo bảng route).
+- [x] AC1: Test tự động fail nếu có route admin không gắn `requireAdmin`.
+- [x] AC2: Không route `/me/*` nào trả dữ liệu của user khác (test IDOR theo bảng route).
 
 **Test bắt buộc:** Test meta trên danh sách route.
 
@@ -197,7 +197,7 @@ hoặc `CLOSED_STOPPED` + cooldown; thông báo đẩy/SMS cho các mốc quan t
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| repo | devops | P1 | 1.5d | Sprint 6 | BE-S7-07 | TODO |
+| repo | devops | P1 | 1.5d | Sprint 6 | BE-S7-07 | IN_REVIEW |
 
 **Mục tiêu:** Có môi trường staging để FE và QA dùng.
 
@@ -215,7 +215,7 @@ hoặc `CLOSED_STOPPED` + cooldown; thông báo đẩy/SMS cho các mốc quan t
 
 **Contract / Event:** Không có.
 
-**Ghi chú:** D5.
+**Ghi chú:** D5. Đã merge (PARTIAL): AC2 + smoke test đạt; AC1 chờ hạ tầng staging + vars/secrets của Environment `staging` (D5) — giữ IN_REVIEW tới khi deploy thật xanh.
 
 ---
 
@@ -223,7 +223,7 @@ hoặc `CLOSED_STOPPED` + cooldown; thông báo đẩy/SMS cho các mốc quan t
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| repo | devops | P1 | 1.5d | BE-S7-08 | — | TODO |
+| repo | devops | P1 | 1.5d | BE-S7-08 | — | IN_REVIEW |
 
 **Mục tiêu:** Xác nhận hệ thống chạy đúng toàn luồng 14 bước và chịu được tải beta.
 

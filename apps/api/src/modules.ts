@@ -3,22 +3,40 @@ import {
   HmacBlindIndexer,
   LocalKeyEncryptor,
   S3ObjectStorage,
+  UPLOADS_ERASE_ON_ACCOUNT_DELETION_CONSUMER,
   UploadService,
   parseMasterKeyRing,
 } from '@tamgiao/db';
 import { requireUser, type AppEnv } from '@tamgiao/http';
-import type { Clock, Scheduler, UnitOfWork } from '@tamgiao/kernel';
-import { FakePaymentGateway, createBillingModule } from '@tamgiao/module-billing';
-import { ConsoleSmsSender, createIdentityModule } from '@tamgiao/module-identity';
-import { createMatchingModule } from '@tamgiao/module-matching';
+import type { Clock, ObjectStorage, Scheduler, UnitOfWork } from '@tamgiao/kernel';
+import { createDatingModule } from '@tamgiao/module-dating';
 import {
+  BILLING_ERASE_ON_ACCOUNT_DELETION_CONSUMER,
+  FakePaymentGateway,
+  createBillingModule,
+} from '@tamgiao/module-billing';
+import {
+  ConsoleSmsSender,
+  createIdentityModule,
+  type AccountDeletionStep,
+  type SmsSender,
+} from '@tamgiao/module-identity';
+import { MATCH_ERASE_ON_ACCOUNT_DELETION_CONSUMER, createMatchingModule } from '@tamgiao/module-matching';
+import {
+  MESSAGING_ERASE_ON_ACCOUNT_DELETION_CONSUMER,
   RedisMessageBroadcaster,
   createMessagingModule,
+  type MessageBroadcaster,
   type UpgradableServer,
 } from '@tamgiao/module-messaging';
-import { createProfileModule } from '@tamgiao/module-profile';
-import { createSafetyModule } from '@tamgiao/module-safety';
 import {
+  NOTIFICATION_ERASE_ON_ACCOUNT_DELETION_CONSUMER,
+  createNotificationModule,
+} from '@tamgiao/module-notification';
+import { PROFILE_ERASE_ON_ACCOUNT_DELETION_CONSUMER, createProfileModule } from '@tamgiao/module-profile';
+import { SAFETY_ERASE_ON_ACCOUNT_DELETION_CONSUMER, createSafetyModule } from '@tamgiao/module-safety';
+import {
+  VERIFICATION_ERASE_ON_ACCOUNT_DELETION_CONSUMER,
   FakeEkycProvider,
   ResilientEkycProvider,
   createVerificationModule,
@@ -55,14 +73,50 @@ export interface ModuleDeps {
   /** Ghi job hẹn giờ cùng transaction (`PgBossScheduler` — xem `job-scheduler.ts`). */
   readonly scheduler: Scheduler;
   readonly logger: Logger;
+  /**
+   * Thay adapter hạ tầng bên ngoài (SMS, object storage, Redis pub/sub) — để test dựng đúng composition thật của API
+   * với Fake (test meta route admin, test IDOR — BE-S7-07). Bỏ trống = adapter thật theo `config`.
+   */
+  readonly adapters?: ModuleAdapterOverrides;
 }
 
+export interface ModuleAdapterOverrides {
+  readonly smsSender?: SmsSender;
+  readonly storage?: ObjectStorage;
+  readonly broadcaster?: MessageBroadcaster & { close(): Promise<void> };
+}
+
+/**
+ * Các module tự xoá/ẩn danh dữ liệu khi nhận `AccountDeletionRequested` (BE-S7-06) — consumer chạy ở worker; API chỉ
+ * dùng danh sách này để báo tiến độ (`GET /account-deletions/:id`). Thêm module mới có dữ liệu cá nhân → thêm vào đây.
+ */
+export const ACCOUNT_DELETION_STEPS: readonly AccountDeletionStep[] = [
+  { module: 'profile', consumer: PROFILE_ERASE_ON_ACCOUNT_DELETION_CONSUMER },
+  { module: 'verification', consumer: VERIFICATION_ERASE_ON_ACCOUNT_DELETION_CONSUMER },
+  { module: 'billing', consumer: BILLING_ERASE_ON_ACCOUNT_DELETION_CONSUMER },
+  { module: 'matching', consumer: MATCH_ERASE_ON_ACCOUNT_DELETION_CONSUMER },
+  { module: 'messaging', consumer: MESSAGING_ERASE_ON_ACCOUNT_DELETION_CONSUMER },
+  { module: 'safety', consumer: SAFETY_ERASE_ON_ACCOUNT_DELETION_CONSUMER },
+  { module: 'notification', consumer: NOTIFICATION_ERASE_ON_ACCOUNT_DELETION_CONSUMER },
+  { module: 'uploads', consumer: UPLOADS_ERASE_ON_ACCOUNT_DELETION_CONSUMER },
+];
+
 /** Nối hạ tầng dùng chung vào từng module (thứ tự = thứ tự phụ thuộc giữa các module). */
-export function buildModules({ config, uow, clock, scheduler, logger }: ModuleDeps): readonly ApiModule[] {
+export function buildModules({
+  config,
+  uow,
+  clock,
+  scheduler,
+  logger,
+  adapters = {},
+}: ModuleDeps): readonly ApiModule[] {
   const encryptor = new LocalKeyEncryptor(
     parseMasterKeyRing(config.crypto.masterKeys, config.crypto.masterKeyVersion),
   );
   const blindIndexer = new HmacBlindIndexer(config.crypto.blindIndexKey);
+  const storage =
+    adapters.storage ??
+    new S3ObjectStorage({ ...config.storage, presignGetTtlSeconds: PRESIGNED_URL_TTL_SECONDS });
 
   const identity = createIdentityModule({
     uow,
@@ -70,12 +124,13 @@ export function buildModules({ config, uow, clock, scheduler, logger }: ModuleDe
     encryptor,
     blindIndexer,
     // `SMS_PROVIDER` hiện chỉ có `console` (D4) — config đã chặn giá trị này ở production.
-    smsSender: new ConsoleSmsSender(),
+    smsSender: adapters.smsSender ?? new ConsoleSmsSender(),
     authSecret: config.auth.secret,
+    // Quyền dữ liệu cá nhân (BE-S7-06): xuất dữ liệu + xoá tài khoản; tiến độ xoá theo consumer của từng module (worker).
+    dataRights: { storage, accountDeletionSteps: ACCOUNT_DELETION_STEPS },
   });
 
   // Upload qua presigned URL (BE-S2-07). `uploads` (UploadRegistry) sẽ truyền vào profile/verification/safety.
-  const storage = new S3ObjectStorage({ ...config.storage, presignGetTtlSeconds: PRESIGNED_URL_TTL_SECONDS });
   const uploads = new UploadService({ uow, clock, storage, putTtlSeconds: PRESIGNED_URL_TTL_SECONDS });
   const userGuard = requireUser(identity.facade.authenticateUser);
   const uploadModule: ApiModule = {
@@ -163,10 +218,12 @@ export function buildModules({ config, uow, clock, scheduler, logger }: ModuleDe
   // Messaging (Sprint 6): hội thoại mở/đóng ở worker theo event matching (BE-S6-01). WS `/ws` + Redis pub/sub đa
   // instance, `GET /me/conversations/:id/messages?after=` (BE-S6-02); bộ lọc nội dung (`screener`) ở BE-S6-03.
   // Handshake WS xác thực bằng cùng `authenticateUser` với guard REST.
-  const broadcaster = new RedisMessageBroadcaster({
-    url: config.redis.url,
-    onError: (error) => logger.warn({ err: error }, 'messaging redis error'),
-  });
+  const broadcaster =
+    adapters.broadcaster ??
+    new RedisMessageBroadcaster({
+      url: config.redis.url,
+      onError: (error) => logger.warn({ err: error }, 'messaging redis error'),
+    });
   const messagingModule = createMessagingModule({
     uow,
     clock,
@@ -202,5 +259,35 @@ export function buildModules({ config, uow, clock, scheduler, logger }: ModuleDe
     messaging: messagingModule.facade,
   });
 
-  return [identity, uploadModule, profile, verification, billing, matching, messaging, safety];
+  // Notification (BE-S7-05): đăng ký thiết bị push + cài đặt nhận thông báo. Gửi push/SMS chạy ở worker.
+  const notification = createNotificationModule({ uow, clock, requireUser: userGuard });
+
+  // Dating (Sprint 7): đặt lịch gặp tại quán đối tác (BE-S7-01) — match phải `DATING` (facade matching), quán đang
+  // hoạt động (facade quán của billing). Hết hạn xác nhận chạy ở worker; voucher kích hoạt qua event `DateConfirmed`.
+  // Check-in an toàn (BE-S7-02): vị trí mã hoá qua `encryptor`.
+  const dating = createDatingModule({
+    uow,
+    clock,
+    scheduler,
+    encryptor,
+    requireUser: userGuard,
+    matching: matching.facade,
+    partners: billing.partnerFacade,
+    // BE-S7-03: hàng chờ cờ "khác biệt eKYC" + xem đánh giá kín (audit).
+    requireAdmin: identity.requireAdmin,
+    auditLogger: identity.auditLogger,
+  });
+
+  return [
+    identity,
+    uploadModule,
+    profile,
+    verification,
+    billing,
+    matching,
+    messaging,
+    safety,
+    notification,
+    dating,
+  ];
 }

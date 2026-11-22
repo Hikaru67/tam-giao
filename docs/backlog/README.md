@@ -36,6 +36,14 @@ S3 và S4 có thể chạy song song (2 dev / 2 nhóm subagent) sau khi S2 xong.
 | D5 | Hạ tầng & KMS (cloud VN / region) | BE-S1-09, BE-S7-08 | `LocalKeyEncryptor` (master key từ env) |
 | D6 | Tuổi tối thiểu, thời gian lưu ảnh eKYC | BE-S2-05, BE-S3-06 | `MIN_AGE=20`, `KYC_MEDIA_RETENTION_DAYS=30` |
 
+## Quyết định PO đã chốt (2026-11-22, review Sprint 7)
+
+| Chủ đề | Quyết định | Hiện thực |
+|---|---|---|
+| Blind index SĐT của tài khoản đã xoá | **Giữ** (chỉ HMAC) để chống lách lệnh khoá: SĐT của tài khoản đã xoá mà bị khoá (trước hoặc sau khi xoá) không đăng ký lại được → `ACCOUNT_BANNED`; không bị khoá → đăng ký lại bình thường | `identity.deleted_phone_indexes` (BE-S7-06 follow-up) |
+| Hoàn phí xác thực khi xoá tài khoản | **Không hoàn** | Hành vi hiện có; có test khoá luật |
+| Voucher cấp cho ai / xử lý khi lịch hẹn bị huỷ (D1) | **Để sau.** Có thể tắt voucher trước khi chốt | Tạm: voucher của người mời, giữ nguyên khi huỷ lịch — chưa đổi code |
+
 ## Bảng theo dõi tổng
 
 Cập nhật cột Trạng thái tại đây và trong file sprint khi task đổi trạng thái.
@@ -48,7 +56,7 @@ Cập nhật cột Trạng thái tại đây và trong file sprint khi task đ�
 | S4 | 0 | 0 | 0 | 7 | 0 |
 | S5 | 0 | 0 | 0 | 7 | 0 |
 | S6 | 0 | 0 | 0 | 7 | 0 |
-| S7 | 9 | 0 | 0 | 0 | 1 |
+| S7 | 1 | 0 | 1 | 7 | 1 |
 
 ## Cách giao task cho subagent
 

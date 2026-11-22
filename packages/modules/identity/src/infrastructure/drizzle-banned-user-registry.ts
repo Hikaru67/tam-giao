@@ -2,7 +2,7 @@ import { asDbTx } from '@tamgiao/db';
 import type { Tx } from '@tamgiao/kernel';
 import { eq } from 'drizzle-orm';
 import type { BannedUserRegistry } from '../application/ports/banned-user-registry.js';
-import { bannedUsers } from './schema.js';
+import { bannedUsers, deletedPhoneIndexes } from './schema.js';
 
 /** `BannedUserRegistry` trên `identity.banned_users` (PK `user_id`, upsert không ghi đè → idempotent). */
 export class DrizzleBannedUserRegistry implements BannedUserRegistry {
@@ -15,6 +15,16 @@ export class DrizzleBannedUserRegistry implements BannedUserRegistry {
       .select({ userId: bannedUsers.userId })
       .from(bannedUsers)
       .where(eq(bannedUsers.userId, userId));
+    return row !== undefined;
+  }
+
+  async isBannedDeletedPhone(tx: Tx, phoneBidx: string): Promise<boolean> {
+    const [row] = await asDbTx(tx)
+      .select({ userId: deletedPhoneIndexes.userId })
+      .from(deletedPhoneIndexes)
+      .innerJoin(bannedUsers, eq(bannedUsers.userId, deletedPhoneIndexes.userId))
+      .where(eq(deletedPhoneIndexes.phoneBidx, phoneBidx))
+      .limit(1);
     return row !== undefined;
   }
 }

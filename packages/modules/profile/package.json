@@ -16,6 +16,7 @@
     "@tamgiao/http": "workspace:*",
     "@tamgiao/kernel": "workspace:*",
     "@tamgiao/module-billing": "workspace:*",
+    "@tamgiao/module-identity": "workspace:*",
     "@tamgiao/module-verification": "workspace:*",
     "drizzle-orm": "0.45.4",
     "hono": "4.13.18",

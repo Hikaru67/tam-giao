@@ -3,8 +3,12 @@ packages:
   - packages/*
   - packages/modules/*
   - tools
+  - tests/e2e
 allowBuilds:
   cpu-features: false
   esbuild: true
   protobufjs: false
   ssh2: false
+overrides:
+  # BE-S7-07: GHSA-8gc5-j5rx-235r & co. (critical/high) — @aws-sdk/core kéo fast-xml-parser 4.4.x; ép bản đã vá.
+  fast-xml-parser@<4.5.5: 4.5.7

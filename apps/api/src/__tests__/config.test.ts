@@ -25,7 +25,16 @@ describe('api config', () => {
       nodeEnv: 'development',
       logLevel: 'info',
       port: 3000,
-      http: { corsOrigins: [], bodyLimitBytes: 1_048_576, trustProxy: false },
+      http: {
+        corsOrigins: [],
+        bodyLimitBytes: 1_048_576,
+        trustProxy: false,
+        rateLimit: {
+          enabled: true,
+          store: 'redis',
+          limits: { globalPerMinute: 600, otpPerMinute: 10, loginPerMinute: 10, dataRightsPerHour: 10 },
+        },
+      },
       database: { url: 'postgres://tamgiao@localhost:5433/tamgiao' },
       redis: { url: 'redis://localhost:6380' },
       storage: {
@@ -49,7 +58,34 @@ describe('api config', () => {
         webhookSecret: 'tamgiao-local-payment-webhook-secret',
         returnUrl: 'tamgiao://payments/return',
       },
+      observability: {
+        sentry: { dsn: undefined, environment: 'development', release: undefined },
+        metrics: { enabled: true, token: undefined },
+        openApi: { enabled: true, serverUrl: undefined },
+        release: 'dev',
+      },
     });
+  });
+
+  it('observability (BE-S7-08): Sentry theo DSN/env, OpenAPI tắt mặc định ở production, METRICS_TOKEN ≥ 16 ký tự', () => {
+    const base = envExample();
+    const config = parseApiConfig({
+      ...base,
+      SENTRY_DSN: 'https://public@sentry.example.com/1',
+      SENTRY_ENVIRONMENT: 'staging',
+      APP_RELEASE: 'abc123',
+      METRICS_TOKEN: 'metrics-token-0123456789',
+      PUBLIC_API_URL: 'https://api.staging.example.com',
+    });
+    expect(config.observability).toEqual({
+      sentry: { dsn: 'https://public@sentry.example.com/1', environment: 'staging', release: 'abc123' },
+      metrics: { enabled: true, token: 'metrics-token-0123456789' },
+      openApi: { enabled: true, serverUrl: 'https://api.staging.example.com' },
+      release: 'abc123',
+    });
+    expect(parseApiConfig({ ...base, OPENAPI_ENABLED: 'false' }).observability.openApi.enabled).toBe(false);
+    expect(() => parseApiConfig({ ...base, METRICS_TOKEN: 'short' })).toThrow(ConfigError);
+    expect(() => parseApiConfig({ ...base, SENTRY_DSN: 'not a url' })).toThrow(ConfigError);
   });
 
   it('thiếu biến bắt buộc → ConfigError liệt kê đủ', () => {
@@ -79,6 +115,12 @@ describe('api config', () => {
       [{ NODE_ENV: 'production' }, ['SMS_PROVIDER', 'EKYC_PROVIDER', 'PAYMENT_GATEWAY']],
       [{ PAYMENT_WEBHOOK_SECRET: 'short' }, ['PAYMENT_WEBHOOK_SECRET']],
       [{ EKYC_MAX_ATTEMPTS: '0' }, ['EKYC_MAX_ATTEMPTS']],
+      // BE-S7-07: store rate limit in-memory đếm riêng từng instance → cấm ở production.
+      [
+        { NODE_ENV: 'production', RATE_LIMIT_STORE: 'memory' },
+        ['SMS_PROVIDER', 'EKYC_PROVIDER', 'RATE_LIMIT_STORE', 'PAYMENT_GATEWAY'],
+      ],
+      [{ RATE_LIMIT_GLOBAL_PER_MINUTE: '0' }, ['RATE_LIMIT_GLOBAL_PER_MINUTE']],
     ] as const) {
       try {
         parseApiConfig({ ...base, ...override });

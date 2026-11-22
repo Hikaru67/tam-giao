@@ -61,6 +61,7 @@ function toMatch(row: MatchRow): Match {
     withdrawn: row.withdrawn,
     closeOutcome,
     lockReason: row.lockReason,
+    closeReason: row.closeReason,
     updatedAt: row.updatedAt,
     version: row.version,
   });
@@ -94,6 +95,7 @@ export class DrizzleMatchRepository implements MatchRepository {
       withdrawn: s.withdrawn,
       closeOutcome: s.closeOutcome,
       lockReason: s.lockReason,
+      closeReason: s.closeReason,
       updatedAt: s.updatedAt,
       version: s.version,
     };

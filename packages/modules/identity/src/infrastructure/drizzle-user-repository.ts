@@ -1,11 +1,11 @@
 import { asDbTx, type OutboxWriter } from '@tamgiao/db';
 import type { BlindIndexer, Encryptor, Tx } from '@tamgiao/kernel';
-import { eq } from 'drizzle-orm';
+import { and, eq, isNull } from 'drizzle-orm';
 import { PHONE_INDEX_PURPOSE } from '../application/index-purposes.js';
 import type { UserRepository } from '../application/ports/user-repository.js';
 import { PhoneNumber } from '../domain/phone-number.js';
 import { User, type UserId } from '../domain/user.js';
-import { users } from './schema.js';
+import { deletedPhoneIndexes, users } from './schema.js';
 
 const phoneContext = (userId: string) => `identity.users.phone:${userId}`;
 
@@ -21,8 +21,36 @@ export class DrizzleUserRepository implements UserRepository {
       .select()
       .from(users)
       .where(eq(users.phoneBidx, this.blindIndexer.index(phone.e164, PHONE_INDEX_PURPOSE)));
-    if (!row) return null;
+    return row ? this.toUser(row) : null;
+  }
 
+  async findActiveById(tx: Tx, id: UserId): Promise<User | null> {
+    const [row] = await asDbTx(tx)
+      .select()
+      .from(users)
+      .where(and(eq(users.id, id), isNull(users.deletedAt)));
+    return row ? this.toUser(row) : null;
+  }
+
+  async anonymize(tx: Tx, id: UserId, now: Date): Promise<void> {
+    const db = asDbTx(tx);
+    const [existing] = await db.select({ phoneBidx: users.phoneBidx }).from(users).where(eq(users.id, id));
+
+    if (existing && !existing.phoneBidx.startsWith('deleted:')) {
+      await db
+        .insert(deletedPhoneIndexes)
+        .values({ userId: id, phoneBidx: existing.phoneBidx, deletedAt: now })
+        .onConflictDoNothing();
+    }
+
+    // Blind index là HMAC (base64url) nên không bao giờ trùng `deleted:<uuid>`.
+    await db
+      .update(users)
+      .set({ phoneEnc: Buffer.alloc(0), phoneBidx: `deleted:${id}`, deletedAt: now })
+      .where(eq(users.id, id));
+  }
+
+  private async toUser(row: typeof users.$inferSelect): Promise<User> {
     const stored = PhoneNumber.parse(await this.encryptor.decrypt(row.phoneEnc, phoneContext(row.id)));
     if (stored.isErr()) throw new Error(`identity.users ${row.id}: SĐT lưu trong DB không hợp lệ`);
     return User.restore({

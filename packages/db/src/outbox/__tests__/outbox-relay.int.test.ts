@@ -173,6 +173,19 @@ describe('OutboxRelay + consumer', () => {
     await waitFor(async () => (await unpublishedCount()) === 0);
     await relay.stop();
   });
+
+  it('consumer xả hàng đợi tồn đọng nhanh hơn 1 event / nhịp polling (BE-S7-09)', async () => {
+    const { logger } = captureLogger();
+    const bus = new EventBus();
+    let handled = 0;
+    bus.on('Backlogged', 'test.backlog-consumer', async () => void handled++);
+    // Nhịp polling 2 s như worker thật: không burst → 30 event mất ~60 s; có burst → vài giây.
+    await registerConsumers({ boss, uow, bus, logger, retry: FAST, pollingIntervalSeconds: 2 });
+    await writeEvents(Array.from({ length: 30 }, () => event('Backlogged')));
+    expect(await new OutboxRelay({ uow, boss, bus, logger }).publishBatch()).toBe(30);
+
+    await waitFor(() => handled === 30, 25_000);
+  }, 40_000);
 });
 
 describe('PgBossScheduler', () => {
