@@ -78,7 +78,8 @@ export interface MatchMetPayload {
 }
 
 /**
- * Match đóng → `CLOSED_SUCCESS` | `CLOSED_STOPPED` (`CLOSED_STOPPED` kéo theo cooldown `COOLDOWN_DAYS`).
+ * Match đóng → `CLOSED_SUCCESS` | `CLOSED_STOPPED` (`CLOSED_STOPPED` do dừng tìm hiểu kéo theo cooldown `COOLDOWN_DAYS`;
+ * hết `DATING_DAYS` chưa gặp thì không — BE-S7-04).
  * Hết `DATING_DAYS` cũng phát event này (`trigger = DATING_PERIOD_ENDED`), không phát `MatchExpired`.
  */
 export const MATCH_CLOSED = 'MatchClosed';

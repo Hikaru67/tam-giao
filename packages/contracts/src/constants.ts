@@ -46,3 +46,7 @@ export const DATE_REMINDER_HOURS = 2;
 export const DATE_RESPONSE_TTL_HOURS = 24;
 /** Huỷ lịch hẹn đã xác nhận chỉ khi còn ít nhất ngần này giờ trước giờ bắt đầu (BE-S7-01). */
 export const DATE_CANCEL_CUTOFF_HOURS = 4;
+/** Nhắc "Mục tiêu: gặp mặt trước ngày `DATING_DAYS`" lần 1 vào ngày thứ ngần này của giai đoạn tìm hiểu (BE-S7-04). */
+export const DATING_FIRST_REMINDER_DAY = 7;
+/** Nhắc lần 2 (sắp hết giai đoạn tìm hiểu) vào ngày thứ ngần này (BE-S7-04). */
+export const DATING_FINAL_REMINDER_DAY = 12;

@@ -2,9 +2,11 @@ import {
   KYC_APPROVED,
   KYC_REJECTED,
   MATCH_AWAITING_RESPONSE,
+  MATCH_CLOSED,
   MATCH_DECLINED,
   MATCH_EXPIRED,
   MATCH_LOCKED,
+  MATCH_MET,
   MATCH_OFFERED,
   MATCH_STARTED_DATING,
   MESSAGE_SENT,
@@ -15,7 +17,12 @@ import {
 import { DATE_REMINDER_HOURS, OFFER_EXPIRY_REMINDER_HOURS } from '@tamgiao/contracts/constants';
 import type { EventBus } from '@tamgiao/db';
 import { newId, type Clock, type DomainEvent, type Scheduler, type Tx } from '@tamgiao/kernel';
-import { reminderTime, type NotificationKind } from '../domain/templates.js';
+import {
+  DATING_REMINDER_KINDS,
+  datingReminderTimes,
+  reminderTime,
+  type NotificationKind,
+} from '../domain/templates.js';
 import type { DrizzleNotificationStore, NewDelivery } from './drizzle-notification-store.js';
 
 /** Hàng đợi job gửi một thông báo (`{deliveryId}`); key job = deliveryId, `runAt` = `send_after`. */
@@ -34,6 +41,10 @@ export const NOTIFICATION_CONSUMERS = {
   matchOffered: 'notification.on-match-offered',
   matchAwaitingResponse: 'notification.on-match-awaiting-response',
   matchStartedDating: 'notification.on-match-started-dating',
+  datingReminders: 'notification.schedule-dating-reminders',
+  datingRemindersMet: 'notification.cancel-dating-reminders-on-match-met',
+  datingRemindersClosed: 'notification.cancel-dating-reminders-on-match-closed',
+  datingRemindersLocked: 'notification.cancel-dating-reminders-on-match-locked',
   matchDeclined: 'notification.cancel-offer-reminder-on-match-declined',
   matchExpired: 'notification.cancel-offer-reminder-on-match-expired',
   matchLocked: 'notification.cancel-offer-reminder-on-match-locked',
@@ -197,6 +208,9 @@ function offerReminder(
  * Nhắc nhở hẹn trước (gợi ý sắp hết hạn, lịch hẹn trước `DATE_REMINDER_HOURS` giờ) là dòng `PENDING` có `send_after` ở
  * tương lai; event làm nhắc nhở mất ý nghĩa (match đã phản hồi/hết hạn/khoá, lịch hẹn bị huỷ) chuyển dòng sang
  * `CANCELLED`.
+ *
+ * Nhắc giai đoạn tìm hiểu (ngày 7 và ngày 12, BE-S7-04) hẹn lịch khi bắt đầu DATING và huỷ khi match không còn ở DATING
+ * (MET, CLOSED, LOCKED).
  */
 export function registerNotificationConsumers(bus: EventBus, deps: NotificationConsumerDeps): void {
   const { store, clock } = deps;
@@ -207,6 +221,17 @@ export function registerNotificationConsumers(bus: EventBus, deps: NotificationC
       exceptEventId: event.eventId,
       now: clock.now(),
     });
+
+  const cancelDatingReminders = async (tx: Tx, event: DomainEvent, matchId: string) => {
+    for (const kind of DATING_REMINDER_KINDS) {
+      await store.cancelPending(tx, {
+        aggregateId: matchId,
+        kind,
+        exceptEventId: event.eventId,
+        now: clock.now(),
+      });
+    }
+  };
 
   bus.on(MATCH_OFFERED, NOTIFICATION_CONSUMERS.matchOffered, async (event, tx) => {
     const p = payloadOf(event);
@@ -243,6 +268,30 @@ export function registerNotificationConsumers(bus: EventBus, deps: NotificationC
       },
     ]);
   });
+
+  bus.on(MATCH_STARTED_DATING, NOTIFICATION_CONSUMERS.datingReminders, async (event, tx) => {
+    const p = payloadOf(event);
+    const matchId = str(event, p, 'matchId');
+    const participantIds = strings(event, p, 'participantIds');
+    const expiresAt = date(event, p, 'expiresAt');
+    const requests: NotifyRequest[] = datingReminderTimes(event.occurredAt, expiresAt).map((r) => ({
+      kind: r.kind,
+      userIds: participantIds,
+      aggregateId: matchId,
+      data: { matchId },
+      sendAfter: r.at,
+    }));
+    if (requests.length > 0) {
+      await notify(deps, tx, event, requests);
+    }
+  });
+
+  const cancelDatingOnly = async (event: DomainEvent, tx: Tx) => {
+    await cancelDatingReminders(tx, event, str(event, payloadOf(event), 'matchId'));
+  };
+  bus.on(MATCH_MET, NOTIFICATION_CONSUMERS.datingRemindersMet, cancelDatingOnly);
+  bus.on(MATCH_CLOSED, NOTIFICATION_CONSUMERS.datingRemindersClosed, cancelDatingOnly);
+  bus.on(MATCH_LOCKED, NOTIFICATION_CONSUMERS.datingRemindersLocked, cancelDatingOnly);
 
   const cancelOnly = async (event: DomainEvent, tx: Tx) => {
     await cancelOfferReminders(tx, event, str(event, payloadOf(event), 'matchId'));

@@ -183,6 +183,13 @@
       "when": 1795327337083,
       "tag": "0025_identity_data_rights",
       "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1795328445811,
+      "tag": "0026_matching_close_reason",
+      "breakpoints": true
     }
   ]
 }

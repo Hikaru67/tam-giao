@@ -105,6 +105,8 @@ Khai báo tại `packages/contracts/src/constants.ts`. Không hardcode ở chỗ
 | `DATE_REMINDER_HOURS` | 2 | Nhắc lịch hẹn trước giờ gặp (BE-S7-05) |
 | `DATE_RESPONSE_TTL_HOURS` | 24 | Người được mời xác nhận lịch hẹn, quá hạn → `EXPIRED` (BE-S7-01) |
 | `DATE_CANCEL_CUTOFF_HOURS` | 4 | Huỷ lịch hẹn đã xác nhận trước giờ bắt đầu ít nhất (BE-S7-01) |
+| `DATING_FIRST_REMINDER_DAY` | 7 | Nhắc "Mục tiêu: gặp mặt trước ngày 14" lần 1, ngày thứ 7 giai đoạn tìm hiểu (BE-S7-04) |
+| `DATING_FINAL_REMINDER_DAY` | 12 | Nhắc lần 2, sắp hết giai đoạn tìm hiểu (BE-S7-04) |
 
 ## 7. Vùng sở hữu file (tránh xung đột khi nhiều subagent chạy song song)
 

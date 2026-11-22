@@ -50,6 +50,9 @@ export const NOTIFICATION_KIND_NAMES = [
   'REFUND_COMPLETED',
   'REPORT_RECEIVED',
   'REPORT_UPDATED',
+  /** Nhắc giai đoạn tìm hiểu ngày `DATING_FIRST_REMINDER_DAY` / `DATING_FINAL_REMINDER_DAY` (BE-S7-04). */
+  'DATING_REMINDER_FIRST',
+  'DATING_REMINDER_FINAL',
 ] as const;
 export type NotificationKindName = (typeof NOTIFICATION_KIND_NAMES)[number];
 

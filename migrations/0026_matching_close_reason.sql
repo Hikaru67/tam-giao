@@ -1,0 +1,2 @@
+ALTER TABLE "matching"."matches" ADD COLUMN "close_reason" text;--> statement-breakpoint
+ALTER TABLE "matching"."matches" ADD CONSTRAINT "matches_close_reason_ck" CHECK ("matching"."matches"."close_reason" is null or "matching"."matches"."status" in ('CLOSED_SUCCESS', 'CLOSED_STOPPED'));
