@@ -1,6 +1,6 @@
 import type { DomainEvent, Tx, UnitOfWork } from '@tamgiao/kernel';
 import { ok } from '@tamgiao/kernel';
-import type { PgBoss } from 'pg-boss';
+import type { JobResult, PgBoss } from 'pg-boss';
 import { asPgClient } from '../tx.js';
 import {
   DEFAULT_RETRY_POLICY,
@@ -38,6 +38,9 @@ const toSerialized = (row: OutboxRow): SerializedEvent => ({
 });
 
 const fromSerialized = (e: SerializedEvent): DomainEvent => ({ ...e, occurredAt: new Date(e.occurredAt) });
+
+/** Số job một consumer lấy mỗi lần (BE-S7-09) — đủ để xả backlog nhanh mà một lô vẫn ngắn. */
+const CONSUMER_BATCH_SIZE = 20;
 
 /**
  * Đọc outbox và chuyển event thành job cho từng consumer.
@@ -154,19 +157,35 @@ export async function registerConsumers(options: {
     await ensureQueue(boss, queue, options.retry ?? DEFAULT_RETRY_POLICY, logger, polling);
     await boss.work<{ event: SerializedEvent }>(
       queue,
-      { pollingIntervalSeconds: polling, batchSize: 1 },
+      // pg-boss luôn chờ đủ `polling` giữa hai lần lấy job: với `batchSize: 1` mỗi consumer chỉ ~0,5 event/s
+      // (BE-S7-09: k6 chat 46 tin/s dồn hàng đợi notification, p95 xử lý 175 s). Lấy lô `CONSUMER_BATCH_SIZE` và
+      // `burstWhenBatchFull` (lô đầy → lấy tiếp ngay, không chờ nhịp). `perJobResults`: kết quả theo từng job — một event
+      // lỗi chỉ làm job đó thử lại / dead-letter, không kéo theo các event khác trong lô. Event xử lý tuần tự trong lô.
+      {
+        pollingIntervalSeconds: polling,
+        batchSize: CONSUMER_BATCH_SIZE,
+        burstWhenBatchFull: true,
+        perJobResults: true,
+      },
       async (jobs) => {
+        const results: JobResult[] = [];
         for (const job of jobs) {
           try {
             await deliverOnce(uow, sub, fromSerialized(job.data.event));
+            results.push({ id: job.id, status: 'completed' });
           } catch (error) {
             logger.warn(
               { consumer: sub.consumer, eventId: job.data.event.eventId, err: error },
               'event handler failed',
             );
-            throw error;
+            results.push({
+              id: job.id,
+              status: 'failed',
+              output: { message: error instanceof Error ? error.message : String(error) },
+            });
           }
         }
+        return results;
       },
     );
   }
