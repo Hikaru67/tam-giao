@@ -4,6 +4,7 @@ import { SystemClock } from '@tamgiao/kernel';
 import { createApp } from './app.js';
 import { loadApiConfig } from './config.js';
 import { createLogger } from '@tamgiao/config';
+import { DATING_SCHEDULED_QUEUES } from '@tamgiao/module-dating';
 import { MATCHING_SCHEDULED_QUEUES } from '@tamgiao/module-matching';
 import { startApiJobScheduler } from './job-scheduler.js';
 import { buildModules } from './modules.js';
@@ -17,7 +18,7 @@ const database = createDatabase(config.database.url);
 // pg-boss chỉ để gửi job hẹn giờ cùng transaction (vd hết hạn match); worker mới chạy job.
 const jobs = await startApiJobScheduler({
   connectionString: config.database.url,
-  queues: MATCHING_SCHEDULED_QUEUES,
+  queues: [...MATCHING_SCHEDULED_QUEUES, ...DATING_SCHEDULED_QUEUES],
   onError: (error) => logger.error({ err: error }, 'pg-boss error'),
 });
 

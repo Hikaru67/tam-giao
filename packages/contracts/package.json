@@ -16,7 +16,8 @@
     "./matching": "./src/matching/index.ts",
     "./messaging": "./src/messaging/index.ts",
     "./safety": "./src/safety/index.ts",
-    "./notification": "./src/notification/index.ts"
+    "./notification": "./src/notification/index.ts",
+    "./dating": "./src/dating/index.ts"
   },
   "scripts": {
     "typecheck": "tsc -p tsconfig.json"

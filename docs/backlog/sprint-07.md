@@ -13,7 +13,7 @@ hoặc `CLOSED_STOPPED` + cooldown; thông báo đẩy/SMS cho các mốc quan t
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| dating | domain, application, infrastructure, presentation | P0 | 2d | Sprint 5, BE-S4-05, BE-S4-06 | BE-S7-05, BE-S7-06 | TODO |
+| dating | domain, application, infrastructure, presentation | P0 | 2d | Sprint 5, BE-S4-05, BE-S4-06 | BE-S7-05, BE-S7-06 | DONE |
 
 **Mục tiêu:** Phục vụ màn "Đặt lịch Gặp mặt & Điểm hẹn An toàn".
 
@@ -22,9 +22,9 @@ hoặc `CLOSED_STOPPED` + cooldown; thông báo đẩy/SMS cho các mốc quan t
 - Ngoài: Đặt bàn qua API quán.
 
 **Tiêu chí nghiệm thu**
-- [ ] AC1: Match không ở `DATING` → `MATCH_NOT_DATING`.
-- [ ] AC2: Xác nhận → voucher của người mời chuyển `ACTIVE` (qua event, idempotent).
-- [ ] AC3: Quá 24h không xác nhận → `EXPIRED`, có thể đề xuất lịch mới.
+- [x] AC1: Match không ở `DATING` → `MATCH_NOT_DATING`.
+- [x] AC2: Xác nhận → voucher của người mời chuyển `ACTIVE` (qua event, idempotent).
+- [x] AC3: Quá 24h không xác nhận → `EXPIRED`, có thể đề xuất lịch mới.
 
 **Test bắt buộc:** Unit domain; integration chuỗi `DateConfirmed` → `VoucherActivated`.
 
@@ -119,7 +119,7 @@ hoặc `CLOSED_STOPPED` + cooldown; thông báo đẩy/SMS cho các mốc quan t
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| notification | application, infrastructure, presentation | P0 | 2d | Sprint 1 | BE-S7-01, BE-S7-06 | IN_REVIEW |
+| notification | application, infrastructure, presentation | P0 | 2d | Sprint 1 | BE-S7-01, BE-S7-06 | DONE |
 
 **Mục tiêu:** Người dùng không bỏ lỡ gợi ý 24h, phản hồi, lịch hẹn, cảnh báo an toàn.
 

@@ -20,7 +20,8 @@ import { PartnerStaffLogin } from './application/partner/partner-staff-login.js'
 import { CreateVerificationCheckout } from './application/payment/create-verification-checkout.js';
 import { HandlePaymentWebhook } from './application/payment/handle-payment-webhook.js';
 import { BillingFacadeQueries, GetMyPayments } from './application/payment/payment-queries.js';
-import type { BillingFacade } from './application/facade.js';
+import type { BillingFacade, BillingPartnerFacade } from './application/facade.js';
+import { PartnerAvailabilityQueries } from './application/partner/partner-availability.js';
 import type { PaymentGateway } from './application/ports/payment-gateway.js';
 import {
   DrizzleLedgerRepository,
@@ -58,6 +59,8 @@ import {
   DrizzleRefundVoucherRepository,
 } from './infrastructure/drizzle-refund-repositories.js';
 import { registerBillingKycConsumers } from './infrastructure/refund-kyc-consumers.js';
+import { ActivateVoucherOnDateConfirmed } from './application/voucher/activate-voucher-on-date-confirmed.js';
+import { registerDateConfirmedConsumer } from './infrastructure/date-confirmed-consumer.js';
 import { createRefundAdminRoutes } from './presentation/refund-admin-routes.js';
 // BE-S4-07 — đối soát ledger hằng ngày.
 import { ListReconciliationReports } from './application/reconciliation/list-reconciliation-reports.js';
@@ -71,7 +74,7 @@ import { createReconciliationAdminRoutes } from './presentation/reconciliation-a
  */
 export type { PartnerStaffAuth } from './application/partner/authenticate-partner-staff.js';
 export type { PartnerEnv, RequirePartnerStaff } from './presentation/partner-auth-middleware.js';
-export type { BillingFacade } from './application/facade.js';
+export type { BillingFacade, BillingPartnerFacade } from './application/facade.js';
 export type { DevPaymentSimulator } from './presentation/payment-routes.js';
 export {
   PaymentGatewayError,
@@ -114,6 +117,8 @@ export interface BillingModule {
   readonly routes: Hono<AppEnv>;
   /** Facade read-only cho module khác (BE-S4-03). */
   readonly facade: BillingFacade;
+  /** Facade read-only về quán đối tác (BE-S7-01: dating kiểm tra quán đang hoạt động). */
+  readonly partnerFacade: BillingPartnerFacade;
 }
 
 /** Composition root của module billing. */
@@ -233,7 +238,9 @@ export function createBillingModule(deps: BillingModuleDeps): BillingModule {
     }),
   );
 
-  return { name: 'billing', routes, facade };
+  const partnerFacade: BillingPartnerFacade = new PartnerAvailabilityQueries({ uow, partners });
+
+  return { name: 'billing', routes, facade, partnerFacade };
 }
 
 // ── Voucher (BE-S4-05) ─────────────────────────────────────────────────────────────────────────────
@@ -267,6 +274,10 @@ export type { RefundVerificationPaymentOutcome } from './application/refund/refu
 export type { OverdueRefund } from './application/refund/refund-queries.js';
 export type { PendingRefund } from './application/ports/refund-repositories.js';
 
+// BE-S7-01: consumer DateConfirmed (dating) → kích hoạt voucher của người mời.
+export { ACTIVATE_VOUCHER_ON_DATE_CONFIRMED_CONSUMER } from './infrastructure/date-confirmed-consumer.js';
+export type { ActivateVoucherOnDateConfirmedOutcome } from './application/voucher/activate-voucher-on-date-confirmed.js';
+
 export interface BillingWorkerDeps {
   readonly uow: UnitOfWork;
   readonly clock: Clock;
@@ -275,7 +286,10 @@ export interface BillingWorkerDeps {
 }
 
 export interface BillingWorker {
-  /** Đăng ký consumer `billing.refund-on-kyc-rejected` + `billing.set-voucher-expiry` (trước `registerConsumers`). */
+  /**
+   * Đăng ký consumer `billing.refund-on-kyc-rejected` + `billing.set-voucher-expiry` + (BE-S7-01)
+   * `billing.activate-voucher-on-date-confirmed` (trước `registerConsumers`).
+   */
   registerConsumers(bus: EventBus): void;
   /** Job hoàn tiền một khoản `REFUND_PENDING` (gọi cổng ngoài transaction). */
   readonly refundPayment: RefundVerificationPayment;
@@ -297,7 +311,10 @@ export function createBillingWorker(deps: BillingWorkerDeps): BillingWorker {
     setVoucherExpiry: new SetVoucherExpiryOnKycApproved({ clock, vouchers }),
   };
   return {
-    registerConsumers: (bus) => registerBillingKycConsumers(bus, consumers),
+    registerConsumers: (bus) => {
+      registerBillingKycConsumers(bus, consumers);
+      registerDateConfirmedConsumer(bus, new ActivateVoucherOnDateConfirmed({ clock, vouchers }));
+    },
     refundPayment: new RefundVerificationPayment({
       uow,
       clock,

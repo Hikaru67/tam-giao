@@ -10,3 +10,4 @@ export * from './matching/index.js';
 export * from './messaging/index.js';
 export * from './safety/index.js';
 export * from './notification/index.js';
+export * from './dating/index.js';

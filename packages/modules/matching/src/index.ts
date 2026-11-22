@@ -108,7 +108,12 @@ export {
   type LockMatchCommand,
   type LockMatchOutcome,
 } from './application/responses/lock-match.js';
-export type { MatchBetweenSummary, MatchingFacade, MatchPairStatus } from './application/facade.js';
+export type {
+  MatchBetweenSummary,
+  MatchingFacade,
+  MatchPairStatus,
+  OpenMatchSummary,
+} from './application/facade.js';
 
 /** Use case khoá match (BE-S6-05) — consumer `ReportFiled` gọi `executeIn(tx, …)`. */
 export function createLockMatch(deps: { readonly clock: Clock; readonly scheduler: Scheduler }): LockMatch {

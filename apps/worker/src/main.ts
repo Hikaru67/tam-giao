@@ -20,6 +20,7 @@ import {
   createVoucherExpiryJob,
   FakePaymentGateway,
 } from '@tamgiao/module-billing';
+import { createExpireDatePlanJob } from '@tamgiao/module-dating';
 import { ConsoleSmsSender, createIdentityModule, createIdentityWorker } from '@tamgiao/module-identity';
 import { createExpireMatchJob, createMatchingWorker } from '@tamgiao/module-matching';
 import { createMessagingWorker } from '@tamgiao/module-messaging';
@@ -29,6 +30,7 @@ import { createKycMediaRetention } from '@tamgiao/module-verification';
 import { PgBoss } from 'pg-boss';
 import { loadWorkerConfig } from './config.js';
 import { registerBillingRefundJobs } from './jobs/billing-refund.js';
+import { registerDatePlanExpiryJob } from './jobs/date-plan-expiry.js';
 import { registerKycMediaRetentionJob } from './jobs/kyc-media-retention.js';
 import { registerLedgerReconciliationJob } from './jobs/ledger-reconciliation.js';
 import { registerMatchExpiryJob } from './jobs/match-expiry.js';
@@ -52,6 +54,7 @@ await boss.start();
 const bus = new EventBus();
 const jobs = registerWorkers(bus);
 // Billing (BE-S4-04): consumer KycRejected (hoàn tiền) + KycApproved (đặt hạn voucher), job hoàn tiền bên dưới.
+// BE-S7-01: consumer DateConfirmed (dating) → kích hoạt voucher của người mời.
 // Fake trong worker là instance khác với API → không biết giao dịch do API tạo; `acceptUnknownRefunds` để hoàn
 // được ở dev. Config đã cấm `fake` ở production.
 const billingWorker = createBillingWorker({
@@ -143,6 +146,14 @@ await registerMatchExpiryJob({
   uow,
   logger,
   expirer: createExpireMatchJob({ uow, clock, scheduler: new PgBossScheduler(boss) }),
+});
+
+// Hết hạn xác nhận lịch hẹn (BE-S7-01): job `dating.expire-date-plan` do API hẹn lúc `expiresAt` → `ExpireDatePlan`.
+await registerDatePlanExpiryJob({
+  boss,
+  uow,
+  logger,
+  expirer: createExpireDatePlanJob({ uow, clock }),
 });
 
 const relay = new OutboxRelay({ uow, boss, bus, logger });

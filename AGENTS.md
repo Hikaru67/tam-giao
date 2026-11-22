@@ -103,6 +103,8 @@ Khai báo tại `packages/contracts/src/constants.ts`. Không hardcode ở chỗ
 | `MESSAGE_RATE_LIMIT_PER_MINUTE` | 30 | Số tin tối đa / người / hội thoại trong 60 giây (BE-S6-01) |
 | `OFFER_EXPIRY_REMINDER_HOURS` | 2 | Nhắc "gợi ý sắp hết hạn" trước hạn phản hồi (BE-S7-05) |
 | `DATE_REMINDER_HOURS` | 2 | Nhắc lịch hẹn trước giờ gặp (BE-S7-05) |
+| `DATE_RESPONSE_TTL_HOURS` | 24 | Người được mời xác nhận lịch hẹn, quá hạn → `EXPIRED` (BE-S7-01) |
+| `DATE_CANCEL_CUTOFF_HOURS` | 4 | Huỷ lịch hẹn đã xác nhận trước giờ bắt đầu ít nhất (BE-S7-01) |
 
 ## 7. Vùng sở hữu file (tránh xung đột khi nhiều subagent chạy song song)
 

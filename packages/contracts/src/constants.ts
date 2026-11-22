@@ -42,3 +42,7 @@ export const MESSAGE_RATE_LIMIT_PER_MINUTE = 30;
 export const OFFER_EXPIRY_REMINDER_HOURS = 2;
 /** Nhắc lịch hẹn gặp mặt trước giờ hẹn ngần này giờ (BE-S7-05). */
 export const DATE_REMINDER_HOURS = 2;
+/** Người được mời xác nhận lịch hẹn trong ngần này giờ kể từ lúc đề xuất, quá hạn → `EXPIRED` (BE-S7-01). */
+export const DATE_RESPONSE_TTL_HOURS = 24;
+/** Huỷ lịch hẹn đã xác nhận chỉ khi còn ít nhất ngần này giờ trước giờ bắt đầu (BE-S7-01). */
+export const DATE_CANCEL_CUTOFF_HOURS = 4;
