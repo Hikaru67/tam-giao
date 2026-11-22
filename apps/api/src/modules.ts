@@ -27,7 +27,10 @@ import {
   createMessagingModule,
   type UpgradableServer,
 } from '@tamgiao/module-messaging';
-import { createNotificationModule } from '@tamgiao/module-notification';
+import {
+  NOTIFICATION_ERASE_ON_ACCOUNT_DELETION_CONSUMER,
+  createNotificationModule,
+} from '@tamgiao/module-notification';
 import { PROFILE_ERASE_ON_ACCOUNT_DELETION_CONSUMER, createProfileModule } from '@tamgiao/module-profile';
 import { SAFETY_ERASE_ON_ACCOUNT_DELETION_CONSUMER, createSafetyModule } from '@tamgiao/module-safety';
 import {
@@ -81,6 +84,7 @@ export const ACCOUNT_DELETION_STEPS: readonly AccountDeletionStep[] = [
   { module: 'matching', consumer: MATCH_ERASE_ON_ACCOUNT_DELETION_CONSUMER },
   { module: 'messaging', consumer: MESSAGING_ERASE_ON_ACCOUNT_DELETION_CONSUMER },
   { module: 'safety', consumer: SAFETY_ERASE_ON_ACCOUNT_DELETION_CONSUMER },
+  { module: 'notification', consumer: NOTIFICATION_ERASE_ON_ACCOUNT_DELETION_CONSUMER },
   { module: 'uploads', consumer: UPLOADS_ERASE_ON_ACCOUNT_DELETION_CONSUMER },
 ];
 

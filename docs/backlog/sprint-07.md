@@ -145,7 +145,7 @@ hoặc `CLOSED_STOPPED` + cooldown; thông báo đẩy/SMS cho các mốc quan t
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| identity (điều phối) | application, infrastructure, presentation | P0 | 1.5d | Sprint 6 | BE-S7-01, BE-S7-05 | TODO |
+| identity (điều phối) | application, infrastructure, presentation | P0 | 1.5d | Sprint 6 | BE-S7-01, BE-S7-05 | IN_REVIEW |
 
 **Mục tiêu:** Đáp ứng quyền của chủ thể dữ liệu theo Nghị định 13/2023.
 

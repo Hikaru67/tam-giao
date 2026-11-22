@@ -176,6 +176,13 @@
       "when": 1795317604465,
       "tag": "0024_dating_date_plans",
       "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1795327337083,
+      "tag": "0025_identity_data_rights",
+      "breakpoints": true
     }
   ]
 }

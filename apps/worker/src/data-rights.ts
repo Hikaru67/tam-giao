@@ -8,6 +8,7 @@ import {
 import type { PersonalDataSource } from '@tamgiao/module-identity';
 import { createMatchingPersonalDataSource } from '@tamgiao/module-matching';
 import { createMessagingPersonalDataSource } from '@tamgiao/module-messaging';
+import { registerNotificationAccountDeletionConsumer } from '@tamgiao/module-notification';
 import {
   createProfilePersonalDataSource,
   registerProfileAccountDeletionConsumer,
@@ -29,13 +30,14 @@ export interface DataRightsDeps {
 
 /**
  * Consumer `AccountDeletionRequested` (BE-S7-06) của các module không có `createXWorker` riêng: profile, verification,
- * billing, safety, uploads. Matching và messaging đăng ký trong `createMatchingWorker` / `createMessagingWorker`.
+ * billing, safety, notification, uploads. Matching và messaging đăng ký trong `createMatchingWorker` / `createMessagingWorker`.
  */
 export function registerAccountDeletionConsumers(bus: EventBus, deps: DataRightsDeps): void {
   registerProfileAccountDeletionConsumer(bus, { storage: deps.storage });
   registerVerificationAccountDeletionConsumer(bus, { storage: deps.storage, clock: deps.clock });
   registerBillingAccountDeletionConsumer(bus, { clock: deps.clock });
   registerSafetyAccountDeletionConsumer(bus, { storage: deps.storage });
+  registerNotificationAccountDeletionConsumer(bus, { clock: deps.clock });
   registerUploadErasureConsumer(bus, { eventType: ACCOUNT_DELETION_REQUESTED, storage: deps.storage });
 }
 

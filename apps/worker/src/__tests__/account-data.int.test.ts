@@ -29,6 +29,7 @@ import {
 } from '@tamgiao/module-identity';
 import { MATCH_ERASE_ON_ACCOUNT_DELETION_CONSUMER, createMatchingWorker } from '@tamgiao/module-matching';
 import { MESSAGING_ERASE_ON_ACCOUNT_DELETION_CONSUMER, createMessagingWorker } from '@tamgiao/module-messaging';
+import { NOTIFICATION_ERASE_ON_ACCOUNT_DELETION_CONSUMER } from '@tamgiao/module-notification';
 import { PROFILE_ERASE_ON_ACCOUNT_DELETION_CONSUMER } from '@tamgiao/module-profile';
 import { SAFETY_ERASE_ON_ACCOUNT_DELETION_CONSUMER } from '@tamgiao/module-safety';
 import { VERIFICATION_ERASE_ON_ACCOUNT_DELETION_CONSUMER } from '@tamgiao/module-verification';
@@ -51,6 +52,7 @@ const STEPS: readonly AccountDeletionStep[] = [
   { module: 'matching', consumer: MATCH_ERASE_ON_ACCOUNT_DELETION_CONSUMER },
   { module: 'messaging', consumer: MESSAGING_ERASE_ON_ACCOUNT_DELETION_CONSUMER },
   { module: 'safety', consumer: SAFETY_ERASE_ON_ACCOUNT_DELETION_CONSUMER },
+  { module: 'notification', consumer: NOTIFICATION_ERASE_ON_ACCOUNT_DELETION_CONSUMER },
   { module: 'uploads', consumer: UPLOADS_ERASE_ON_ACCOUNT_DELETION_CONSUMER },
 ];
 
@@ -304,6 +306,21 @@ async function seedEverything(me: string, peer: string) {
       NOW,
     ],
   );
+  // notification: token thiết bị, cài đặt, thông báo chờ gửi
+  await sql(
+    `insert into notification.devices (id, user_id, token, platform, created_at, last_seen_at)
+     values ($1, $2, 'ExponentPushToken[me]', 'ios', $4, $4), ($3, $5, 'ExponentPushToken[peer]', 'ios', $4, $4)`,
+    [newId(), me, newId(), NOW, peer],
+  );
+  await sql(
+    `insert into notification.preferences (user_id, matches, messages, dates, updated_at) values ($1, true, false, true, $2)`,
+    [me, NOW],
+  );
+  await sql(
+    `insert into notification.deliveries (id, event_id, event_type, kind, user_id, aggregate_id, data, status, send_after,
+       created_at, updated_at) values ($1, $2, 'MatchOffered', 'MATCH_OFFERED', $3, $4, '{}', 'PENDING', $5, $5, $5)`,
+    [newId(), newId(), me, matchId, NOW],
+  );
   // platform.uploads: kể cả ảnh chưa gắn vào đâu
   for (const [key, bucket, purpose] of [
     [`profile_photo/${me}/1.jpg`, 'publicProfile', 'profile_photo'],
@@ -507,6 +524,14 @@ async function expectErased(
   ]);
   expect(await sql('select description from safety.reports where id = $1', [ids.peerReportId])).toEqual([
     { description: MARKER.peerReport },
+  ]);
+
+  // notification: token + cài đặt của tôi bị xoá, thông báo chờ bị huỷ; token người kia còn
+  expect(await sql('select token from notification.devices where user_id = $1', [me])).toEqual([]);
+  expect(await sql('select token from notification.devices where user_id = $1', [peer])).toHaveLength(1);
+  expect(await sql('select user_id from notification.preferences where user_id = $1', [me])).toEqual([]);
+  expect(await sql('select status from notification.deliveries where user_id = $1', [me])).toEqual([
+    { status: 'CANCELLED' },
   ]);
 
   // storage / uploads: mọi object của tôi bị xoá (kể cả ảnh chưa gắn), dòng uploads của tôi bị xoá; của người kia còn
