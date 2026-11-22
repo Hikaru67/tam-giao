@@ -70,7 +70,7 @@ nhận hồ sơ → duyệt → app user chuyển "đã duyệt", voucher có h�
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| mobile | presentation | P0 | 1d | FE-S3-02 | FE-S3-04, FE-S3-07 | TODO |
+| mobile | presentation | P0 | 1d | FE-S3-02 | FE-S3-04, FE-S3-07 | DONE |
 
 **Mục tiêu:** User chọn slot phỏng vấn với chuyên viên (BE-S3-05).
 
