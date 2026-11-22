@@ -179,7 +179,7 @@ CI kiểm tra FE. Chưa có màn nghiệp vụ.
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| packages/ui-mobile, packages/ui-web | presentation | P1 | 2d | FE-S1-02 | FE-S1-04, FE-S1-06 | TODO |
+| packages/ui-mobile, packages/ui-web | presentation | P1 | 2d | FE-S1-02 | FE-S1-04, FE-S1-06 | DONE |
 
 **Mục tiêu:** Các màn dựng từ component chung, đúng thiết kế (luật F6).
 

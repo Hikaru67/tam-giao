@@ -9,7 +9,13 @@ export default defineConfig({
         test: {
           name: 'unit',
           include: ['{apps,packages,tools}/**/*.test.ts'],
-          exclude: [...ignored, '**/*.int.test.ts', 'apps/{admin,partner,mobile}/**'],
+          exclude: [
+            ...ignored,
+            '**/*.int.test.ts',
+            'apps/{admin,partner,mobile}/**',
+            'packages/{ui-web,ui-mobile}/**',
+            'packages/ui-core/src/**/*.test.tsx',
+          ],
         },
       },
       {
@@ -29,9 +35,14 @@ export default defineConfig({
       {
         test: {
           name: 'web',
-          include: ['apps/{admin,partner}/src/**/*.test.{ts,tsx}'],
+          include: [
+            'apps/{admin,partner}/src/**/*.test.{ts,tsx}',
+            'packages/{ui-web,ui-core}/src/**/*.test.tsx',
+          ],
           exclude: ignored,
           environment: 'jsdom',
+          // Testing Library chỉ tự `cleanup` sau mỗi test khi có `afterEach` toàn cục → bật globals cho project web.
+          globals: true,
         },
         esbuild: {
           jsx: 'automatic',

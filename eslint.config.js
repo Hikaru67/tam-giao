@@ -20,9 +20,12 @@ export default defineConfig(
       'apps/mobile/.expo/**',
       'apps/*/dist/**',
       'apps/mobile/babel.config.js',
+      'packages/ui-mobile/babel.config.js',
       'apps/mobile/metro.config.js',
       'apps/mobile/tailwind.config.js',
       'apps/*/postcss.config.js',
+      'packages/ui-web/postcss.config.js',
+      'packages/*/storybook-static/**',
     ],
   },
   js.configs.recommended,
@@ -52,11 +55,19 @@ export default defineConfig(
     rules: { 'import-x/no-default-export': 'off' },
   },
   {
+    // Storybook stories và configs được phép dùng default export.
+    files: ['**/*.stories.tsx', '**/.storybook/**'],
+    rules: { 'import-x/no-default-export': 'off' },
+  },
+  {
     files: ['tools/scripts/**'],
     rules: { 'no-console': 'off' },
   },
   {
-    files: ['**/apps/{mobile,admin,partner}/**/*.{ts,tsx}'],
+    files: [
+      '**/apps/{mobile,admin,partner}/**/*.{ts,tsx}',
+      '**/packages/{ui-core,ui-web,ui-mobile,api-client}/**/*.{ts,tsx}',
+    ],
     languageOptions: { globals: { ...globals.browser } },
     rules: {
       'no-restricted-imports': [

@@ -30,6 +30,7 @@ apps/mobile/.expo/
 apps/mobile/ios/
 apps/mobile/android/
 dev-dist/
+storybook-static/
 
 
 # dev FE (FE-S1-05): log api local có SĐT test
