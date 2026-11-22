@@ -14,7 +14,7 @@ tài khoản và quyền dữ liệu.
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| mobile | presentation | P0 | 1.5d | FE-S1-03, FE-S1-07 | — | TODO |
+| mobile | presentation | P0 | 1.5d | FE-S1-03, FE-S1-07 | — | DONE |
 
 **Mục tiêu:** Màn `ng_nh_p_ng_k` + `x_c_th_c_s_i_n_tho_i_otp`.
 

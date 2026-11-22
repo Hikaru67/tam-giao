@@ -11,7 +11,9 @@
   },
   "dependencies": {
     "@expo-google-fonts/be-vietnam-pro": "0.4.1",
+    "@tamgiao/api-client": "workspace:*",
     "@tamgiao/contracts": "workspace:*",
+    "@tamgiao/ui-core": "workspace:*",
     "@tamgiao/ui-mobile": "workspace:*",
     "@tamgiao/ui-tokens": "workspace:*",
     "@tanstack/react-query": "5.107.1",
@@ -54,6 +56,9 @@
     ],
     "moduleNameMapper": {
       "^(\\.{1,2}/.*)\\.js$": "$1"
-    }
+    },
+    "setupFiles": [
+      "<rootDir>/jest.setup.ts"
+    ]
   }
 }

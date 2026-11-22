@@ -378,9 +378,15 @@ importers:
       '@expo-google-fonts/be-vietnam-pro':
         specifier: 0.4.1
         version: 0.4.1
+      '@tamgiao/api-client':
+        specifier: workspace:*
+        version: link:../../packages/api-client
       '@tamgiao/contracts':
         specifier: workspace:*
         version: link:../../packages/contracts
+      '@tamgiao/ui-core':
+        specifier: workspace:*
+        version: link:../../packages/ui-core
       '@tamgiao/ui-mobile':
         specifier: workspace:*
         version: link:../../packages/ui-mobile

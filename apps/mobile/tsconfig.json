@@ -8,5 +8,12 @@
     "types": ["jest"],
     "exactOptionalPropertyTypes": false
   },
-  "include": ["app/**/*", "src/**/*", "nativewind-env.d.ts", "expo-env.d.ts", ".expo/types/**/*.ts"]
+  "include": [
+    "jest.setup.ts",
+    "app/**/*",
+    "src/**/*",
+    "nativewind-env.d.ts",
+    "expo-env.d.ts",
+    ".expo/types/**/*.ts"
+  ]
 }
