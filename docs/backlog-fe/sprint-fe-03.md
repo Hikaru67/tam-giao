@@ -176,7 +176,7 @@ nhận hồ sơ → duyệt → app user chuyển "đã duyệt", voucher có h�
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| admin | presentation | P1 | 1d | FE-S3-05 | FE-S3-03 | TODO |
+| admin | presentation | P1 | 1d | FE-S3-05 | FE-S3-03 | DONE |
 
 **Mục tiêu:** Chuyên viên mở slot và ghi nhận xét phỏng vấn.
 
@@ -186,7 +186,7 @@ nhận hồ sơ → duyệt → app user chuyển "đã duyệt", voucher có h�
 - Ngoài: —
 
 **Tiêu chí nghiệm thu**
-- [ ] AC1: Slot đã có người đặt hiển thị khác slot trống.
+- [x] AC1: Slot đã có người đặt hiển thị khác slot trống.
 
 **Test bắt buộc:** MSW tạo slot, ghi chú.
 
