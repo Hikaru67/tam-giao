@@ -1,0 +1,101 @@
+// Phải khớp src/tokens.ts — test tokens.test.ts đối chiếu cả hai với DESIGN.md
+
+const colors = {
+  surface: '#f8f9ff',
+  'surface-dim': '#cbdbf5',
+  'surface-bright': '#f8f9ff',
+  'surface-container-lowest': '#ffffff',
+  'surface-container-low': '#eff4ff',
+  'surface-container': '#e5eeff',
+  'surface-container-high': '#dce9ff',
+  'surface-container-highest': '#d3e4fe',
+  'on-surface': '#0b1c30',
+  'on-surface-variant': '#5c3f40',
+  'inverse-surface': '#213145',
+  'inverse-on-surface': '#eaf1ff',
+  outline: '#906f70',
+  'outline-variant': '#e5bdbe',
+  'surface-tint': '#be0037',
+  primary: '#b80035',
+  'on-primary': '#ffffff',
+  'primary-container': '#e11d48',
+  'on-primary-container': '#fffaf9',
+  'inverse-primary': '#ffb3b6',
+  secondary: '#565e74',
+  'on-secondary': '#ffffff',
+  'secondary-container': '#dae2fd',
+  'on-secondary-container': '#5c647a',
+  tertiary: '#815100',
+  'on-tertiary': '#ffffff',
+  'tertiary-container': '#a36700',
+  'on-tertiary-container': '#fffaf9',
+  error: '#ba1a1a',
+  'on-error': '#ffffff',
+  'error-container': '#ffdad6',
+  'on-error-container': '#93000a',
+  'primary-fixed': '#ffdada',
+  'primary-fixed-dim': '#ffb3b6',
+  'on-primary-fixed': '#40000c',
+  'on-primary-fixed-variant': '#920028',
+  'secondary-fixed': '#dae2fd',
+  'secondary-fixed-dim': '#bec6e0',
+  'on-secondary-fixed': '#131b2e',
+  'on-secondary-fixed-variant': '#3f465c',
+  'tertiary-fixed': '#ffddb8',
+  'tertiary-fixed-dim': '#ffb95f',
+  'on-tertiary-fixed': '#2a1700',
+  'on-tertiary-fixed-variant': '#653e00',
+  background: '#f8f9ff',
+  'on-background': '#0b1c30',
+  'surface-variant': '#d3e4fe',
+};
+
+const rounded = {
+  sm: '0.25rem',
+  DEFAULT: '0.5rem',
+  md: '0.75rem',
+  lg: '1rem',
+  xl: '1.5rem',
+  full: '9999px',
+};
+
+const spacing = {
+  gutter: '1rem',
+  'gutter-desktop': '1.5rem',
+  margin: '1rem',
+  'margin-tablet': '2rem',
+  'margin-desktop': '3rem',
+  'space-xs': '0.25rem',
+  'space-sm': '0.5rem',
+  'space-md': '1rem',
+  'space-lg': '1.5rem',
+  'space-xl': '2.5rem',
+};
+
+const fontSize = {
+  display: ['40px', { lineHeight: '52px', letterSpacing: '-0.02em', fontWeight: '700' }],
+  'headline-lg': ['32px', { lineHeight: '40px', letterSpacing: '-0.015em', fontWeight: '700' }],
+  'headline-lg-mobile': ['26px', { lineHeight: '34px', letterSpacing: '-0.01em', fontWeight: '700' }],
+  'headline-md': ['24px', { lineHeight: '32px', letterSpacing: '-0.01em', fontWeight: '600' }],
+  'headline-sm': ['20px', { lineHeight: '28px', fontWeight: '600' }],
+  'title-md': ['16px', { lineHeight: '24px', fontWeight: '600' }],
+  'body-lg': ['16px', { lineHeight: '26px', fontWeight: '400' }],
+  'body-md': ['14px', { lineHeight: '22px', fontWeight: '400' }],
+  'body-sm': ['12px', { lineHeight: '18px', fontWeight: '400' }],
+  'label-md': ['14px', { lineHeight: '20px', letterSpacing: '0.01em', fontWeight: '500' }],
+  'label-sm': ['11px', { lineHeight: '16px', letterSpacing: '0.04em', fontWeight: '600' }],
+};
+
+module.exports = {
+  theme: {
+    extend: {
+      colors,
+      borderRadius: rounded,
+      spacing,
+      fontFamily: {
+        sans: ['Be Vietnam Pro', 'system-ui', 'sans-serif'],
+      },
+      fontSize,
+    },
+  },
+};

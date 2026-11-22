@@ -17,6 +17,15 @@ export default defineConfig(
       '**/coverage/**',
       'design/**',
       'tools/lint-fixtures/**',
+      'apps/mobile/.expo/**',
+      'apps/*/dist/**',
+      'apps/mobile/babel.config.js',
+      'packages/ui-mobile/babel.config.js',
+      'apps/mobile/metro.config.js',
+      'apps/mobile/tailwind.config.js',
+      'apps/*/postcss.config.js',
+      'packages/ui-web/postcss.config.js',
+      'packages/*/storybook-static/**',
     ],
   },
   js.configs.recommended,
@@ -46,8 +55,46 @@ export default defineConfig(
     rules: { 'import-x/no-default-export': 'off' },
   },
   {
+    // Storybook stories và configs được phép dùng default export.
+    files: ['**/*.stories.tsx', '**/.storybook/**'],
+    rules: { 'import-x/no-default-export': 'off' },
+  },
+  {
     files: ['tools/scripts/**'],
     rules: { 'no-console': 'off' },
+  },
+  {
+    files: [
+      '**/apps/{mobile,admin,partner}/**/*.{ts,tsx}',
+      '**/packages/{ui-core,ui-web,ui-mobile,api-client}/**/*.{ts,tsx}',
+    ],
+    languageOptions: { globals: { ...globals.browser } },
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: [
+                '@tamgiao/module-*',
+                '@tamgiao/db',
+                '@tamgiao/db/*',
+                '@tamgiao/http',
+                '@tamgiao/http/*',
+                '@tamgiao/config',
+                '@tamgiao/testing',
+                '@tamgiao/kernel',
+              ],
+              message: 'App FE chỉ được import @tamgiao/contracts và package FE (luật F1, FE-S1-01).',
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
+    files: ['apps/mobile/app/**/*.tsx'],
+    rules: { 'import-x/no-default-export': 'off' },
   },
   prettier,
 );

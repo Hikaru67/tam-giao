@@ -1,0 +1,12 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "lib": ["ES2023"],
+    "jsx": "react-jsx",
+    "types": ["jest"],
+    "exactOptionalPropertyTypes": false
+  },
+  "include": ["app/**/*", "src/**/*", "nativewind-env.d.ts", "expo-env.d.ts", ".expo/types/**/*.ts"]
+}

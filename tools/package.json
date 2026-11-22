@@ -5,6 +5,7 @@
   "scripts": {
     "typecheck": "tsc -p tsconfig.json",
     "seed:admin": "node --env-file-if-exists=../.env --import tsx scripts/seed-admin.ts",
+    "seed:fe": "node --env-file-if-exists=../.env --import tsx scripts/seed-fe.ts",
     "smoke:staging": "node --import tsx scripts/smoke-staging.ts",
     "scan:pii": "node --import tsx security/scan-pii.ts"
   },

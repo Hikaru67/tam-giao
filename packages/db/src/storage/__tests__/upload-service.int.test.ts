@@ -54,7 +54,8 @@ async function put(t: UploadTicket, body: Uint8Array): Promise<Response> {
   return fetch(t.url, {
     method: 'PUT',
     headers: { ...t.headers }, // fetch tự đặt content-length theo body
-    body,
+    // Bản sao dựa trên ArrayBuffer: kiểu DOM `BodyInit` (nạp kèm jsdom từ FE-S1-01) không nhận `Uint8Array<ArrayBufferLike>`.
+    body: new Uint8Array(body),
   });
 }
 

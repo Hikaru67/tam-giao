@@ -119,7 +119,12 @@ export async function uploadImage(user: UserSession, purpose: UploadPurpose): Pr
     { purpose, contentType: 'image/jpeg', sizeBytes: bytes.length },
     { token: user.accessToken, expect: 201 },
   );
-  const res = await fetch(ticket.url, { method: 'PUT', headers: ticket.headers, body: bytes });
+  // Kiểu DOM `BodyInit` (jsdom trong workspace) chỉ nhận Uint8Array dựa trên ArrayBuffer.
+  const res = await fetch(ticket.url, {
+    method: 'PUT',
+    headers: ticket.headers,
+    body: new Uint8Array(bytes),
+  });
   if (!res.ok) throw new Error(`PUT presigned (${purpose}) → ${res.status}`);
   return ticket.key;
 }

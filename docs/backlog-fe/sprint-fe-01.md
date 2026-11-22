@@ -14,7 +14,7 @@ CI kiểm tra FE. Chưa có màn nghiệp vụ.
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| mobile, admin, partner, repo | devops | P0 | 1.5d | — | — | TODO |
+| mobile, admin, partner, repo | devops | P0 | 1.5d | — | — | DONE |
 
 **Mục tiêu:** Có khung 3 app theo FE-D1/FE-D2 để các task sau chỉ thêm màn.
 
@@ -44,7 +44,7 @@ CI kiểm tra FE. Chưa có màn nghiệp vụ.
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| packages/ui-tokens | presentation | P0 | 1d | FE-S1-01 | FE-S1-03, FE-S1-05 | TODO |
+| packages/ui-tokens | presentation | P0 | 1d | FE-S1-01 | FE-S1-03, FE-S1-05 | DONE |
 
 **Mục tiêu:** Một nguồn token (màu, chữ, bo góc, khoảng cách) cho cả mobile và web, khớp thiết kế Stitch.
 
@@ -72,7 +72,7 @@ CI kiểm tra FE. Chưa có màn nghiệp vụ.
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| packages/api-client | infrastructure | P0 | 2d | FE-S1-01 | FE-S1-02, FE-S1-05 | TODO |
+| packages/api-client | infrastructure | P0 | 2d | FE-S1-01 | FE-S1-02, FE-S1-05 | DONE |
 
 **Mục tiêu:** Mọi app gọi BE qua một client có kiểu, parse bằng Zod của contracts, xử lý lỗi và phiên thống nhất (luật F1).
 
@@ -102,7 +102,7 @@ CI kiểm tra FE. Chưa có màn nghiệp vụ.
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| packages/api-client | presentation | P0 | 0.5d | FE-S1-03 | FE-S1-06, FE-S1-07 | TODO |
+| packages/api-client | presentation | P0 | 0.5d | FE-S1-03 | FE-S1-06, FE-S1-07 | DONE |
 
 **Mục tiêu:** Người dùng thấy câu tiếng Việt dễ hiểu cho mọi mã lỗi BE (luật F3).
 
@@ -127,7 +127,7 @@ CI kiểm tra FE. Chưa có màn nghiệp vụ.
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| repo, tests/e2e | devops | P0 | 1d | FE-S1-01 | FE-S1-02, FE-S1-03 | TODO |
+| repo, tests/e2e | devops | P0 | 1d | FE-S1-01 | FE-S1-02, FE-S1-03 | DONE |
 
 **Mục tiêu:** Dev FE dựng được dữ liệu ở mọi giai đoạn (mới đăng ký, đã duyệt, đang ghép, đang hẹn) trong 1 lệnh.
 
@@ -154,7 +154,7 @@ CI kiểm tra FE. Chưa có màn nghiệp vụ.
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| repo | devops | P0 | 0.5d | FE-S1-01 | FE-S1-04, FE-S1-07 | TODO |
+| repo | devops | P0 | 0.5d | FE-S1-01 | FE-S1-04, FE-S1-07 | DONE |
 
 **Mục tiêu:** PR có FE được kiểm tra tự động như BE.
 
@@ -179,7 +179,7 @@ CI kiểm tra FE. Chưa có màn nghiệp vụ.
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| packages/ui-mobile, packages/ui-web | presentation | P1 | 2d | FE-S1-02 | FE-S1-04, FE-S1-06 | TODO |
+| packages/ui-mobile, packages/ui-web | presentation | P1 | 2d | FE-S1-02 | FE-S1-04, FE-S1-06 | DONE |
 
 **Mục tiêu:** Các màn dựng từ component chung, đúng thiết kế (luật F6).
 

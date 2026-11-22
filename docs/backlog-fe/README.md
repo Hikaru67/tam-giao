@@ -98,7 +98,7 @@ chạy được trên BE local (`pnpm dev` + provider giả) với ảnh chụp/
 
 | Sprint | TODO | IN_PROGRESS | IN_REVIEW | DONE | BLOCKED |
 |---|---|---|---|---|---|
-| FE-S1 | 7 | 0 | 0 | 0 | 0 |
+| FE-S1 | 0 | 0 | 0 | 7 | 0 |
 | FE-S2 | 6 | 0 | 0 | 0 | 0 |
 | FE-S3 | 8 | 0 | 0 | 0 | 0 |
 | FE-S4 | 8 | 0 | 0 | 0 | 0 |

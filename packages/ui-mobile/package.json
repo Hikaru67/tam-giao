@@ -1,0 +1,49 @@
+{
+  "name": "@tamgiao/ui-mobile",
+  "version": "0.0.0",
+  "private": true,
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json",
+    "test:native": "jest"
+  },
+  "dependencies": {
+    "@tamgiao/ui-core": "workspace:*",
+    "@tamgiao/ui-tokens": "workspace:*"
+  },
+  "peerDependencies": {
+    "nativewind": "4.2.7",
+    "react": "19.3.0",
+    "react-native": "0.88.1"
+  },
+  "devDependencies": {
+    "@testing-library/react-native": "14.1.0",
+    "@types/jest": "30.0.0",
+    "@types/react": "19.3.0",
+    "expo": "58.0.26",
+    "jest": "30.5.2",
+    "jest-expo": "58.0.15",
+    "nativewind": "4.2.7",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "react-native": "0.88.1",
+    "react-native-css-interop": "0.2.7",
+    "react-native-web": "0.21.4",
+    "tailwindcss": "3.4.19",
+    "typescript": "5.9.3"
+  },
+  "jest": {
+    "preset": "jest-expo",
+    "testMatch": [
+      "<rootDir>/src/**/*.native-test.tsx"
+    ],
+    "transformIgnorePatterns": [
+      "node_modules/(?!(?:.pnpm/)?((jest-)?react-native|@react-native(-community)?|expo(nent)?|@expo(nent)?/.*|@expo-google-fonts/.*|react-navigation|@react-navigation/.*|nativewind|react-native-css-interop))"
+    ],
+    "moduleNameMapper": {
+      "^(\\.{1,2}/.*)\\.js$": "$1"
+    }
+  }
+}

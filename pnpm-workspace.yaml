@@ -7,6 +7,8 @@ packages:
 allowBuilds:
   cpu-features: false
   esbuild: true
+  '@parcel/watcher': false
+  msw: false
   protobufjs: false
   ssh2: false
 overrides:
