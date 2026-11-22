@@ -44,11 +44,13 @@ export function parseDatePlanId(raw: string): Result<DatePlanId, DomainError<'IN
 
 /**
  * Gửi đánh giá kín sau buổi gặp (BE-S7-03, `POST /me/dates/:id/feedback`). **Một transaction**:
- * tải lịch (không có → `NOT_FOUND`) → người ngoài cặp → `NOT_PARTICIPANT` (trước mọi kiểm tra khác) → khoá theo match
- * (tuần tự hoá với người còn lại gửi cùng lúc) → đã gửi → `FEEDBACK_ALREADY_SUBMITTED` → đọc đánh giá của người còn
- * lại → domain `DateFeedback.submit` (lịch chưa diễn ra → `FEEDBACK_NOT_ALLOWED`, câu trả lời sai → `FEEDBACK_INVALID`;
- * chốt quyết định của cặp → `FeedbackSubmitted` vào outbox) → INSERT (unique `(match_id, author_id)` là chốt chặn cuối,
- * A10). Matching tiêu thụ `FeedbackSubmitted` để đóng match — use case không gọi matching trực tiếp (A6).
+ * tải và khoá dòng lịch `FOR UPDATE` (không có → `NOT_FOUND`) → người ngoài cặp → `NOT_PARTICIPANT` (trước mọi kiểm tra
+ * khác) → khoá theo match (tuần tự hoá với người còn lại gửi cùng lúc) → đã gửi → `FEEDBACK_ALREADY_SUBMITTED` →
+ * đọc đánh giá của người còn lại → domain `DateFeedback.submit` (lịch chưa diễn ra → `FEEDBACK_NOT_ALLOWED`, câu trả lời
+ * sai → `FEEDBACK_INVALID`; chốt quyết định của cặp → `FeedbackSubmitted` vào outbox) → INSERT (unique `(match_id, author_id)`
+ * là chốt chặn cuối, A10) → đánh giá đầu tiên của match (`CONFIRMED | CHECKED_IN`) chuyển lịch sang `COMPLETED`, phát
+ * `DateCompleted` qua outbox (BE-S7-04, matching tiêu thụ để chuyển `DATING → MET`). Matching tiêu thụ `FeedbackSubmitted`
+ * để đóng match — use case không gọi matching trực tiếp (A6).
  *
  * Không kiểm tra trạng thái match qua facade: đánh giá vẫn được lưu cho chuyên viên khi match đã đóng (vd người còn lại
  * gửi sau một `B_STOP`); matching tự bỏ qua event nếu match không còn mở.
@@ -62,7 +64,7 @@ export class SubmitFeedback {
     const userId = cmd.userId.toLowerCase();
 
     return this.deps.uow.run(async (tx): Promise<Result<FeedbackView, SubmitFeedbackError>> => {
-      const plan = await this.deps.datePlans.findById(tx, id.value);
+      const plan = await this.deps.datePlans.findByIdForUpdate(tx, id.value);
       if (plan === null) return fail('NOT_FOUND');
       if (!plan.isParticipant(userId)) return fail('NOT_PARTICIPANT');
 
@@ -72,6 +74,7 @@ export class SubmitFeedback {
       const counterpartId = userId === plan.inviterId ? plan.inviteeId : plan.inviterId;
       const counterpart = await this.deps.feedbacks.findByMatchAndAuthor(tx, plan.matchId, counterpartId);
 
+      const now = this.deps.clock.now();
       const submitted = DateFeedback.submit(
         {
           id: newId<'DateFeedback'>(),
@@ -87,13 +90,25 @@ export class SubmitFeedback {
           answers: cmd.answers,
         },
         counterpart,
-        this.deps.clock.now(),
+        now,
       );
       if (submitted.isErr()) return err(submitted.error);
       const feedback = submitted.value;
 
       const added = await this.deps.feedbacks.add(tx, feedback);
       if (added.isErr()) return err(added.error);
+
+      if (plan.status === 'CONFIRMED' || plan.status === 'CHECKED_IN') {
+        const completed = plan.markCompleted(now);
+        if (completed.isErr()) {
+          throw new Error(`dating.date_plans ${plan.id}: ${completed.error.code} khi markCompleted`);
+        }
+        const saved = await this.deps.datePlans.save(tx, plan);
+        if (saved.isErr()) {
+          throw new Error(`dating.date_plans ${plan.id}: ${saved.error.code} khi cập nhật`);
+        }
+      }
+
       return ok(feedback.toState());
     });
   }

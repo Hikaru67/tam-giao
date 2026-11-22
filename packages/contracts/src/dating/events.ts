@@ -79,6 +79,15 @@ export interface DateCheckedInPayload extends DatePlanEventBase {
   readonly source: CheckInSourceName;
 }
 
+/**
+ * Có đánh giá đầu tiên sau buổi gặp → lịch `CONFIRMED | CHECKED_IN → COMPLETED` (BE-S7-04). Matching chuyển match
+ * `DATING → MET`.
+ */
+export const DATE_COMPLETED = 'DateCompleted';
+export interface DateCompletedPayload extends DatePlanEventBase {
+  readonly completedAt: string;
+}
+
 /** Trường chung của event check-in an toàn từng người (aggregate `SafetyCheckIn`, BE-S7-02). Không có vị trí. */
 export interface SafetyCheckInEventBase {
   readonly checkInId: string;

@@ -508,6 +508,61 @@ describe('Đánh giá sau gặp mặt (BE-S7-03)', () => {
     expect(outboxEvents[0]?.payload.outcome).toBe('SUCCESS');
   });
 
+  it('sau POST feedback đầu tiên: dating.date_plans.status = COMPLETED và outbox có đúng 1 DateCompleted; feedback thứ hai không thêm', async () => {
+    const a = newId();
+    const b = newId();
+    const matchId = await seedDating(a, b);
+    const datePlanId = await seedConfirmedDatePlan(matchId, a, b);
+
+    clock.set(addDuration(STARTS, { hours: 3 }));
+
+    const resA = await post(`/me/dates/${datePlanId}/feedback`, a, {
+      rating: 5,
+      profileMatch: 'FULL_MATCH',
+      feeling: 'DEEP_INTEREST',
+      decision: 'A_COMMIT',
+      stopReasons: [],
+      stopNote: null,
+    });
+    expect(resA.status).toBe(201);
+
+    const { rows: planRows } = await database.pool.query<{ status: string }>(
+      `select status from dating.date_plans where id = $1`,
+      [datePlanId],
+    );
+    expect(planRows[0]?.status).toBe('COMPLETED');
+
+    const { rows: completedRows } = await database.pool.query<OutboxFeedbackRow>(
+      `select id, event_type, aggregate_type, aggregate_id, aggregate_version, occurred_at, payload
+         from platform.outbox where event_type = 'DateCompleted' and aggregate_id = $1`,
+      [datePlanId],
+    );
+    expect(completedRows).toHaveLength(1);
+    expect(completedRows[0]?.payload).toMatchObject({
+      datePlanId,
+      matchId,
+      inviterId: a,
+      inviteeId: b,
+      completedAt: clock.now().toISOString(),
+    });
+
+    const resB = await post(`/me/dates/${datePlanId}/feedback`, b, {
+      rating: 4,
+      profileMatch: 'MOSTLY_MATCH',
+      feeling: 'DEEP_INTEREST',
+      decision: 'A_COMMIT',
+      stopReasons: [],
+      stopNote: null,
+    });
+    expect(resB.status).toBe(201);
+
+    const { rows: completedRowsAfter } = await database.pool.query(
+      `select id from platform.outbox where event_type = 'DateCompleted' and aggregate_id = $1`,
+      [datePlanId],
+    );
+    expect(completedRowsAfter).toHaveLength(1);
+  });
+
   it('Admin: b gửi profileMatch DIFFERENT → reviewer GET /appearance-flags 200, item có authorId/subjectId không có stopNote; matchmaker 403; GET /feedbacks/:id reviewer 200 có stopNote + audit', async () => {
     const a = newId();
     const b = newId();

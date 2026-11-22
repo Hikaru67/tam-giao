@@ -1,13 +1,13 @@
+import { DATE_COMPLETED } from '@tamgiao/contracts';
 import type { EventBus } from '@tamgiao/db';
 import type { DomainEvent } from '@tamgiao/kernel';
 import type { MarkMatchMet } from '../application/responses/mark-match-met.js';
 
 /**
- * Event "buổi hẹn đã diễn ra" của module dating (`DatePlan → COMPLETED`). Dating chưa phát event này (BE-S7-02/03 làm
- * song song) nên khai báo theo **tên event trong outbox**, không import code dating (A3). Payload giả định giống các
- * event `DatePlan` hiện có: `{datePlanId, matchId, inviterId, inviteeId, …}` — matching chỉ cần `matchId`.
+ * Event "buổi hẹn đã diễn ra" của module dating (`DatePlan → COMPLETED`, BE-S7-04), phát khi có đánh giá đầu tiên.
+ * Tên event import từ `@tamgiao/contracts` (A1). Payload chứa `DatePlanEventBase` + `completedAt` — matching chỉ cần `matchId`.
  */
-export const DATE_COMPLETED_EVENT = 'DateCompleted';
+export const DATE_COMPLETED_EVENT = DATE_COMPLETED;
 
 /** Tên consumer (duy nhất toàn hệ thống) — đổi tên = consumer mới, event cũ bị xử lý lại. */
 export const MATCH_MET_ON_DATE_COMPLETED_CONSUMER = 'matching.mark-met-on-date-completed';
