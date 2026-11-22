@@ -4,6 +4,7 @@ import { act, screen, fireEvent, within } from '@testing-library/react';
 import { server, meHandler, meUnauthorizedHandler, logoutHandler } from '../test-utils/msw-server';
 import { adminMe } from '../test-utils/fixtures';
 import { renderApp } from '../test-utils/render-app';
+import { emptyKycQueueHandler } from '../features/kyc/kyc-test-fixtures';
 import { LOGIN_COPY } from '../features/auth/copy';
 import { FORBIDDEN_COPY, NAV_COPY, OVERVIEW_COPY, SHELL_COPY } from './copy';
 
@@ -49,7 +50,7 @@ describe('route-guard', () => {
   });
 
   it('REVIEWER thấy menu thẩm định và vào được', async () => {
-    server.use(meHandler(adminMe('REVIEWER')));
+    server.use(meHandler(adminMe('REVIEWER')), emptyKycQueueHandler());
 
     const { history } = await renderApp('/kyc', { token: 'valid-token' });
 
@@ -72,7 +73,7 @@ describe('route-guard', () => {
   });
 
   it('phiên hết hạn giữa chừng (api-client báo đăng xuất) → về đăng nhập, giữ trang đang mở để quay lại', async () => {
-    server.use(meHandler(adminMe('REVIEWER')));
+    server.use(meHandler(adminMe('REVIEWER')), emptyKycQueueHandler());
 
     const { history, sessionEvents, tokenStore } = await renderApp('/kyc', {
       token: 'admin-session-token',

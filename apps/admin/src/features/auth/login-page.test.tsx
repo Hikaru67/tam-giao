@@ -7,6 +7,7 @@ import { messageFor } from '@tamgiao/api-client';
 import { server, meHandler } from '../../test-utils/msw-server';
 import { adminLoginResponse, adminMe } from '../../test-utils/fixtures';
 import { renderApp } from '../../test-utils/render-app';
+import { emptyKycQueueHandler } from '../kyc/kyc-test-fixtures';
 import { LOGIN_COPY } from './copy';
 import { OVERVIEW_COPY, NAV_COPY } from '../../layout/copy';
 
@@ -174,6 +175,7 @@ describe('LoginPage', () => {
         return HttpResponse.json(adminLoginResponse('REVIEWER'));
       }),
       meHandler(adminMe('REVIEWER')),
+      emptyKycQueueHandler(),
     );
 
     const { history } = await renderApp('/login?redirect=%2Fkyc');

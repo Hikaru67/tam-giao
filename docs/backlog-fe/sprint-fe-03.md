@@ -148,7 +148,7 @@ nhận hồ sơ → duyệt → app user chuyển "đã duyệt", voucher có h�
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| admin | presentation | P0 | 2.5d | FE-S3-05 | FE-S3-02 | TODO |
+| admin | presentation | P0 | 2.5d | FE-S3-05 | FE-S3-02 | DONE |
 
 **Mục tiêu:** Màn `web_admin_th_m_nh_ekyc_gh_p_i_c_quy_n` (hàng chờ + panel chi tiết + thanh quyết định).
 

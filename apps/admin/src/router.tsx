@@ -3,7 +3,7 @@ import { rootRoute, type AdminRouterContext } from './routes/root-route';
 import { loginRoute } from './routes/login-route';
 import { authedRoute } from './layout/authed-route';
 import { overviewRoute } from './routes/overview/overview-route';
-import { kycRoute } from './routes/kyc/kyc-route';
+import { kycRouteTree } from './routes/kyc/kyc-route';
 import { interviewsRoute } from './routes/interviews/interviews-route';
 import { auditRoute } from './routes/audit/audit-route';
 import { RouteError } from './layout/route-error';
@@ -14,7 +14,7 @@ export type { AdminRouterContext } from './routes/root-route';
 export function createAdminRouter(options: { context: AdminRouterContext; history?: RouterHistory }) {
   const routeTree = rootRoute.addChildren([
     loginRoute,
-    authedRoute.addChildren([overviewRoute, kycRoute, interviewsRoute, auditRoute]),
+    authedRoute.addChildren([overviewRoute, kycRouteTree, interviewsRoute, auditRoute]),
   ]);
 
   return createRouter({
