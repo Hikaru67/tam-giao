@@ -171,7 +171,7 @@ hoặc `CLOSED_STOPPED` + cooldown; thông báo đẩy/SMS cho các mốc quan t
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| api, repo | devops, presentation | P0 | 2d | BE-S7-01…06 | BE-S7-08 | IN_REVIEW |
+| api, repo | devops, presentation | P0 | 2d | BE-S7-01…06 | BE-S7-08 | DONE |
 
 **Mục tiêu:** Giảm rủi ro trước khi mở beta.
 
