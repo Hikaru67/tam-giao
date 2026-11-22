@@ -7,9 +7,15 @@ import {
   BeVietnamPro_700Bold,
   useFonts,
 } from '@expo-google-fonts/be-vietnam-pro';
+import { ApiClientProvider } from '@tamgiao/api-client/react';
+import { TokenStoreProvider } from '../src/session/token-store-context';
+import { ToastProvider } from '@tamgiao/ui-mobile';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
+import { apiClient, tokenStore } from '../src/session/api';
+import { SessionGate } from '../src/features/session/session-gate';
+import { PushRegistrar } from '../src/features/notifications/push-registrar.js';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -36,7 +42,22 @@ export default function RootLayout() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <Stack screenOptions={{ headerShown: false }} />
+      <ApiClientProvider client={apiClient}>
+        <TokenStoreProvider store={tokenStore}>
+          <ToastProvider>
+            <SessionGate>
+              <PushRegistrar />
+              <Stack screenOptions={{ headerShown: false }}>
+                <Stack.Screen name="index" />
+                <Stack.Screen name="(auth)" />
+                <Stack.Screen name="(onboarding)" />
+                <Stack.Screen name="(verification)" />
+                <Stack.Screen name="(main)" />
+              </Stack>
+            </SessionGate>
+          </ToastProvider>
+        </TokenStoreProvider>
+      </ApiClientProvider>
     </QueryClientProvider>
   );
 }

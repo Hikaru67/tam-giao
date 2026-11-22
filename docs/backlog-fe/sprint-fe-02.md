@@ -14,7 +14,7 @@ tài khoản và quyền dữ liệu.
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| mobile | presentation | P0 | 1.5d | FE-S1-03, FE-S1-07 | — | TODO |
+| mobile | presentation | P0 | 1.5d | FE-S1-03, FE-S1-07 | — | DONE |
 
 **Mục tiêu:** Màn `ng_nh_p_ng_k` + `x_c_th_c_s_i_n_tho_i_otp`.
 
@@ -43,7 +43,7 @@ tài khoản và quyền dữ liệu.
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| mobile | presentation | P0 | 1d | FE-S2-01 | — | TODO |
+| mobile | presentation | P0 | 1d | FE-S2-01 | — | DONE |
 
 **Mục tiêu:** Mở app là vào đúng màn theo tiến độ (`GET /me`): hồ sơ → tiêu chí → thanh toán → eKYC → chờ duyệt → ghép.
 
@@ -70,7 +70,7 @@ tài khoản và quyền dữ liệu.
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| mobile | presentation | P0 | 2d | FE-S2-02 | FE-S2-04, FE-S2-05, FE-S2-06 | TODO |
+| mobile | presentation | P0 | 2d | FE-S2-02 | FE-S2-04, FE-S2-05, FE-S2-06 | DONE |
 
 **Mục tiêu:** Màn `kh_i_t_o_h_s_mi_n_ph`.
 
@@ -98,7 +98,7 @@ tài khoản và quyền dữ liệu.
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| mobile | presentation | P0 | 1d | FE-S2-02 | FE-S2-03, FE-S2-05, FE-S2-06 | TODO |
+| mobile | presentation | P0 | 1d | FE-S2-02 | FE-S2-03, FE-S2-05, FE-S2-06 | DONE |
 
 **Mục tiêu:** Màn `thi_t_l_p_ti_u_ch_b_n_i_b_l_c_c_ng`.
 
@@ -123,7 +123,7 @@ tài khoản và quyền dữ liệu.
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| mobile | infrastructure, presentation | P0 | 1.5d | FE-S2-02 | FE-S2-03, FE-S2-04, FE-S2-06 | TODO |
+| mobile | infrastructure, presentation | P0 | 1.5d | FE-S2-02 | FE-S2-03, FE-S2-04, FE-S2-06 | DONE |
 
 **Mục tiêu:** Người dùng nhận được gợi ý 24h, phản hồi, lịch hẹn, cảnh báo (BE-S7-05).
 
@@ -151,7 +151,7 @@ tài khoản và quyền dữ liệu.
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| mobile | presentation | P0 | 1d | FE-S2-02 | FE-S2-03, FE-S2-04, FE-S2-05 | TODO |
+| mobile | presentation | P0 | 1d | FE-S2-02 | FE-S2-03, FE-S2-04, FE-S2-05 | DONE |
 
 **Mục tiêu:** Quyền chủ thể dữ liệu theo NĐ 13 (BE-S7-06) có trên app.
 

@@ -12,7 +12,7 @@ const config: ExpoConfig = {
   android: {
     package: 'vn.tamgiao.app',
   },
-  plugins: ['expo-router', 'expo-secure-store'],
+  plugins: ['expo-router', 'expo-secure-store', 'expo-notifications'],
   experiments: {
     typedRoutes: true,
   },

@@ -80,8 +80,10 @@ export interface ApiClient {
  * Sinh mã định danh request ngẫu nhiên khi môi trường không có crypto.randomUUID.
  */
 function defaultCreateRequestId(): string {
-  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
-    return crypto.randomUUID();
+  // Không giả định lib DOM (React Native): đọc crypto qua globalThis có kiểu tối thiểu.
+  const webCrypto = (globalThis as { crypto?: { randomUUID?: () => string } }).crypto;
+  if (webCrypto?.randomUUID) {
+    return webCrypto.randomUUID();
   }
   const part1 = Math.random().toString(16).slice(2);
   const part2 = Math.random().toString(16).slice(2);
@@ -377,7 +379,7 @@ export function createApiClient(options: ApiClientOptions): ApiClient {
         headers: uploadMeta.headers,
         // Kiểu DOM `BodyInit` chỉ nhận Uint8Array dựa trên ArrayBuffer → chép sang bản mới.
         body: input.body instanceof Uint8Array ? new Uint8Array(input.body) : input.body,
-        signal: input.signal ?? null,
+        ...(input.signal ? { signal: input.signal } : {}),
       });
     } catch (putError) {
       if (isApiError(putError)) {

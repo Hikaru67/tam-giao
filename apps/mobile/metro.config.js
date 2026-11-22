@@ -20,7 +20,7 @@ config.resolver.resolveRequest = (context, moduleName, platform) => {
     moduleName.startsWith('.') &&
     moduleName.endsWith('.js') &&
     context.originModulePath &&
-    context.originModulePath.includes('/packages/') &&
+    // Mọi file TS (app + packages) viết import ESM có đuôi `.js` theo quy ước repo → thử bản bỏ `.js`.
     /\.(tsx?)$/.test(context.originModulePath)
   ) {
     const stripped = moduleName.replace(/\.js$/, '');
