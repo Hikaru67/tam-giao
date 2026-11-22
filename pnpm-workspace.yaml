@@ -3,6 +3,7 @@ packages:
   - packages/*
   - packages/modules/*
   - tools
+  - tests/e2e
 allowBuilds:
   cpu-features: false
   esbuild: true

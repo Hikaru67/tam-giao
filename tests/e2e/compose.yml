@@ -1,0 +1,73 @@
+# Hạ tầng tạm cho e2e + k6 trên máy local (BE-S7-09) — tách biệt với docker-compose.yml của máy dev:
+# project riêng `tamgiao-e2e`, cổng riêng, dữ liệu không lưu volume (mỗi lần `up` là DB trống).
+# Dùng qua `tests/e2e/run-local.sh`; staging thật dùng docs/runbooks/staging/compose.yml.
+name: tamgiao-e2e
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: tamgiao
+      POSTGRES_USER: tamgiao
+      # Chỉ cho máy local: không mật khẩu, cổng chỉ mở trên 127.0.0.1.
+      POSTGRES_HOST_AUTH_METHOD: trust
+    command: ['postgres', '-c', 'max_connections=300']
+    ports:
+      - '127.0.0.1:55433:5432'
+    tmpfs: ['/var/lib/postgresql/data']
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U tamgiao -d tamgiao']
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+  redis:
+    image: redis:7.4-alpine
+    command: ['redis-server', '--save', '', '--appendonly', 'no']
+    ports:
+      - '127.0.0.1:56380:6379'
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+  seaweedfs:
+    image: chrislusf/seaweedfs:4.53
+    command: >
+      server -dir=/data -ip=seaweedfs -ip.bind=0.0.0.0
+      -master.volumeSizeLimitMB=64 -volume.max=0
+      -s3 -s3.port=8333 -s3.config=/etc/seaweedfs/s3.json
+    ports:
+      - '127.0.0.1:58333:8333'
+    tmpfs: ['/data']
+    volumes:
+      - ../../infra/local/seaweedfs-s3.json:/etc/seaweedfs/s3.json:ro
+    healthcheck:
+      test:
+        [
+          'CMD-SHELL',
+          'wget -q -O /dev/null http://127.0.0.1:9333/cluster/status && wget -q -O /dev/null http://127.0.0.1:8333/status',
+        ]
+      interval: 2s
+      timeout: 3s
+      retries: 45
+
+  storage-init:
+    image: amazon/aws-cli:2.40.3
+    depends_on:
+      seaweedfs:
+        condition: service_healthy
+    environment:
+      AWS_ACCESS_KEY_ID: tamgiao
+      AWS_SECRET_ACCESS_KEY: tamgiao-local-secret
+      AWS_DEFAULT_REGION: us-east-1
+    entrypoint: ['/bin/sh', '-c']
+    command:
+      - |
+        set -e
+        for bucket in public-profile private-kyc; do
+          aws --endpoint-url http://seaweedfs:8333 s3api head-bucket --bucket "$$bucket" 2>/dev/null \
+            || aws --endpoint-url http://seaweedfs:8333 s3api create-bucket --bucket "$$bucket"
+          echo "bucket ready: $$bucket"
+        done
