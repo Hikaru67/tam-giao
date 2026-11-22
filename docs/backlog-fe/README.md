@@ -56,7 +56,7 @@ Màn **chưa có thiết kế** (dựng từ design system, cần designer duy�
 đặt lịch phỏng vấn, voucher QR, check-in an toàn chi tiết, toàn bộ app partner, admin: đề xuất ghép, kiểm duyệt, quán đối
 tác, slot phỏng vấn, audit log.
 
-## Quyết định FE (mặc định tạm — không chặn task, đổi được trước khi task bắt đầu)
+## Quyết định FE (PO đã đồng ý 2026-11-22)
 
 | ID | Quyết định | Mặc định | Lý do |
 |---|---|---|---|
