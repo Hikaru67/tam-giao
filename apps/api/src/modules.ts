@@ -16,6 +16,7 @@ import {
   createMessagingModule,
   type UpgradableServer,
 } from '@tamgiao/module-messaging';
+import { createNotificationModule } from '@tamgiao/module-notification';
 import { createProfileModule } from '@tamgiao/module-profile';
 import { createSafetyModule } from '@tamgiao/module-safety';
 import {
@@ -202,5 +203,8 @@ export function buildModules({ config, uow, clock, scheduler, logger }: ModuleDe
     messaging: messagingModule.facade,
   });
 
-  return [identity, uploadModule, profile, verification, billing, matching, messaging, safety];
+  // Notification (BE-S7-05): đăng ký thiết bị push + cài đặt nhận thông báo. Gửi push/SMS chạy ở worker.
+  const notification = createNotificationModule({ uow, clock, requireUser: userGuard });
+
+  return [identity, uploadModule, profile, verification, billing, matching, messaging, safety, notification];
 }
