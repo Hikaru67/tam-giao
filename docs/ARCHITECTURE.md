@@ -37,7 +37,7 @@ tam-giao/
   apps/
     api/src/          main.ts (composition root), config.ts, modules.ts, http/
     worker/src/       main.ts, config.ts, jobs/
-    mobile/ admin/ partner/          (frontend — ngoài phạm vi backlog BE)
+    mobile/ admin/ partner/          (frontend — backlog riêng: docs/backlog-fe/)
   packages/
     kernel/           Entity, AggregateRoot, DomainEvent, Result, Id, Clock, Money, UnitOfWork port
     contracts/        Zod DTO, mã lỗi, hằng số nghiệp vụ, event payload (dùng chung BE ↔ FE)
