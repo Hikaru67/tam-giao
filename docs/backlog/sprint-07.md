@@ -171,7 +171,7 @@ hoặc `CLOSED_STOPPED` + cooldown; thông báo đẩy/SMS cho các mốc quan t
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| api, repo | devops, presentation | P0 | 2d | BE-S7-01…06 | BE-S7-08 | DONE |
+| api, repo | devops, presentation | P0 | 2d | BE-S7-01…06 | BE-S7-08 | IN_REVIEW |
 
 **Mục tiêu:** Giảm rủi ro trước khi mở beta.
 
@@ -223,7 +223,7 @@ hoặc `CLOSED_STOPPED` + cooldown; thông báo đẩy/SMS cho các mốc quan t
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| repo | devops | P1 | 1.5d | BE-S7-08 | — | TODO |
+| repo | devops | P1 | 1.5d | BE-S7-08 | — | IN_REVIEW |
 
 **Mục tiêu:** Xác nhận hệ thống chạy đúng toàn luồng 14 bước và chịu được tải beta.
 
