@@ -123,7 +123,7 @@ tài khoản và quyền dữ liệu.
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| mobile | infrastructure, presentation | P0 | 1.5d | FE-S2-02 | FE-S2-03, FE-S2-04, FE-S2-06 | TODO |
+| mobile | infrastructure, presentation | P0 | 1.5d | FE-S2-02 | FE-S2-03, FE-S2-04, FE-S2-06 | DONE |
 
 **Mục tiêu:** Người dùng nhận được gợi ý 24h, phản hồi, lịch hẹn, cảnh báo (BE-S7-05).
 

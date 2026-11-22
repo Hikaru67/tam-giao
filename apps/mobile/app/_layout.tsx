@@ -15,6 +15,7 @@ import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { apiClient, tokenStore } from '../src/session/api';
 import { SessionGate } from '../src/features/session/session-gate';
+import { PushRegistrar } from '../src/features/notifications/push-registrar.js';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -45,6 +46,7 @@ export default function RootLayout() {
         <TokenStoreProvider store={tokenStore}>
           <ToastProvider>
             <SessionGate>
+              <PushRegistrar />
               <Stack screenOptions={{ headerShown: false }}>
                 <Stack.Screen name="index" />
                 <Stack.Screen name="(auth)" />
