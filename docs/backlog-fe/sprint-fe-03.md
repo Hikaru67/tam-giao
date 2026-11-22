@@ -14,7 +14,7 @@ nhận hồ sơ → duyệt → app user chuyển "đã duyệt", voucher có h�
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| mobile | presentation | P0 | 1.5d | FE-S2-02 | FE-S3-05 | TODO |
+| mobile | presentation | P0 | 1.5d | FE-S2-02 | FE-S3-05 | DONE |
 
 **Mục tiêu:** Phần thanh toán trong màn `x_c_th_c_ekyc_m_kh_a_h_s_t_ng_h_p_b_o_ch_ng_100`.
 
