@@ -202,7 +202,7 @@ nhận hồ sơ → duyệt → app user chuyển "đã duyệt", voucher có h�
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| admin | presentation | P1 | 0.5d | FE-S3-05 | FE-S3-04 | TODO |
+| admin | presentation | P1 | 0.5d | FE-S3-05 | FE-S3-04 | DONE |
 
 **Mục tiêu:** Xem ai đã đọc dữ liệu nhạy cảm (permission `audit:read`).
 
@@ -211,7 +211,7 @@ nhận hồ sơ → duyệt → app user chuyển "đã duyệt", voucher có h�
 - Ngoài: Xuất file.
 
 **Tiêu chí nghiệm thu**
-- [ ] AC1: Query sai → hiện lỗi `VALIDATION_FAILED` đúng trường lọc.
+- [x] AC1: Query sai → hiện lỗi `VALIDATION_FAILED` đúng trường lọc.
 
 **Test bắt buộc:** MSW lọc + phân trang.
 
