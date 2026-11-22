@@ -1,11 +1,5 @@
-import { SESSION_COPY } from '../../src/features/session/copy.js';
-import { PlaceholderScreen } from '../../src/features/session/placeholder-screen.js';
+import { ProfileScreen } from '../../src/features/profile/profile-screen.js';
 
 export default function ProfileRoute() {
-  return (
-    <PlaceholderScreen
-      title={SESSION_COPY.screens.profile.title}
-      taskId={SESSION_COPY.screens.profile.taskId}
-    />
-  );
+  return <ProfileScreen />;
 }
