@@ -119,7 +119,7 @@ hoặc `CLOSED_STOPPED` + cooldown; thông báo đẩy/SMS cho các mốc quan t
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| notification | application, infrastructure, presentation | P0 | 2d | Sprint 1 | BE-S7-01, BE-S7-06 | TODO |
+| notification | application, infrastructure, presentation | P0 | 2d | Sprint 1 | BE-S7-01, BE-S7-06 | IN_REVIEW |
 
 **Mục tiêu:** Người dùng không bỏ lỡ gợi ý 24h, phản hồi, lịch hẹn, cảnh báo an toàn.
 
