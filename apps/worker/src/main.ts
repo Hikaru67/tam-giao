@@ -37,13 +37,18 @@ import { registerMatchExpiryJob } from './jobs/match-expiry.js';
 import { registerNotificationSendJob } from './jobs/notification-send.js';
 import { registerVoucherExpiryJob } from './jobs/voucher-expiry.js';
 import { registerWorkers } from './registry.js';
+import { createErrorReporter, withErrorReporting } from './observability/error-reporter.js';
+import { OutboxBacklogMonitor, readOutboxBacklog } from './observability/outbox-backlog-monitor.js';
 
 /** Composition root của worker: relay outbox → hàng đợi consumer, và chạy job hẹn giờ. */
 const SHUTDOWN_TIMEOUT_MS = 15_000;
 const RELAY_INTERVAL_MS = 1_000;
 
 const config = loadWorkerConfig();
-const logger = createLogger({ service: 'worker', level: config.logLevel });
+// Sentry (BE-S7-08): no-op khi thiếu SENTRY_DSN; logger.error/fatal (job lỗi, relay lỗi…) được báo kèm, đã scrub PII.
+const errorReporter = createErrorReporter({ ...config.observability.sentry, service: 'worker' });
+const baseLogger = createLogger({ service: 'worker', level: config.logLevel });
+const logger = withErrorReporting(baseLogger, errorReporter);
 const database = createDatabase(config.database.url);
 const uow = new DrizzleUnitOfWork(database.pool);
 
@@ -158,6 +163,17 @@ await registerDatePlanExpiryJob({
 
 const relay = new OutboxRelay({ uow, boss, bus, logger });
 relay.start(RELAY_INTERVAL_MS);
+
+// Cảnh báo outbox tồn đọng (BE-S7-08). Dùng logger gốc: monitor tự gửi cảnh báo, tránh báo trùng qua logger.error.
+const backlogMonitor = new OutboxBacklogMonitor({
+  read: () => readOutboxBacklog(database.pool),
+  thresholds: config.observability.outboxBacklog.thresholds,
+  realertAfterMs: config.observability.outboxBacklog.realertAfterMs,
+  reporter: errorReporter,
+  logger: baseLogger,
+  clock,
+});
+backlogMonitor.start(config.observability.outboxBacklog.checkIntervalMs);
 logger.info({ consumers: bus.list().length, jobs: jobs.length }, 'worker started');
 
 let shuttingDown = false;
@@ -171,9 +187,11 @@ async function shutdown(signal: string): Promise<void> {
   }, SHUTDOWN_TIMEOUT_MS);
   force.unref();
 
+  backlogMonitor.stop();
   await relay.stop();
   await boss.stop({ graceful: true, timeout: SHUTDOWN_TIMEOUT_MS - 2_000 });
   await database.close();
+  await errorReporter.flush(2_000);
   logger.info('shutdown complete');
   process.exit(0);
 }

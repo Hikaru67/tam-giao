@@ -1,0 +1,42 @@
+# Docker Compose mẫu cho máy staging (BE-S7-08). Đặt tại `$STAGING_DEPLOY_DIR/compose.yml` trên máy staging,
+# kèm file `.env` (secret thật, không commit — xem docs/runbooks/staging-deploy.md).
+# Workflow .github/workflows/deploy-staging.yml gọi: `docker compose pull` → `run --rm migrate` → `up -d api worker`.
+#
+# REGISTRY_IMAGE = <REGISTRY>/<IMAGE_REPOSITORY> (vd ghcr.io/my-org/tamgiao); IMAGE_TAG do workflow truyền (git sha).
+name: tamgiao-staging
+
+x-app-env: &app-env
+  env_file: .env
+  restart: unless-stopped
+  logging:
+    driver: json-file
+    options: { max-size: '20m', max-file: '5' }
+
+services:
+  migrate:
+    <<: *app-env
+    image: ${REGISTRY_IMAGE}-api:${IMAGE_TAG:-staging}
+    command: ['migrate']
+    restart: 'no'
+    profiles: ['tools'] # không chạy khi `up`; chỉ chạy bằng `docker compose run --rm migrate`
+
+  api:
+    <<: *app-env
+    image: ${REGISTRY_IMAGE}-api:${IMAGE_TAG:-staging}
+    ports:
+      # Chỉ mở cho reverse proxy (TLS) trên cùng máy; không mở thẳng ra internet.
+      - '127.0.0.1:3000:3000'
+    read_only: true
+    tmpfs: ['/tmp']
+    security_opt: ['no-new-privileges:true']
+    cap_drop: ['ALL']
+
+  worker:
+    <<: *app-env
+    image: ${REGISTRY_IMAGE}-worker:${IMAGE_TAG:-staging}
+    read_only: true
+    tmpfs: ['/tmp']
+    security_opt: ['no-new-privileges:true']
+    cap_drop: ['ALL']
+# Postgres / Redis / object storage: dùng dịch vụ managed của nhà cung cấp (D5) hoặc thêm service ở đây.
+# Postgres tự host → bắt buộc có sao lưu theo docs/runbooks/postgres-backup-restore.md.

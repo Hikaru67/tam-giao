@@ -49,7 +49,34 @@ describe('api config', () => {
         webhookSecret: 'tamgiao-local-payment-webhook-secret',
         returnUrl: 'tamgiao://payments/return',
       },
+      observability: {
+        sentry: { dsn: undefined, environment: 'development', release: undefined },
+        metrics: { enabled: true, token: undefined },
+        openApi: { enabled: true, serverUrl: undefined },
+        release: 'dev',
+      },
     });
+  });
+
+  it('observability (BE-S7-08): Sentry theo DSN/env, OpenAPI tắt mặc định ở production, METRICS_TOKEN ≥ 16 ký tự', () => {
+    const base = envExample();
+    const config = parseApiConfig({
+      ...base,
+      SENTRY_DSN: 'https://public@sentry.example.com/1',
+      SENTRY_ENVIRONMENT: 'staging',
+      APP_RELEASE: 'abc123',
+      METRICS_TOKEN: 'metrics-token-0123456789',
+      PUBLIC_API_URL: 'https://api.staging.example.com',
+    });
+    expect(config.observability).toEqual({
+      sentry: { dsn: 'https://public@sentry.example.com/1', environment: 'staging', release: 'abc123' },
+      metrics: { enabled: true, token: 'metrics-token-0123456789' },
+      openApi: { enabled: true, serverUrl: 'https://api.staging.example.com' },
+      release: 'abc123',
+    });
+    expect(parseApiConfig({ ...base, OPENAPI_ENABLED: 'false' }).observability.openApi.enabled).toBe(false);
+    expect(() => parseApiConfig({ ...base, METRICS_TOKEN: 'short' })).toThrow(ConfigError);
+    expect(() => parseApiConfig({ ...base, SENTRY_DSN: 'not a url' })).toThrow(ConfigError);
   });
 
   it('thiếu biến bắt buộc → ConfigError liệt kê đủ', () => {

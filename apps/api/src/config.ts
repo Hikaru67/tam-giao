@@ -59,6 +59,20 @@ const apiEnvSchema = z
     PAYMENT_WEBHOOK_SECRET: z.string().min(16),
     /** URL cổng chuyển người dùng về sau khi thanh toán (deep link hoặc trang web của app). */
     PAYMENT_RETURN_URL: z.url().default('tamgiao://payments/return'),
+    // Observability (BE-S7-08)
+    /** DSN Sentry; bỏ trống = không gửi lỗi đi đâu (no-op). */
+    SENTRY_DSN: z.url().optional(),
+    /** Tên môi trường gắn vào lỗi (`staging`…); mặc định = NODE_ENV. */
+    SENTRY_ENVIRONMENT: z.string().min(1).optional(),
+    /** Phiên bản đang chạy (git sha) — image Docker gán sẵn qua build arg. */
+    APP_RELEASE: z.string().min(1).optional(),
+    METRICS_ENABLED: envBoolean.default(true),
+    /** Có giá trị → `GET /metrics` yêu cầu `Authorization: Bearer <METRICS_TOKEN>` (≥ 16 ký tự). */
+    METRICS_TOKEN: z.string().min(16).optional(),
+    /** `GET /openapi.json` + `GET /docs`; mặc định bật trừ production. */
+    OPENAPI_ENABLED: envBoolean.optional(),
+    /** URL công khai của API ghi vào `servers` của OpenAPI (vd https://api.staging.example.com). */
+    PUBLIC_API_URL: envHttpUrl.optional(),
   })
   .superRefine((e, ctx) => {
     if (e.NODE_ENV === 'production' && e.SMS_PROVIDER === 'console') {
@@ -113,6 +127,15 @@ const apiEnvSchema = z
       gateway: e.PAYMENT_GATEWAY,
       webhookSecret: e.PAYMENT_WEBHOOK_SECRET,
       returnUrl: e.PAYMENT_RETURN_URL,
+    },
+    observability: {
+      sentry: { dsn: e.SENTRY_DSN, environment: e.SENTRY_ENVIRONMENT ?? e.NODE_ENV, release: e.APP_RELEASE },
+      metrics: { enabled: e.METRICS_ENABLED, token: e.METRICS_TOKEN },
+      openApi: {
+        enabled: e.OPENAPI_ENABLED ?? e.NODE_ENV !== 'production',
+        serverUrl: e.PUBLIC_API_URL,
+      },
+      release: e.APP_RELEASE ?? 'dev',
     },
   }));
 

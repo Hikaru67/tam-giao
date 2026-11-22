@@ -64,6 +64,32 @@ describe('worker config', () => {
     expect(() => parseWorkerConfig({ ...ENV, PUSH_PROVIDER: 'fcm' })).toThrow(ConfigError);
   });
 
+  it('observability (BE-S7-08): không DSN → Sentry tắt; ngưỡng outbox tồn đọng mặc định + cấu hình được', () => {
+    expect(parseWorkerConfig(ENV).observability).toEqual({
+      sentry: { dsn: undefined, environment: 'test', release: undefined },
+      outboxBacklog: {
+        thresholds: { maxUnpublished: 500, maxAgeSeconds: 300 },
+        checkIntervalMs: 60_000,
+        realertAfterMs: 900_000,
+      },
+    });
+    const custom = parseWorkerConfig({
+      ...ENV,
+      SENTRY_DSN: 'https://public@sentry.example.com/2',
+      OUTBOX_BACKLOG_MAX_EVENTS: '50',
+      OUTBOX_BACKLOG_MAX_AGE_SECONDS: '120',
+      OUTBOX_BACKLOG_CHECK_INTERVAL_SECONDS: '30',
+      OUTBOX_BACKLOG_REALERT_MINUTES: '5',
+    }).observability;
+    expect(custom.sentry.dsn).toBe('https://public@sentry.example.com/2');
+    expect(custom.outboxBacklog).toEqual({
+      thresholds: { maxUnpublished: 50, maxAgeSeconds: 120 },
+      checkIntervalMs: 30_000,
+      realertAfterMs: 300_000,
+    });
+    expect(() => parseWorkerConfig({ ...ENV, OUTBOX_BACKLOG_MAX_EVENTS: '0' })).toThrow(ConfigError);
+  });
+
   it('thiếu DATABASE_URL → ConfigError', () => {
     expect(() => parseWorkerConfig({})).toThrow(ConfigError);
   });
