@@ -98,7 +98,7 @@ tài khoản và quyền dữ liệu.
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| mobile | presentation | P0 | 1d | FE-S2-02 | FE-S2-03, FE-S2-05, FE-S2-06 | TODO |
+| mobile | presentation | P0 | 1d | FE-S2-02 | FE-S2-03, FE-S2-05, FE-S2-06 | DONE |
 
 **Mục tiêu:** Màn `thi_t_l_p_ti_u_ch_b_n_i_b_l_c_c_ng`.
 
