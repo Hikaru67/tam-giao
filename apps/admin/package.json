@@ -9,6 +9,7 @@
     "typecheck": "tsc -p tsconfig.json"
   },
   "dependencies": {
+    "@tamgiao/api-client": "workspace:*",
     "@tamgiao/contracts": "workspace:*",
     "@tamgiao/ui-tokens": "workspace:*",
     "@tamgiao/ui-web": "workspace:*",
@@ -24,6 +25,7 @@
     "@vitejs/plugin-react": "6.2.1",
     "autoprefixer": "10.6.2",
     "jsdom": "31.0.0",
+    "msw": "2.15.0",
     "postcss": "8.5.32",
     "tailwindcss": "3.4.19",
     "typescript": "5.9.3",

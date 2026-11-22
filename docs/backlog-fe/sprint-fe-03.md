@@ -122,7 +122,7 @@ nhận hồ sơ → duyệt → app user chuyển "đã duyệt", voucher có h�
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| admin | presentation | P0 | 1.5d | FE-S1-03, FE-S1-07 | FE-S3-01 | TODO |
+| admin | presentation | P0 | 1.5d | FE-S1-03, FE-S1-07 | FE-S3-01 | DONE |
 
 **Mục tiêu:** Màn `ng_nh_p_qu_n_tr_i_u_ph_i_mai_m_i` + khung (sidebar, header) theo `web_admin_th_m_nh…`.
 
@@ -132,7 +132,7 @@ nhận hồ sơ → duyệt → app user chuyển "đã duyệt", voucher có h�
 - Ngoài: Quản lý tài khoản admin (seed bằng tool BE).
 
 **Tiêu chí nghiệm thu**
-- [ ] AC1: Role không có `kyc:review` không thấy menu thẩm định và vào URL trực tiếp thì thấy màn 403.
+- [x] AC1: Role không có `kyc:review` không thấy menu thẩm định và vào URL trực tiếp thì thấy màn 403.
 
 **Test bắt buộc:** Bảng permission → menu; MSW đăng nhập sai/khoá.
 
