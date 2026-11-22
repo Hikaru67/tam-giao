@@ -28,3 +28,15 @@ export const DATING_ERROR_CODES = registerErrors('dating', {
   /** BE-S7-02. `meta.reason`: `NOT_CHECKED_IN` | `ALREADY_CHECKED_OUT`. */
   DATE_NOT_CHECKED_IN: { status: 409, title: 'Bạn chưa check-in hoặc đã check-out buổi hẹn này' },
 });
+
+/** Mã lỗi đánh giá kín sau gặp (BE-S7-03). */
+export const DATING_FEEDBACK_ERROR_CODES = registerErrors('dating', {
+  /** `meta.reason`: luật vi phạm (vd `RATING_OUT_OF_RANGE`, `STOP_DETAILS_WITHOUT_STOP`, `NOTE_TOO_LONG`). */
+  FEEDBACK_INVALID: { status: 422, title: 'Đánh giá sau gặp không hợp lệ' },
+  /** `meta.reason` = `DATE_NOT_HAPPENED` (lịch chưa xác nhận hoặc chưa tới giờ hẹn), `meta.status`: trạng thái lịch. */
+  FEEDBACK_NOT_ALLOWED: { status: 409, title: 'Chưa thể đánh giá buổi gặp này' },
+  /** Mỗi người chỉ gửi một đánh giá cho mỗi kết nối; đã gửi thì không sửa. */
+  FEEDBACK_ALREADY_SUBMITTED: { status: 409, title: 'Bạn đã gửi đánh giá cho buổi gặp này' },
+  /** Đánh giá không tồn tại (route admin). */
+  FEEDBACK_NOT_FOUND: { status: 404, title: 'Không tìm thấy đánh giá' },
+});

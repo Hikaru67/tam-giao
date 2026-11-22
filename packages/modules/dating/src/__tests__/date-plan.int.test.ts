@@ -28,6 +28,7 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { DATE_PLAN_EXPIRY_QUEUE } from '../application/date-plan-expiry.js';
 import { createDatingModule, createExpireDatePlanJob } from '../index.js';
 import { FakeMatchingFacade, FakePartnerFacade, RecordingScheduler } from './dating-fakes.js';
+import { RecordingAuditLogger } from './feedback-fakes.js';
 
 const T0 = new Date('2026-12-01T02:00:00.000Z');
 const STARTS = addDuration(T0, { days: 3 });
@@ -64,7 +65,17 @@ beforeAll(() => {
     return next();
   });
   const encryptor = new LocalKeyEncryptor({ currentVersion: 1, keys: new Map([[1, Buffer.alloc(32, 7)]]) });
-  const module = createDatingModule({ uow, clock, scheduler, encryptor, requireUser, matching, partners });
+  const module = createDatingModule({
+    uow,
+    clock,
+    scheduler,
+    encryptor,
+    requireUser,
+    matching,
+    partners,
+    requireAdmin: () => async (c) => c.json({ code: 'FORBIDDEN' }, 403),
+    auditLogger: new RecordingAuditLogger(),
+  });
   const logger = createLogger({ service: 'api', level: 'silent', destination: { write: () => undefined } });
   app = new Hono<AppEnv>();
   app.use('*', requestContext(logger));

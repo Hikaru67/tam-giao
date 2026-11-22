@@ -18,6 +18,7 @@ import {
 import { handleError, handleNotFound, requestContext, type AppEnv } from '@tamgiao/http';
 import { addDuration, FakeClock, newId, type DomainEvent } from '@tamgiao/kernel';
 import { resetDatabase, runConcurrently, testDatabaseUrl } from '@tamgiao/testing';
+import { RecordingAuditLogger } from './feedback-fakes.js';
 import { Hono } from 'hono';
 import { createMiddleware } from 'hono/factory';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
@@ -60,6 +61,8 @@ beforeAll(() => {
     requireUser,
     matching,
     partners,
+    requireAdmin: () => async (c) => c.json({ code: 'FORBIDDEN' }, 403),
+    auditLogger: new RecordingAuditLogger(),
   });
   const logger = createLogger({ service: 'api', level: 'silent', destination: { write: () => undefined } });
   app = new Hono<AppEnv>();
