@@ -17,10 +17,6 @@ export const SESSION_COPY = {
       title: 'Tiêu chí bạn đời',
       taskId: 'FE-S2-04',
     },
-    verificationStart: {
-      title: 'Xác thực hồ sơ',
-      taskId: 'FE-S3-01',
-    },
     verificationStatus: {
       title: 'Hồ sơ đang thẩm định',
       taskId: 'FE-S3-04',

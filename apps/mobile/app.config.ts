@@ -12,7 +12,20 @@ const config: ExpoConfig = {
   android: {
     package: 'vn.tamgiao.app',
   },
-  plugins: ['expo-router', 'expo-secure-store', 'expo-notifications'],
+  plugins: [
+    'expo-router',
+    'expo-secure-store',
+    'expo-notifications',
+    [
+      'expo-camera',
+      {
+        cameraPermission: 'Tâm Giao cần dùng máy ảnh để chụp giấy tờ và ảnh chân dung khi xác thực hồ sơ.',
+        microphonePermission: false,
+        recordAudioAndroid: false,
+        barcodeScannerEnabled: false,
+      },
+    ],
+  ],
   experiments: {
     typedRoutes: true,
   },

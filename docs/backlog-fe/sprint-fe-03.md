@@ -14,7 +14,7 @@ nhận hồ sơ → duyệt → app user chuyển "đã duyệt", voucher có h�
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| mobile | presentation | P0 | 1.5d | FE-S2-02 | FE-S3-05 | TODO |
+| mobile | presentation | P0 | 1.5d | FE-S2-02 | FE-S3-05 | DONE |
 
 **Mục tiêu:** Phần thanh toán trong màn `x_c_th_c_ekyc_m_kh_a_h_s_t_ng_h_p_b_o_ch_ng_100`.
 
@@ -42,7 +42,7 @@ nhận hồ sơ → duyệt → app user chuyển "đã duyệt", voucher có h�
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| mobile | presentation | P0 | 2d | FE-S3-01 | FE-S3-06 | TODO |
+| mobile | presentation | P0 | 2d | FE-S3-01 | FE-S3-06 | DONE |
 
 **Mục tiêu:** Phần eKYC của màn `x_c_th_c_ekyc_…`.
 
@@ -70,7 +70,7 @@ nhận hồ sơ → duyệt → app user chuyển "đã duyệt", voucher có h�
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| mobile | presentation | P0 | 1d | FE-S3-02 | FE-S3-04, FE-S3-07 | TODO |
+| mobile | presentation | P0 | 1d | FE-S3-02 | FE-S3-04, FE-S3-07 | DONE |
 
 **Mục tiêu:** User chọn slot phỏng vấn với chuyên viên (BE-S3-05).
 
@@ -96,7 +96,7 @@ nhận hồ sơ → duyệt → app user chuyển "đã duyệt", voucher có h�
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| mobile | presentation | P0 | 1d | FE-S3-02 | FE-S3-03, FE-S3-08 | TODO |
+| mobile | presentation | P0 | 1d | FE-S3-02 | FE-S3-03, FE-S3-08 | DONE |
 
 **Mục tiêu:** Màn `h_s_ang_th_m_nh_h_ng_ch_1_1`.
 
@@ -106,7 +106,7 @@ nhận hồ sơ → duyệt → app user chuyển "đã duyệt", voucher có h�
 - Ngoài: QR voucher (FE-S5-02).
 
 **Tiêu chí nghiệm thu**
-- [ ] AC1: Push "đã duyệt" khi đang mở màn → màn tự cập nhật.
+- [x] AC1: Push "đã duyệt" khi đang mở màn → màn tự cập nhật.
 
 **Test bắt buộc:** Render theo từng trạng thái KYC/payment.
 
@@ -122,7 +122,7 @@ nhận hồ sơ → duyệt → app user chuyển "đã duyệt", voucher có h�
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| admin | presentation | P0 | 1.5d | FE-S1-03, FE-S1-07 | FE-S3-01 | TODO |
+| admin | presentation | P0 | 1.5d | FE-S1-03, FE-S1-07 | FE-S3-01 | DONE |
 
 **Mục tiêu:** Màn `ng_nh_p_qu_n_tr_i_u_ph_i_mai_m_i` + khung (sidebar, header) theo `web_admin_th_m_nh…`.
 
@@ -132,7 +132,7 @@ nhận hồ sơ → duyệt → app user chuyển "đã duyệt", voucher có h�
 - Ngoài: Quản lý tài khoản admin (seed bằng tool BE).
 
 **Tiêu chí nghiệm thu**
-- [ ] AC1: Role không có `kyc:review` không thấy menu thẩm định và vào URL trực tiếp thì thấy màn 403.
+- [x] AC1: Role không có `kyc:review` không thấy menu thẩm định và vào URL trực tiếp thì thấy màn 403.
 
 **Test bắt buộc:** Bảng permission → menu; MSW đăng nhập sai/khoá.
 
@@ -148,7 +148,7 @@ nhận hồ sơ → duyệt → app user chuyển "đã duyệt", voucher có h�
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| admin | presentation | P0 | 2.5d | FE-S3-05 | FE-S3-02 | TODO |
+| admin | presentation | P0 | 2.5d | FE-S3-05 | FE-S3-02 | DONE |
 
 **Mục tiêu:** Màn `web_admin_th_m_nh_ekyc_gh_p_i_c_quy_n` (hàng chờ + panel chi tiết + thanh quyết định).
 
@@ -176,7 +176,7 @@ nhận hồ sơ → duyệt → app user chuyển "đã duyệt", voucher có h�
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| admin | presentation | P1 | 1d | FE-S3-05 | FE-S3-03 | TODO |
+| admin | presentation | P1 | 1d | FE-S3-05 | FE-S3-03 | DONE |
 
 **Mục tiêu:** Chuyên viên mở slot và ghi nhận xét phỏng vấn.
 
@@ -186,7 +186,7 @@ nhận hồ sơ → duyệt → app user chuyển "đã duyệt", voucher có h�
 - Ngoài: —
 
 **Tiêu chí nghiệm thu**
-- [ ] AC1: Slot đã có người đặt hiển thị khác slot trống.
+- [x] AC1: Slot đã có người đặt hiển thị khác slot trống.
 
 **Test bắt buộc:** MSW tạo slot, ghi chú.
 
@@ -202,7 +202,7 @@ nhận hồ sơ → duyệt → app user chuyển "đã duyệt", voucher có h�
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| admin | presentation | P1 | 0.5d | FE-S3-05 | FE-S3-04 | TODO |
+| admin | presentation | P1 | 0.5d | FE-S3-05 | FE-S3-04 | DONE |
 
 **Mục tiêu:** Xem ai đã đọc dữ liệu nhạy cảm (permission `audit:read`).
 
@@ -211,7 +211,7 @@ nhận hồ sơ → duyệt → app user chuyển "đã duyệt", voucher có h�
 - Ngoài: Xuất file.
 
 **Tiêu chí nghiệm thu**
-- [ ] AC1: Query sai → hiện lỗi `VALIDATION_FAILED` đúng trường lọc.
+- [x] AC1: Query sai → hiện lỗi `VALIDATION_FAILED` đúng trường lọc.
 
 **Test bắt buộc:** MSW lọc + phân trang.
 
