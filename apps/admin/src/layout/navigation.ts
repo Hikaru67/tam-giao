@@ -9,6 +9,9 @@ export const NAV_ICONS = [
   'matching',
   'moderation',
   'partners',
+  'appearance-flags',
+  'refunds',
+  'reconciliation',
   'audit',
 ] as const;
 export type NavIconName = (typeof NAV_ICONS)[number];
@@ -16,7 +19,17 @@ export type NavIconName = (typeof NAV_ICONS)[number];
 export interface NavItem {
   readonly id: string;
   /** Đường dẫn tuyệt đối của route (khai báo trong `router.tsx`). */
-  readonly to: '/' | '/kyc' | '/interviews' | '/matching' | '/moderation' | '/partners' | '/audit';
+  readonly to:
+    | '/'
+    | '/kyc'
+    | '/interviews'
+    | '/matching'
+    | '/moderation'
+    | '/partners'
+    | '/operations/appearance-flags'
+    | '/operations/refunds'
+    | '/operations/reconciliation'
+    | '/audit';
   readonly label: string;
   readonly icon: NavIconName;
   /** Permission BE yêu cầu cho API của màn; `null` = mọi admin đã đăng nhập. Route dùng cùng permission. */
@@ -60,6 +73,27 @@ export const NAV_ITEMS = [
     label: NAV_COPY.partners,
     icon: 'partners',
     permission: 'partner:manage',
+  },
+  {
+    id: 'appearance-flags',
+    to: '/operations/appearance-flags',
+    label: NAV_COPY.appearanceFlags,
+    icon: 'appearance-flags',
+    permission: 'kyc:review',
+  },
+  {
+    id: 'refunds',
+    to: '/operations/refunds',
+    label: NAV_COPY.refunds,
+    icon: 'refunds',
+    permission: 'billing:refund',
+  },
+  {
+    id: 'reconciliation',
+    to: '/operations/reconciliation',
+    label: NAV_COPY.reconciliation,
+    icon: 'reconciliation',
+    permission: 'billing:refund',
   },
   { id: 'audit', to: '/audit', label: NAV_COPY.audit, icon: 'audit', permission: 'audit:read' },
 ] as const satisfies readonly NavItem[];

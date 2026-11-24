@@ -109,6 +109,61 @@ const icons = {
       <line x1="14" y1="2" x2="14" y2="4" />
     </svg>
   ),
+  'appearance-flags': (
+    <svg
+      width="20"
+      height="20"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z" />
+      <line x1="4" y1="22" x2="4" y2="15" />
+      <line x1="10" y1="7" x2="10" y2="10" />
+      <line x1="10" y1="12" x2="10" y2="12.01" />
+    </svg>
+  ),
+  refunds: (
+    <svg
+      width="20"
+      height="20"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M3 10h10a5 5 0 0 1 5 5v2" />
+      <polyline points="7 6 3 10 7 14" />
+      <path d="M21 10V8a2 2 0 0 0-2-2h-3" />
+      <circle cx="18" cy="18" r="3" />
+    </svg>
+  ),
+  reconciliation: (
+    <svg
+      width="20"
+      height="20"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <rect x="2" y="3" width="20" height="18" rx="2" />
+      <line x1="2" y1="9" x2="22" y2="9" />
+      <line x1="2" y1="15" x2="22" y2="15" />
+      <line x1="10" y1="3" x2="10" y2="21" />
+      <line x1="16" y1="3" x2="16" y2="21" />
+    </svg>
+  ),
   audit: (
     <svg
       width="20"

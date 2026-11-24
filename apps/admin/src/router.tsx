@@ -8,6 +8,7 @@ import { interviewsRoute } from './routes/interviews/interviews-route';
 import { matchingRouteTree } from './routes/matching/matching-route';
 import { moderationRouteTree } from './routes/moderation/moderation-route';
 import { partnersRouteTree } from './routes/partners/partners-route';
+import { operationsRoutes } from './routes/operations/operations-routes';
 import { auditRoute } from './routes/audit/audit-route';
 import { RouteError } from './layout/route-error';
 import { NotFoundPage } from './layout/not-found-page';
@@ -24,6 +25,7 @@ export function createAdminRouter(options: { context: AdminRouterContext; histor
       matchingRouteTree,
       moderationRouteTree,
       partnersRouteTree,
+      ...operationsRoutes,
       auditRoute,
     ]),
   ]);
