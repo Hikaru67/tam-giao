@@ -68,6 +68,9 @@
     },
     "setupFiles": [
       "<rootDir>/jest.setup.ts"
+    ],
+    "setupFilesAfterEnv": [
+      "<rootDir>/jest.setup-after-env.ts"
     ]
   }
 }

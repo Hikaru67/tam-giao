@@ -14,7 +14,7 @@ báo cáo vi phạm. Admin: đề xuất ghép, kiểm duyệt báo cáo và tin
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| mobile | presentation | P0 | 1.5d | FE-S3-04 | FE-S4-07 | TODO |
+| mobile | presentation | P0 | 1.5d | FE-S3-04 | FE-S4-07 | DONE |
 
 **Mục tiêu:** Màn `g_i_gh_p_i_c_quy_n`.
 
@@ -42,7 +42,7 @@ báo cáo vi phạm. Admin: đề xuất ghép, kiểm duyệt báo cáo và tin
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| mobile | presentation | P0 | 0.5d | FE-S4-01 | FE-S4-03 | TODO |
+| mobile | presentation | P0 | 0.5d | FE-S4-01 | FE-S4-03 | DONE |
 
 **Mục tiêu:** Màn `ch_ph_n_h_i_gh_p_i_1_1`.
 
@@ -68,7 +68,7 @@ báo cáo vi phạm. Admin: đề xuất ghép, kiểm duyệt báo cáo và tin
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| mobile | presentation | P1 | 1d | FE-S4-01 | FE-S4-02 | TODO |
+| mobile | presentation | P1 | 1d | FE-S4-01 | FE-S4-02 | DONE |
 
 **Mục tiêu:** Màn `chi_ti_t_h_s_quan_ni_m_h_n_nh_n`.
 
@@ -94,7 +94,7 @@ báo cáo vi phạm. Admin: đề xuất ghép, kiểm duyệt báo cáo và tin
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| mobile, packages/api-client | infrastructure, presentation | P0 | 3d | FE-S4-02 | FE-S4-08 | TODO |
+| mobile, packages/api-client | infrastructure, presentation | P0 | 3d | FE-S4-02 | FE-S4-08 | DONE |
 
 **Mục tiêu:** Màn `tr_chuy_n_h_n_h_c_quy_n` (BE-S6-01…03).
 
@@ -125,7 +125,7 @@ báo cáo vi phạm. Admin: đề xuất ghép, kiểm duyệt báo cáo và tin
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| mobile | presentation | P1 | 1d | FE-S4-04 | FE-S4-06 | TODO |
+| mobile | presentation | P1 | 1d | FE-S4-04 | FE-S4-06 | DONE |
 
 **Mục tiêu:** Màn `h_p_th_h_n_h_t_v_n_vi_n` (phần có API).
 
@@ -150,7 +150,7 @@ báo cáo vi phạm. Admin: đề xuất ghép, kiểm duyệt báo cáo và tin
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| mobile | presentation | P0 | 1.5d | FE-S4-04 | FE-S4-05 | TODO |
+| mobile | presentation | P0 | 1.5d | FE-S4-04 | FE-S4-05 | DONE |
 
 **Mục tiêu:** Màn `b_o_c_o_vi_ph_m_trung_t_m_an_to_n_kh_n_c_p` (BE-S6-04).
 
@@ -177,7 +177,7 @@ báo cáo vi phạm. Admin: đề xuất ghép, kiểm duyệt báo cáo và tin
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| admin | presentation | P0 | 2d | FE-S3-05 | FE-S4-01 | TODO |
+| admin | presentation | P0 | 2d | FE-S3-05 | FE-S4-01 | DONE |
 
 **Mục tiêu:** Tab "Đề xuất Ghép đôi 1-1" trong khung admin.
 
@@ -203,7 +203,7 @@ báo cáo vi phạm. Admin: đề xuất ghép, kiểm duyệt báo cáo và tin
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| admin | presentation | P0 | 2d | FE-S3-05 | FE-S4-04 | TODO |
+| admin | presentation | P0 | 2d | FE-S3-05 | FE-S4-04 | DONE |
 
 **Mục tiêu:** Tab "Báo cáo Vi phạm & Khiếu nại" (BE-S6-05/06).
 
