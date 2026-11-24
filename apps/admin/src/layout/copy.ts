@@ -9,6 +9,7 @@ export const NAV_COPY = {
   kyc: 'Thẩm định eKYC',
   interviews: 'Lịch phỏng vấn',
   matching: 'Đề xuất ghép đôi 1-1',
+  moderation: 'Báo cáo & khiếu nại',
   audit: 'Nhật ký truy cập',
 } as const;
 

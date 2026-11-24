@@ -203,7 +203,7 @@ báo cáo vi phạm. Admin: đề xuất ghép, kiểm duyệt báo cáo và tin
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| admin | presentation | P0 | 2d | FE-S3-05 | FE-S4-04 | TODO |
+| admin | presentation | P0 | 2d | FE-S3-05 | FE-S4-04 | DONE |
 
 **Mục tiêu:** Tab "Báo cáo Vi phạm & Khiếu nại" (BE-S6-05/06).
 

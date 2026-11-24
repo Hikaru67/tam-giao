@@ -18,11 +18,19 @@ describe('navigation', () => {
       'kyc',
       'interviews',
       'matching',
+      'moderation',
       'audit',
     ]);
 
     const adminItems = visibleNavItems(ROLE_PERMISSIONS_FIXTURE.ADMIN);
-    expect(adminItems.map((item) => item.id)).toEqual(['overview', 'kyc', 'interviews', 'matching', 'audit']);
+    expect(adminItems.map((item) => item.id)).toEqual([
+      'overview',
+      'kyc',
+      'interviews',
+      'matching',
+      'moderation',
+      'audit',
+    ]);
 
     const emptyItems = visibleNavItems([]);
     expect(emptyItems.map((item) => item.id)).toEqual(['overview']);
