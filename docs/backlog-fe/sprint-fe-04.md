@@ -94,7 +94,7 @@ báo cáo vi phạm. Admin: đề xuất ghép, kiểm duyệt báo cáo và tin
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| mobile, packages/api-client | infrastructure, presentation | P0 | 3d | FE-S4-02 | FE-S4-08 | TODO |
+| mobile, packages/api-client | infrastructure, presentation | P0 | 3d | FE-S4-02 | FE-S4-08 | DONE |
 
 **Mục tiêu:** Màn `tr_chuy_n_h_n_h_c_quy_n` (BE-S6-01…03).
 

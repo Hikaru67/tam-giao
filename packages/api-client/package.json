@@ -5,6 +5,7 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
+    "./ws": "./src/ws/index.ts",
     "./react": "./src/react.tsx",
     "./mocks": "./src/mocks/index.ts"
   },
