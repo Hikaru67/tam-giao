@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import type { DatePlanDto } from '@tamgiao/contracts/dating';
+import { FeedbackEntry } from '../feedback/feedback-entry.js';
 import { VoucherEntry } from '../vouchers/voucher-entry.js';
 import { CheckInCard } from './check-in/index.js';
 import type { DateView } from './date-view.js';
@@ -10,6 +11,7 @@ export function renderDateActions(plan: DatePlanDto, view: DateView): ReactNode 
     <>
       <CheckInCard plan={plan} view={view} />
       <VoucherEntry plan={plan} view={view} />
+      <FeedbackEntry plan={plan} view={view} />
     </>
   );
 }
