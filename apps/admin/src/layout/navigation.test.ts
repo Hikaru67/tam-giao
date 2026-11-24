@@ -29,8 +29,13 @@ describe('navigation', () => {
       'interviews',
       'matching',
       'moderation',
+      'partners',
       'audit',
     ]);
+    expect(adminItems.some((item) => item.id === 'partners')).toBe(true);
+    expect(supervisorItems.some((item) => item.id === 'partners')).toBe(false);
+    expect(reviewerItems.some((item) => item.id === 'partners')).toBe(false);
+    expect(matchmakerItems.some((item) => item.id === 'partners')).toBe(false);
 
     const emptyItems = visibleNavItems([]);
     expect(emptyItems.map((item) => item.id)).toEqual(['overview']);

@@ -152,7 +152,7 @@ voucher. Admin: quản lý quán, cờ khác biệt eKYC, hoàn tiền/đối so
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| admin | presentation | P1 | 1d | FE-S3-05 | FE-S5-01, FE-S5-07 | TODO |
+| admin | presentation | P1 | 1d | FE-S3-05 | FE-S5-01, FE-S5-07 | DONE |
 
 **Mục tiêu:** Chuyên viên quản lý danh sách quán dùng voucher.
 
