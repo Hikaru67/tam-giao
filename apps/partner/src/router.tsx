@@ -1,20 +1,28 @@
-import { createRootRoute, createRoute, createRouter } from '@tanstack/react-router';
-import { HomePage } from './home-page';
+import { createRouter, type RouterHistory } from '@tanstack/react-router';
+import { rootRoute, type PartnerRouterContext } from './routes/root-route';
+import { loginRoute } from './routes/login-route';
+import { authedRoute } from './layout/authed-route';
+import { scanRoute } from './routes/scan-route';
+import { RouteError } from './layout/route-error';
 
-const rootRoute = createRootRoute();
+export type { PartnerRouterContext } from './routes/root-route';
 
-const indexRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: '/',
-  component: HomePage,
-});
+export function createPartnerRouter(options: { context: PartnerRouterContext; history?: RouterHistory }) {
+  const routeTree = rootRoute.addChildren([loginRoute, authedRoute.addChildren([scanRoute])]);
 
-const routeTree = rootRoute.addChildren([indexRoute]);
+  return createRouter({
+    routeTree,
+    context: options.context,
+    ...(options.history ? { history: options.history } : {}),
+    defaultErrorComponent: RouteError,
+    defaultPreload: false,
+  });
+}
 
-export const router = createRouter({ routeTree });
+export type PartnerRouter = ReturnType<typeof createPartnerRouter>;
 
 declare module '@tanstack/react-router' {
   interface Register {
-    router: typeof router;
+    router: PartnerRouter;
   }
 }

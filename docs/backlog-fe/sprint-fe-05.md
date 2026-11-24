@@ -125,7 +125,7 @@ voucher. Admin: quản lý quán, cờ khác biệt eKYC, hoàn tiền/đối so
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| partner | presentation | P0 | 2d | FE-S1-03 | FE-S5-01, FE-S5-04 | TODO |
+| partner | presentation | P0 | 2d | FE-S1-03 | FE-S5-01, FE-S5-04 | DONE |
 
 **Mục tiêu:** Nhân viên quán xác nhận voucher bằng điện thoại (BE-S4-06).
 
