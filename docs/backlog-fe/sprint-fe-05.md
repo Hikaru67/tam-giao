@@ -14,7 +14,7 @@ voucher. Admin: quản lý quán, cờ khác biệt eKYC, hoàn tiền/đối so
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| mobile | presentation | P0 | 2d | FE-S4-04 | FE-S5-05, FE-S5-06 | TODO |
+| mobile | presentation | P0 | 2d | FE-S4-04 | FE-S5-05, FE-S5-06 | DONE |
 
 **Mục tiêu:** Màn `t_l_ch_g_p_m_t_i_m_h_n_an_to_n` (BE-S7-01).
 
@@ -43,7 +43,7 @@ voucher. Admin: quản lý quán, cờ khác biệt eKYC, hoàn tiền/đối so
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| mobile | presentation | P0 | 1d | FE-S5-01 | FE-S5-03 | TODO |
+| mobile | presentation | P0 | 1d | FE-S5-01 | FE-S5-03 | DONE |
 
 **Mục tiêu:** User xuất trình QR voucher tại quán (BE-S4-05).
 
@@ -69,7 +69,7 @@ voucher. Admin: quản lý quán, cờ khác biệt eKYC, hoàn tiền/đối so
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| mobile | presentation | P1 | 1d | FE-S5-01 | FE-S5-02 | TODO |
+| mobile | presentation | P1 | 1d | FE-S5-01 | FE-S5-02 | DONE |
 
 **Mục tiêu:** Toggle "Check-in an toàn: gửi vị trí cho chuyên viên" (BE-S7-02).
 
@@ -97,7 +97,7 @@ voucher. Admin: quản lý quán, cờ khác biệt eKYC, hoàn tiền/đối so
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| mobile | presentation | P0 | 1.5d | FE-S5-01 | FE-S5-05 | TODO |
+| mobile | presentation | P0 | 1.5d | FE-S5-01 | FE-S5-05 | DONE |
 
 **Mục tiêu:** Màn `nh_gi_sau_g_p_m_t_quy_t_nh_h_n_h` (BE-S7-03).
 
@@ -125,7 +125,7 @@ voucher. Admin: quản lý quán, cờ khác biệt eKYC, hoàn tiền/đối so
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| partner | presentation | P0 | 2d | FE-S1-03 | FE-S5-01, FE-S5-04 | TODO |
+| partner | presentation | P0 | 2d | FE-S1-03 | FE-S5-01, FE-S5-04 | DONE |
 
 **Mục tiêu:** Nhân viên quán xác nhận voucher bằng điện thoại (BE-S4-06).
 
@@ -152,7 +152,7 @@ voucher. Admin: quản lý quán, cờ khác biệt eKYC, hoàn tiền/đối so
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| admin | presentation | P1 | 1d | FE-S3-05 | FE-S5-01, FE-S5-07 | TODO |
+| admin | presentation | P1 | 1d | FE-S3-05 | FE-S5-01, FE-S5-07 | DONE |
 
 **Mục tiêu:** Chuyên viên quản lý danh sách quán dùng voucher.
 
@@ -178,7 +178,7 @@ voucher. Admin: quản lý quán, cờ khác biệt eKYC, hoàn tiền/đối so
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| admin | presentation | P1 | 1.5d | FE-S3-05 | FE-S5-06 | TODO |
+| admin | presentation | P1 | 1.5d | FE-S3-05 | FE-S5-06 | DONE |
 
 **Mục tiêu:** Các màn vận hành còn lại cho chuyên viên.
 

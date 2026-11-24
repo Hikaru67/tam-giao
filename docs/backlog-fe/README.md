@@ -102,7 +102,7 @@ chạy được trên BE local (`pnpm dev` + provider giả) với ảnh chụp/
 | FE-S2 | 0 | 0 | 0 | 6 | 0 |
 | FE-S3 | 0 | 0 | 0 | 8 | 0 |
 | FE-S4 | 0 | 0 | 0 | 8 | 0 |
-| FE-S5 | 7 | 0 | 0 | 0 | 0 |
+| FE-S5 | 0 | 0 | 0 | 7 | 0 |
 | FE-S6 | 5 | 0 | 0 | 0 | 0 |
 
 ## Cách giao task

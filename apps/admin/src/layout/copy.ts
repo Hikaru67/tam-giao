@@ -10,6 +10,10 @@ export const NAV_COPY = {
   interviews: 'Lịch phỏng vấn',
   matching: 'Đề xuất ghép đôi 1-1',
   moderation: 'Báo cáo & khiếu nại',
+  partners: 'Quán đối tác',
+  appearanceFlags: 'Cờ khác biệt eKYC',
+  refunds: 'Hoàn tiền',
+  reconciliation: 'Đối soát',
   audit: 'Nhật ký truy cập',
 } as const;
 

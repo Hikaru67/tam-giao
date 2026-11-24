@@ -6,7 +6,12 @@ import { ROLE_PERMISSIONS_FIXTURE } from '../test-utils/fixtures';
 describe('navigation', () => {
   it('bảng permission → menu theo từng vai trò', () => {
     const reviewerItems = visibleNavItems(ROLE_PERMISSIONS_FIXTURE.REVIEWER);
-    expect(reviewerItems.map((item) => item.id)).toEqual(['overview', 'kyc', 'interviews']);
+    expect(reviewerItems.map((item) => item.id)).toEqual([
+      'overview',
+      'kyc',
+      'interviews',
+      'appearance-flags',
+    ]);
 
     const matchmakerItems = visibleNavItems(ROLE_PERMISSIONS_FIXTURE.MATCHMAKER);
     expect(matchmakerItems.map((item) => item.id)).toEqual(['overview', 'matching']);
@@ -19,6 +24,9 @@ describe('navigation', () => {
       'interviews',
       'matching',
       'moderation',
+      'appearance-flags',
+      'refunds',
+      'reconciliation',
       'audit',
     ]);
 
@@ -29,8 +37,16 @@ describe('navigation', () => {
       'interviews',
       'matching',
       'moderation',
+      'partners',
+      'appearance-flags',
+      'refunds',
+      'reconciliation',
       'audit',
     ]);
+    expect(adminItems.some((item) => item.id === 'partners')).toBe(true);
+    expect(supervisorItems.some((item) => item.id === 'partners')).toBe(false);
+    expect(reviewerItems.some((item) => item.id === 'partners')).toBe(false);
+    expect(matchmakerItems.some((item) => item.id === 'partners')).toBe(false);
 
     const emptyItems = visibleNavItems([]);
     expect(emptyItems.map((item) => item.id)).toEqual(['overview']);
