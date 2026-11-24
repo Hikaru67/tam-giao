@@ -9,6 +9,7 @@ export const MATCH_COPY = {
   header: {
     title: 'Gợi ý ghép đôi',
     settings: 'Cài đặt',
+    inbox: 'Hộp thư',
   },
   loading: 'Đang tải gợi ý ghép đôi...',
   genericError: 'Có lỗi xảy ra. Vui lòng thử lại sau.',

@@ -79,17 +79,30 @@ export function MatchHomeScreen() {
           <Text variant="title-md" className="font-bold text-on-surface">
             {MATCH_COPY.header.title}
           </Text>
-          <Pressable
-            testID="match-settings"
-            accessibilityRole="button"
-            accessibilityLabel={MATCH_COPY.header.settings}
-            onPress={() => router.push('/(main)/settings')}
-            className="w-10 h-10 rounded-full items-center justify-center bg-surface-container-low"
-          >
-            <Text variant="title-md" className="text-secondary font-bold">
-              ⚙
-            </Text>
-          </Pressable>
+          <View className="flex-row items-center gap-space-xs">
+            <Pressable
+              testID="match-inbox"
+              accessibilityRole="button"
+              accessibilityLabel={MATCH_COPY.header.inbox}
+              onPress={() => router.push('/(main)/inbox')}
+              className="w-10 h-10 rounded-full items-center justify-center bg-surface-container-low"
+            >
+              <Text variant="title-md" className="text-secondary font-bold">
+                💬
+              </Text>
+            </Pressable>
+            <Pressable
+              testID="match-settings"
+              accessibilityRole="button"
+              accessibilityLabel={MATCH_COPY.header.settings}
+              onPress={() => router.push('/(main)/settings')}
+              className="w-10 h-10 rounded-full items-center justify-center bg-surface-container-low"
+            >
+              <Text variant="title-md" className="text-secondary font-bold">
+                ⚙
+              </Text>
+            </Pressable>
+          </View>
         </View>
       </View>
 

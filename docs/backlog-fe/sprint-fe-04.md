@@ -125,7 +125,7 @@ báo cáo vi phạm. Admin: đề xuất ghép, kiểm duyệt báo cáo và tin
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| mobile | presentation | P1 | 1d | FE-S4-04 | FE-S4-06 | TODO |
+| mobile | presentation | P1 | 1d | FE-S4-04 | FE-S4-06 | DONE |
 
 **Mục tiêu:** Màn `h_p_th_h_n_h_t_v_n_vi_n` (phần có API).
 
