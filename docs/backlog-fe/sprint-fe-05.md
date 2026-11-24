@@ -69,7 +69,7 @@ voucher. Admin: quản lý quán, cờ khác biệt eKYC, hoàn tiền/đối so
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| mobile | presentation | P1 | 1d | FE-S5-01 | FE-S5-02 | TODO |
+| mobile | presentation | P1 | 1d | FE-S5-01 | FE-S5-02 | DONE |
 
 **Mục tiêu:** Toggle "Check-in an toàn: gửi vị trí cho chuyên viên" (BE-S7-02).
 

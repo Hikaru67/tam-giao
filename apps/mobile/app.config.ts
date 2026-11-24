@@ -25,6 +25,14 @@ const config: ExpoConfig = {
         barcodeScannerEnabled: false,
       },
     ],
+    [
+      'expo-location',
+      {
+        locationWhenInUsePermission: 'Tâm Giao chỉ dùng vị trí khi bạn bật gửi vị trí lúc check-in buổi hẹn.',
+        isIosBackgroundLocationEnabled: false,
+        isAndroidBackgroundLocationEnabled: false,
+      },
+    ],
   ],
   experiments: {
     typedRoutes: true,
