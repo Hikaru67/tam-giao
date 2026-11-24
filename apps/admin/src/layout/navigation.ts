@@ -2,13 +2,13 @@ import type { AdminPermissionName } from '@tamgiao/contracts/identity';
 import { NAV_COPY } from './copy';
 
 /** Tên icon của mục menu — vẽ bởi `NavIcon` (`nav-icon.tsx`). */
-export const NAV_ICONS = ['overview', 'kyc', 'interviews', 'audit'] as const;
+export const NAV_ICONS = ['overview', 'kyc', 'interviews', 'matching', 'audit'] as const;
 export type NavIconName = (typeof NAV_ICONS)[number];
 
 export interface NavItem {
   readonly id: string;
   /** Đường dẫn tuyệt đối của route (khai báo trong `router.tsx`). */
-  readonly to: '/' | '/kyc' | '/interviews' | '/audit';
+  readonly to: '/' | '/kyc' | '/interviews' | '/matching' | '/audit';
   readonly label: string;
   readonly icon: NavIconName;
   /** Permission BE yêu cầu cho API của màn; `null` = mọi admin đã đăng nhập. Route dùng cùng permission. */
@@ -29,6 +29,13 @@ export const NAV_ITEMS = [
     label: NAV_COPY.interviews,
     icon: 'interviews',
     permission: 'kyc:review',
+  },
+  {
+    id: 'matching',
+    to: '/matching',
+    label: NAV_COPY.matching,
+    icon: 'matching',
+    permission: 'match:propose',
   },
   { id: 'audit', to: '/audit', label: NAV_COPY.audit, icon: 'audit', permission: 'audit:read' },
 ] as const satisfies readonly NavItem[];

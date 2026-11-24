@@ -5,6 +5,7 @@ import { authedRoute } from './layout/authed-route';
 import { overviewRoute } from './routes/overview/overview-route';
 import { kycRouteTree } from './routes/kyc/kyc-route';
 import { interviewsRoute } from './routes/interviews/interviews-route';
+import { matchingRouteTree } from './routes/matching/matching-route';
 import { auditRoute } from './routes/audit/audit-route';
 import { RouteError } from './layout/route-error';
 import { NotFoundPage } from './layout/not-found-page';
@@ -14,7 +15,7 @@ export type { AdminRouterContext } from './routes/root-route';
 export function createAdminRouter(options: { context: AdminRouterContext; history?: RouterHistory }) {
   const routeTree = rootRoute.addChildren([
     loginRoute,
-    authedRoute.addChildren([overviewRoute, kycRouteTree, interviewsRoute, auditRoute]),
+    authedRoute.addChildren([overviewRoute, kycRouteTree, interviewsRoute, matchingRouteTree, auditRoute]),
   ]);
 
   return createRouter({

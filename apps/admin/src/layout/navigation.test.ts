@@ -9,14 +9,20 @@ describe('navigation', () => {
     expect(reviewerItems.map((item) => item.id)).toEqual(['overview', 'kyc', 'interviews']);
 
     const matchmakerItems = visibleNavItems(ROLE_PERMISSIONS_FIXTURE.MATCHMAKER);
-    expect(matchmakerItems.map((item) => item.id)).toEqual(['overview']);
+    expect(matchmakerItems.map((item) => item.id)).toEqual(['overview', 'matching']);
     expect(matchmakerItems.some((item) => item.id === 'kyc')).toBe(false);
 
     const supervisorItems = visibleNavItems(ROLE_PERMISSIONS_FIXTURE.SUPERVISOR);
-    expect(supervisorItems.map((item) => item.id)).toEqual(['overview', 'kyc', 'interviews', 'audit']);
+    expect(supervisorItems.map((item) => item.id)).toEqual([
+      'overview',
+      'kyc',
+      'interviews',
+      'matching',
+      'audit',
+    ]);
 
     const adminItems = visibleNavItems(ROLE_PERMISSIONS_FIXTURE.ADMIN);
-    expect(adminItems.map((item) => item.id)).toEqual(['overview', 'kyc', 'interviews', 'audit']);
+    expect(adminItems.map((item) => item.id)).toEqual(['overview', 'kyc', 'interviews', 'matching', 'audit']);
 
     const emptyItems = visibleNavItems([]);
     expect(emptyItems.map((item) => item.id)).toEqual(['overview']);

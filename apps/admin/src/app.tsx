@@ -7,6 +7,7 @@ import type { ApiClient } from '@tamgiao/api-client';
 import { ApiClientProvider } from '@tamgiao/api-client/react';
 import type { AdminTokenStore } from './features/auth/session-token-store';
 import type { SessionEvents } from './features/auth/session-events';
+import { ToastProvider } from '@tamgiao/ui-web';
 import { AdminSessionProvider } from './features/auth/admin-session-context';
 import { createAdminRouter } from './router';
 
@@ -42,7 +43,9 @@ export function AdminApp(props: {
     <QueryClientProvider client={props.queryClient}>
       <ApiClientProvider client={props.apiClient}>
         <AdminSessionProvider tokenStore={props.tokenStore}>
-          <RouterProvider router={router} />
+          <ToastProvider>
+            <RouterProvider router={router} />
+          </ToastProvider>
         </AdminSessionProvider>
       </ApiClientProvider>
     </QueryClientProvider>

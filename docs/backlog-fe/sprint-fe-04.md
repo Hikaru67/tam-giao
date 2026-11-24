@@ -177,7 +177,7 @@ báo cáo vi phạm. Admin: đề xuất ghép, kiểm duyệt báo cáo và tin
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| admin | presentation | P0 | 2d | FE-S3-05 | FE-S4-01 | TODO |
+| admin | presentation | P0 | 2d | FE-S3-05 | FE-S4-01 | DONE |
 
 **Mục tiêu:** Tab "Đề xuất Ghép đôi 1-1" trong khung admin.
 
