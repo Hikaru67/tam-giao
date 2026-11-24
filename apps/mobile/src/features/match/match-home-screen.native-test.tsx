@@ -261,7 +261,7 @@ describe('MatchHomeScreen (FE-S4-01)', () => {
     await screen.unmount();
   });
 
-  it('d. accept: bấm match-accept → match-accept-confirm → POST /me/match/accept 1 lần, GET lại, server đổi sang WAITING_FOR_COUNTERPART → hiện match-phase-WAITING_FOR_COUNTERPART', async () => {
+  it('d. accept: bấm match-accept → match-accept-confirm → POST /me/match/accept 1 lần, GET lại, server đổi sang WAITING_FOR_COUNTERPART → hiện match-waiting', async () => {
     const screen = await setupScreen();
 
     // Nút đồng ý chỉ bật khi hồ sơ đã tải xong.
@@ -290,7 +290,7 @@ describe('MatchHomeScreen (FE-S4-01)', () => {
 
     await waitFor(() => {
       expect(acceptCount).toBe(1);
-      expect(screen.getByTestId('match-phase-WAITING_FOR_COUNTERPART')).toBeTruthy();
+      expect(screen.getByTestId('match-waiting')).toBeTruthy();
       expect(screen.getByText(MATCH_COPY.toast.accepted)).toBeTruthy();
     });
 

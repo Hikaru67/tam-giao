@@ -42,7 +42,7 @@ báo cáo vi phạm. Admin: đề xuất ghép, kiểm duyệt báo cáo và tin
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| mobile | presentation | P0 | 0.5d | FE-S4-01 | FE-S4-03 | TODO |
+| mobile | presentation | P0 | 0.5d | FE-S4-01 | FE-S4-03 | DONE |
 
 **Mục tiêu:** Màn `ch_ph_n_h_i_gh_p_i_1_1`.
 

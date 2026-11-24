@@ -50,16 +50,42 @@ export const MATCH_COPY = {
     cancel: 'Huỷ',
   },
   declineReasons: DECLINE_REASONS,
+  waiting: {
+    badge: 'Đang chờ phản hồi',
+    title: (name: string) => `Bạn đã gửi lời ngỏ tới ${name}`,
+    titleWithoutName: 'Bạn đã gửi lời ngỏ tới đối phương',
+    countdownPrefix: 'Thời gian phản hồi còn lại:',
+    maxResponseHours: (hours: number) => `Tối đa ${hours} giờ`,
+    expiredHint: (hours: number) =>
+      `Nếu sau ${hours} giờ đối phương chưa phản hồi, gợi ý này sẽ khép lại và bạn có thể nhận gợi ý mới.`,
+    principlesTitle: 'Nguyên tắc ghép đôi 1-1',
+    principles: {
+      exclusive: 'Một người tại một thời điểm: Bạn và đối phương đều không nhận thêm gợi ý khác.',
+      datingDays: (days: number) => `Mở kênh trò chuyện ${days} ngày khi đối phương đồng ý kết nối.`,
+      withdrawRight: 'Bạn có quyền rút lại lời ngỏ bất cứ lúc nào trước khi đối phương phản hồi.',
+    },
+    viewProfile: 'Xem hồ sơ',
+    withdraw: 'Rút lại lời ngỏ',
+    expiredTitle: 'Đã hết thời gian chờ phản hồi',
+    expiredDescription: 'Chuyên viên đang tìm gợi ý mới phù hợp với bạn.',
+    refresh: 'Làm mới',
+  },
+  withdrawSheet: {
+    title: 'Rút lại lời ngỏ?',
+    body: 'Bạn có chắc chắn muốn rút lại lời ngỏ kết nối? Bạn sẽ quay về trạng thái tìm kiếm gợi ý mới.',
+    confirm: 'Xác nhận rút lại',
+    cancel: 'Để sau',
+  },
+  dating: {
+    openChat: 'Vào trò chuyện',
+    openingChat: 'Đang mở phòng trò chuyện…',
+  },
   toast: {
     accepted: 'Đã gửi lời đồng ý.',
     declined: 'Đã bỏ qua gợi ý.',
+    withdrawn: 'Đã rút lại lời ngỏ.',
   },
   phases: {
-    WAITING_FOR_COUNTERPART: {
-      title: 'Đang chờ đối phương phản hồi',
-      description:
-        'Bạn đã gửi lời đồng ý. Hệ thống đang chờ phản hồi từ đối phương trong thời gian quy định.',
-    },
     DATING: {
       title: 'Đang trong giai đoạn tìm hiểu',
       description: 'Hai bạn đã đồng ý kết nối và đang trong giai đoạn tìm hiểu độc quyền.',

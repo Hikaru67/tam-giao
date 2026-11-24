@@ -1,11 +1,13 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { isApiError, messageFor } from '@tamgiao/api-client';
-import { Button, Card, EmptyState, ErrorState, Text } from '@tamgiao/ui-mobile';
+import { Button, EmptyState, ErrorState, Text } from '@tamgiao/ui-mobile';
 import { colors } from '@tamgiao/ui-tokens';
 import { useRouter } from 'expo-router';
 import { ActivityIndicator, Pressable, RefreshControl, ScrollView, View } from 'react-native';
 import { MATCH_COPY } from './copy.js';
+import { MatchDatingCard } from './match-dating-card.js';
 import { MatchOfferCard } from './match-offer-card.js';
+import { MatchWaitingCard } from './match-waiting-card.js';
 import { useCurrentMatch, useMatchPushRefresh, useRefreshMatch } from './use-match.js';
 
 export function MatchHomeScreen() {
@@ -15,6 +17,20 @@ export function MatchHomeScreen() {
   const refresh = useRefreshMatch();
 
   const [isRefreshing, setIsRefreshing] = useState(false);
+
+  // Match đã thấy ở phase chưa hẹn hò trong lần mở màn này: khi chính match đó chuyển sang DATING thì tự vào trò chuyện.
+  const pendingMatchIdRef = useRef<string | null>(null);
+  const currentMatch = matchQuery.data?.match ?? null;
+  useEffect(() => {
+    if (currentMatch !== null && currentMatch.phase !== 'DATING' && currentMatch.phase !== 'MET') {
+      pendingMatchIdRef.current = currentMatch.matchId;
+    }
+  }, [currentMatch]);
+
+  const autoOpen =
+    currentMatch !== null &&
+    currentMatch.phase === 'DATING' &&
+    pendingMatchIdRef.current === currentMatch.matchId;
 
   const handleRefresh = useCallback(async () => {
     setIsRefreshing(true);
@@ -53,7 +69,7 @@ export function MatchHomeScreen() {
     );
   }
 
-  const match = matchQuery.data?.match ?? null;
+  const match = currentMatch;
 
   return (
     <View className="flex-1 bg-surface">
@@ -109,16 +125,12 @@ export function MatchHomeScreen() {
             <MatchOfferCard key={match.matchId} match={match} />
           ) : null}
 
-          {match !== null &&
-          (match.phase === 'WAITING_FOR_COUNTERPART' || match.phase === 'DATING' || match.phase === 'MET') ? (
-            <Card testID={`match-phase-${match.phase}`} className="gap-space-xs">
-              <Text variant="title-md" className="font-bold text-on-surface">
-                {MATCH_COPY.phases[match.phase].title}
-              </Text>
-              <Text variant="body-md" className="text-secondary leading-relaxed">
-                {MATCH_COPY.phases[match.phase].description}
-              </Text>
-            </Card>
+          {match !== null && match.phase === 'WAITING_FOR_COUNTERPART' ? (
+            <MatchWaitingCard key={match.matchId} match={match} />
+          ) : null}
+
+          {match !== null && (match.phase === 'DATING' || match.phase === 'MET') ? (
+            <MatchDatingCard key={match.matchId} match={match} autoOpen={autoOpen} />
           ) : null}
         </View>
       </ScrollView>
