@@ -3,12 +3,14 @@ import { isApiError, messageFor } from '@tamgiao/api-client';
 import type { CurrentMatchDto } from '@tamgiao/contracts/matching';
 import { Badge, BottomSheet, Button, Card, Countdown, ErrorState, Text, useToast } from '@tamgiao/ui-mobile';
 import { colors } from '@tamgiao/ui-tokens';
+import { useRouter } from 'expo-router';
 import { ActivityIndicator, Image, Pressable, ScrollView, View } from 'react-native';
 import { PROFILE_COPY } from '../profile/copy.js';
 import { MATCH_COPY } from './copy.js';
 import { useAcceptMatch, useDeclineMatch, useMatchProfile, useRefreshMatch } from './use-match.js';
 
 export function MatchOfferCard({ match }: { match: CurrentMatchDto }) {
+  const router = useRouter();
   const profileQuery = useMatchProfile(match.matchId);
   const refreshMatch = useRefreshMatch();
   const acceptMutation = useAcceptMatch();
@@ -235,6 +237,16 @@ export function MatchOfferCard({ match }: { match: CurrentMatchDto }) {
                 </View>
               </View>
             ) : null}
+
+            <Button
+              testID="match-view-profile"
+              variant="ghost"
+              size="md"
+              fullWidth
+              onPress={() => router.push('/(main)/match/profile')}
+            >
+              {MATCH_COPY.offer.viewProfile}
+            </Button>
           </View>
         ) : null}
 

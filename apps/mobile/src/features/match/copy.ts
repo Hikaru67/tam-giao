@@ -24,6 +24,7 @@ export const MATCH_COPY = {
     interestsTitle: 'Sở thích',
     photoLabel: (name: string, index: number, total: number) => `Ảnh ${index}/${total} của ${name}`,
     noPhoto: 'Chưa có ảnh hồ sơ',
+    viewProfile: 'Xem chi tiết hồ sơ',
     accept: 'Đồng ý kết nối',
     decline: 'Bỏ qua',
   },
