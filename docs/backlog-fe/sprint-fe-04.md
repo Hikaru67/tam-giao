@@ -150,7 +150,7 @@ báo cáo vi phạm. Admin: đề xuất ghép, kiểm duyệt báo cáo và tin
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| mobile | presentation | P0 | 1.5d | FE-S4-04 | FE-S4-05 | TODO |
+| mobile | presentation | P0 | 1.5d | FE-S4-04 | FE-S4-05 | DONE |
 
 **Mục tiêu:** Màn `b_o_c_o_vi_ph_m_trung_t_m_an_to_n_kh_n_c_p` (BE-S6-04).
 

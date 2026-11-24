@@ -17,6 +17,7 @@ import {
 } from 'react-native';
 import { useQueryClient } from '@tanstack/react-query';
 import { CONVERSATIONS_QUERY_KEY, CURRENT_MATCH_QUERY_KEY, useCurrentMatch } from '../match/index.js';
+import { useIsPeerReported } from '../safety/reported-peers.js';
 import { useChatClient, useChatConnectionState } from './chat-client-context.js';
 import { ChatComposer } from './chat-composer.js';
 import { CHAT_COPY } from './copy.js';
@@ -75,7 +76,8 @@ export function ChatScreen({ conversationId }: ChatScreenProps) {
 
   useMarkRead(conversationId, messages, summary);
 
-  const isClosed = summary?.status === 'CLOSED' || closedByServer;
+  const isReported = useIsPeerReported(summary?.peerUserId ?? null);
+  const isClosed = summary?.status === 'CLOSED' || closedByServer || isReported;
 
   // Khi server báo đóng hội thoại lần đầu → invalidate cache
   const prevClosedRef = useRef(false);
@@ -213,6 +215,24 @@ export function ChatScreen({ conversationId }: ChatScreenProps) {
           <Text variant="title-md" numberOfLines={1} className="font-semibold text-on-surface flex-1">
             {peerDisplayName}
           </Text>
+          {summary?.peerUserId ? (
+            <Pressable
+              testID="chat-report"
+              accessibilityRole="button"
+              accessibilityLabel={CHAT_COPY.header.report}
+              onPress={() => {
+                router.push({
+                  pathname: '/(main)/safety/report',
+                  params: { reportedUserId: summary.peerUserId },
+                });
+              }}
+              className="w-10 h-10 rounded-full items-center justify-center bg-surface-container-low"
+            >
+              <Text variant="label-md" className="text-secondary font-bold">
+                !
+              </Text>
+            </Pressable>
+          ) : null}
         </View>
       </View>
 

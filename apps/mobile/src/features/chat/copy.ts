@@ -4,6 +4,7 @@ export const CHAT_COPY = {
     peerFallback: 'Người tìm hiểu cùng bạn',
     backIcon: '←',
     nameAge: (name: string, age: number) => `${name}, ${age}`,
+    report: 'Báo cáo vi phạm',
   },
   progress: {
     day: (day: number, total: number) => `Ngày ${day}/${total}`,
