@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, type ComponentType } from 'react';
 import { isApiError, messageFor } from '@tamgiao/api-client';
 import { DEPOSIT_VND, REFUND_SLA_HOURS, VOUCHER_VND } from '@tamgiao/contracts/constants';
 import { Badge, Button, Card, ErrorState, Stepper, Text } from '@tamgiao/ui-mobile';
@@ -7,9 +7,24 @@ import { useRouter } from 'expo-router';
 import { ActivityIndicator, Pressable, ScrollView, View } from 'react-native';
 import { openCheckout } from './checkout-browser.js';
 import { PAYMENT_COPY } from './copy.js';
-import { DevFakePaymentPanel } from './dev-fake-payment-panel.js';
+import type { DevFakePaymentPanelProps } from './dev-fake-payment-panel.js';
 import { formatVnd } from './format.js';
 import { useCreateVerificationCheckout, usePaymentStatus } from './use-verification-payment.js';
+
+/**
+ * Panel thanh toán giả chỉ nạp trong dev: Metro bản production thay `__DEV__` = false và loại nhánh `require` này
+ * → bundle phát hành không chứa route `/dev/` hay nút thanh toán giả (FE-S6-03, AC1). `require` phải nằm ngay trong nhánh
+ * `__DEV__` (không bọc trong hàm): Metro thu thập dependency sau khi gấp hằng số, `require` trong hàm vẫn bị đóng gói.
+ */
+/* eslint-disable @typescript-eslint/no-require-imports -- nạp có điều kiện để Metro loại khỏi bundle production */
+const DevFakePaymentPanel: ComponentType<DevFakePaymentPanelProps> | null = __DEV__
+  ? (
+      require('./dev-fake-payment-panel') as {
+        DevFakePaymentPanel: ComponentType<DevFakePaymentPanelProps>;
+      }
+    ).DevFakePaymentPanel
+  : null;
+/* eslint-enable @typescript-eslint/no-require-imports */
 
 export function PaymentScreen() {
   const router = useRouter();
@@ -232,7 +247,7 @@ export function PaymentScreen() {
           ) : null}
 
           {/* Dev Fake Payment Panel (AC2: inline __DEV__ check) */}
-          {__DEV__ && pendingOrderId !== null ? (
+          {__DEV__ && DevFakePaymentPanel !== null && pendingOrderId !== null ? (
             <DevFakePaymentPanel orderId={pendingOrderId} onDone={restartPolling} />
           ) : null}
         </View>

@@ -66,7 +66,7 @@ local nếu D5 chưa xong).
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| mobile, admin, partner | presentation, devops | P0 | 1.5d | FE-S5 | FE-S6-01, FE-S6-02, FE-S6-04 | TODO |
+| mobile, admin, partner | presentation, devops | P0 | 1.5d | FE-S5 | FE-S6-01, FE-S6-02, FE-S6-04 | DONE |
 
 **Mục tiêu:** Rà soát luật F4/F5 trước khi phát hành.
 

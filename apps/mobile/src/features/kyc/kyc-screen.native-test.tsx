@@ -90,9 +90,9 @@ jest.mock('expo-camera', () => {
   };
 });
 
-const mockPreventScreenCapture = jest.fn();
-jest.mock('expo-screen-capture', () => ({
-  usePreventScreenCapture: () => mockPreventScreenCapture(),
+const mockScreenCaptureProtection = jest.fn();
+jest.mock('../security/use-screen-capture-protection', () => ({
+  useScreenCaptureProtection: (...args: unknown[]) => mockScreenCaptureProtection(...args),
 }));
 
 const mockSecureStore = new Map<string, string>();
@@ -258,7 +258,7 @@ describe('KycScreen (FE-S3-02)', () => {
       expect(screen.getByTestId('kyc-slot-CCCD_FRONT')).toBeTruthy();
     });
 
-    expect(mockPreventScreenCapture).toHaveBeenCalled();
+    expect(mockScreenCaptureProtection).toHaveBeenCalledWith('kyc');
     expect(screen.queryByText(/VNeID|Bộ Công An|NFC/)).toBeNull();
 
     // Chụp lần lượt 4 slot

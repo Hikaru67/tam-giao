@@ -36,9 +36,9 @@ jest.mock('expo-router', () => ({
   useLocalSearchParams: () => ({}),
 }));
 
-const mockPreventScreenCapture = jest.fn();
-jest.mock('expo-screen-capture', () => ({
-  usePreventScreenCapture: (...args: unknown[]) => mockPreventScreenCapture(...args),
+const mockScreenCaptureProtection = jest.fn();
+jest.mock('../security/use-screen-capture-protection', () => ({
+  useScreenCaptureProtection: (...args: unknown[]) => mockScreenCaptureProtection(...args),
 }));
 
 const mockLaunchImageLibraryAsync = jest.fn();
@@ -148,6 +148,8 @@ describe('FE-S4-06 Safety Center & Report Screen', () => {
     const screen = await renderWithProviders(<ReportScreen reportedUserId={PEER_USER_ID} />, {
       client,
     });
+
+    expect(mockScreenCaptureProtection).toHaveBeenCalledWith('safety-report');
 
     for (const cat of REPORT_CATEGORY_NAMES) {
       const option = screen.getByTestId(`report-category-${cat}`);

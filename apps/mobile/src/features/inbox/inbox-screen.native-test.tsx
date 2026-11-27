@@ -49,8 +49,9 @@ jest.mock('expo-notifications', () => ({
   },
 }));
 
-jest.mock('expo-screen-capture', () => ({
-  usePreventScreenCapture: jest.fn(),
+const mockScreenCaptureProtection = jest.fn();
+jest.mock('../security/use-screen-capture-protection', () => ({
+  useScreenCaptureProtection: (...args: unknown[]) => mockScreenCaptureProtection(...args),
 }));
 
 const CONVERSATION_ID_1 = '01890a5d-ac96-774b-bcce-b302099a0001';

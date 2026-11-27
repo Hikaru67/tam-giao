@@ -7,6 +7,18 @@ const workspaceRoot = path.resolve(projectRoot, '../..');
 
 const config = getDefaultConfig(projectRoot);
 
+// FE-S6-03 (luật F4): bản production không giữ console.log/info/debug (kể cả của thư viện) — tránh lộ PII qua log thiết bị.
+// console.error/warn giữ lại để báo lỗi. Minify chỉ chạy ở bản production nên dev không bị ảnh hưởng.
+// Dùng `drop_console` dạng mảng (terser ≥ 5.27) thay `pure_funcs`: thay cả lời gọi có dùng giá trị trả về
+// (vd `infoLog` của react-native: `return console.log(...args)`) bằng `void 0`.
+config.transformer.minifierConfig = {
+  ...config.transformer.minifierConfig,
+  compress: {
+    ...config.transformer.minifierConfig?.compress,
+    drop_console: ['log', 'info', 'debug'],
+  },
+};
+
 config.watchFolders = [workspaceRoot];
 config.resolver.nodeModulesPaths = [
   path.resolve(projectRoot, 'node_modules'),

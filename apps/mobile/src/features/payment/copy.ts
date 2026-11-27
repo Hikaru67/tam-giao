@@ -49,9 +49,4 @@ export const PAYMENT_COPY = {
   },
   loading: 'Đang tải thông tin thanh toán...',
   genericError: 'Đã có lỗi xảy ra. Vui lòng thử lại.',
-  dev: {
-    title: 'Công cụ dev: cổng thanh toán giả',
-    succeed: 'Thanh toán giả: thành công',
-    fail: 'Thanh toán giả: thất bại',
-  },
 } as const;

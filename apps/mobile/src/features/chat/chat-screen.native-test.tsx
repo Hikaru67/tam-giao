@@ -35,9 +35,9 @@ jest.mock('expo-router', () => ({
   useLocalSearchParams: () => ({ conversationId: '01890a5d-ac96-774b-bcce-b302099a0001' }),
 }));
 
-const mockPreventScreenCapture = jest.fn();
-jest.mock('expo-screen-capture', () => ({
-  usePreventScreenCapture: (...args: unknown[]) => mockPreventScreenCapture(...args),
+const mockScreenCaptureProtection = jest.fn();
+jest.mock('../security/use-screen-capture-protection', () => ({
+  useScreenCaptureProtection: (...args: unknown[]) => mockScreenCaptureProtection(...args),
 }));
 
 const CONVERSATION_ID = '01890a5d-ac96-774b-bcce-b302099a0001';
@@ -249,8 +249,8 @@ describe('ChatScreen (FE-S4-04)', () => {
     expect(screen.getByText('Chào Huy!')).toBeTruthy();
     expect(screen.getByText('Chào Trang!')).toBeTruthy();
 
-    // mock expo-screen-capture được gọi với 'chat'
-    expect(mockPreventScreenCapture).toHaveBeenCalledWith('chat');
+    // mock useScreenCaptureProtection được gọi với 'chat'
+    expect(mockScreenCaptureProtection).toHaveBeenCalledWith('chat');
 
     await screen.unmount();
   });

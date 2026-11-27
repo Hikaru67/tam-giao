@@ -4,8 +4,8 @@ import type { KycProgressResponse } from '@tamgiao/contracts/verification';
 import { Badge, Button, Card, ErrorState, Text, type BadgeTone } from '@tamgiao/ui-mobile';
 import { colors } from '@tamgiao/ui-tokens';
 import { useRouter } from 'expo-router';
-import { usePreventScreenCapture } from 'expo-screen-capture';
 import { ActivityIndicator, Image, Pressable, ScrollView, View } from 'react-native';
+import { useScreenCaptureProtection } from '../security/use-screen-capture-protection.js';
 import { useMe } from '../session/use-me.js';
 import { KYC_COPY } from './copy.js';
 import { KycCamera } from './kyc-camera.js';
@@ -365,7 +365,7 @@ function KycCaptureForm({ userId, progress, previousKeys }: KycCaptureFormProps)
 }
 
 export function KycScreen() {
-  usePreventScreenCapture();
+  useScreenCaptureProtection('kyc');
 
   const router = useRouter();
   const me = useMe();
