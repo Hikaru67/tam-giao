@@ -11,4 +11,6 @@ function resolveApiUrl(): string {
 
 export const PARTNER_ENV = {
   apiUrl: resolveApiUrl(),
+  /** DSN Sentry tuỳ chọn — để trống = tắt giám sát lỗi. */
+  sentryDsn: import.meta.env.VITE_SENTRY_DSN as string | undefined,
 };

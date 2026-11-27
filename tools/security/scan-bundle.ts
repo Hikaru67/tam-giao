@@ -99,6 +99,12 @@ export const VENDOR_ALLOWANCES: readonly BundleAllowance[] = [
     regex: /window\.origin:`http:\/\/localhost`/,
     reason: 'TanStack Router: base URL giả để parse đường dẫn tương đối',
   },
+  {
+    rule: 'dev-url',
+    regex: /["']http:\/\/localhost:8969\/stream["']/,
+    reason:
+      '@sentry/react-native: URL sidecar mặc định của Spotlight (công cụ debug local), app không bật spotlightIntegration (FE-S6-04)',
+  },
 ];
 
 export const SCANNED_EXTENSIONS: readonly string[] = [

@@ -9,8 +9,10 @@
     "typecheck": "tsc -p tsconfig.json"
   },
   "dependencies": {
+    "@sentry/react": "10.78.0",
     "@tamgiao/api-client": "workspace:*",
     "@tamgiao/contracts": "workspace:*",
+    "@tamgiao/observability-fe": "workspace:*",
     "@tamgiao/ui-tokens": "workspace:*",
     "@tamgiao/ui-web": "workspace:*",
     "@tanstack/react-query": "5.107.1",

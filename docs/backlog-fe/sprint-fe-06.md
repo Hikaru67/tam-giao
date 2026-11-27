@@ -92,7 +92,7 @@ local nếu D5 chưa xong).
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| mobile, admin, partner | infrastructure | P1 | 1d | FE-S5 | FE-S6-01, FE-S6-02, FE-S6-03 | TODO |
+| mobile, admin, partner | infrastructure | P1 | 1d | FE-S5 | FE-S6-01, FE-S6-02, FE-S6-03 | DONE |
 
 **Mục tiêu:** Biết app lỗi ở đâu mà không thu PII.
 

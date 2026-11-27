@@ -26,13 +26,15 @@ async function createTempDir(): Promise<string> {
 }
 
 describe('scanContent', () => {
-  it('bundle sạch (có console.error/warn, API production và 2 ngoại lệ vendor) trả []', () => {
+  it('bundle sạch (có console.error/warn, API production và 3 ngoại lệ vendor) trả []', () => {
     const cleanJs = [
       'console.error(err);',
       'console.warn(warning);',
       'fetch(`https://api.tamgiao.example/v1`);',
       "const o='http://localhost:8081/';",
       'const u=`null`?window.origin:`http://localhost`;',
+      'var l=n.sidecarUrl||"http://localhost:8969/stream";',
+      "var c='http://localhost:8969/stream';",
     ].join('\n');
 
     expect(scanContent('assets/index.js', cleanJs)).toEqual([]);
