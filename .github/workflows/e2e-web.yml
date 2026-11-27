@@ -1,0 +1,63 @@
+name: E2E web (admin + partner)
+
+on:
+  push:
+    branches: ['sprint-fe/**']
+  workflow_dispatch:
+
+concurrency:
+  group: e2e-web-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  playwright:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      CI: 'true'
+      # API local (tests/e2e/local.env) cho phép web admin/partner gọi chéo origin.
+      CORS_ORIGINS: http://localhost:5173,http://localhost:5174
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Playwright browsers
+        run: pnpm --filter @tamgiao/admin exec playwright install --with-deps chromium webkit
+
+      - name: Start backend stack
+        run: tests/e2e/run-local.sh up
+
+      - name: Playwright admin
+        run: pnpm --filter @tamgiao/admin e2e
+
+      - name: Playwright partner
+        if: ${{ !cancelled() }}
+        run: pnpm --filter @tamgiao/partner e2e
+
+      # KHÔNG upload tests/e2e/.run/ vì log API có SĐT test và admin.env có mật khẩu (AGENTS.md mục 5).
+      - name: Upload Playwright reports
+        if: ${{ failure() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-reports
+          path: |
+            apps/admin/e2e/.run/
+            apps/partner/e2e/.run/
+          retention-days: 7
+          include-hidden-files: true
+
+      - name: Stop backend stack
+        if: ${{ always() }}
+        run: tests/e2e/run-local.sh down

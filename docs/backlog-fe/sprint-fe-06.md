@@ -40,7 +40,7 @@ local nếu D5 chưa xong).
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| admin, partner, tests | devops | P0 | 1.5d | FE-S5 | FE-S6-01, FE-S6-03, FE-S6-04 | TODO |
+| admin, partner, tests | devops | P0 | 1.5d | FE-S5 | FE-S6-01, FE-S6-03, FE-S6-04 | DONE |
 
 **Mục tiêu:** Luồng chuyên viên và quán được kiểm tra tự động.
 
