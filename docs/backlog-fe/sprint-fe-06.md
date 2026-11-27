@@ -14,7 +14,7 @@ local nếu D5 chưa xong).
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| mobile, tests | devops | P0 | 2d | FE-S5 | FE-S6-02, FE-S6-03, FE-S6-04 | IN_REVIEW |
+| mobile, tests | devops | P0 | 2d | FE-S5 | FE-S6-02, FE-S6-03, FE-S6-04 | DONE |
 
 **Mục tiêu:** Luồng chính mobile được kiểm tra tự động trên BE local với provider giả.
 

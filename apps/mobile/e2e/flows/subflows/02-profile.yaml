@@ -5,10 +5,24 @@ name: Bước 2 — Hoàn thiện hồ sơ cơ bản
 - tapOn:
     id: profile-full-name
 - inputText: '${output.fullName}'
+# Bàn phím Android che các ô phía dưới → ẩn bàn phím rồi cuộn tới ô kế tiếp trước khi bấm.
+- hideKeyboard
+- scrollUntilVisible:
+    element:
+      id: profile-birth-date
+    direction: DOWN
+    timeout: 20000
+- waitForAnimationToEnd
 - tapOn:
     id: profile-birth-date
 - inputText: '1994-03-15'
 - hideKeyboard
+- scrollUntilVisible:
+    element:
+      id: profile-gender-male
+    direction: DOWN
+    timeout: 20000
+- waitForAnimationToEnd
 - tapOn:
     id: profile-gender-male
 - scrollUntilVisible:
@@ -16,6 +30,7 @@ name: Bước 2 — Hoàn thiện hồ sơ cơ bản
       id: profile-hometown
     direction: DOWN
     timeout: 20000
+- waitForAnimationToEnd
 - tapOn:
     id: profile-hometown
 - inputText: 'Ha Noi'
@@ -25,6 +40,7 @@ name: Bước 2 — Hoàn thiện hồ sơ cơ bản
       id: profile-current-city
     direction: DOWN
     timeout: 20000
+- waitForAnimationToEnd
 - tapOn:
     id: profile-current-city
 - inputText: 'Ha Noi'
@@ -34,6 +50,7 @@ name: Bước 2 — Hoàn thiện hồ sơ cơ bản
       id: profile-education-bachelor
     direction: DOWN
     timeout: 20000
+- waitForAnimationToEnd
 - tapOn:
     id: profile-education-bachelor
 - scrollUntilVisible:
@@ -41,6 +58,7 @@ name: Bước 2 — Hoàn thiện hồ sơ cơ bản
       id: profile-occupation
     direction: DOWN
     timeout: 20000
+- waitForAnimationToEnd
 - tapOn:
     id: profile-occupation
 - inputText: 'Ky su phan mem'
@@ -50,6 +68,7 @@ name: Bước 2 — Hoàn thiện hồ sơ cơ bản
       id: profile-religion-none
     direction: DOWN
     timeout: 20000
+- waitForAnimationToEnd
 - tapOn:
     id: profile-religion-none
 - scrollUntilVisible:
@@ -57,6 +76,7 @@ name: Bước 2 — Hoàn thiện hồ sơ cơ bản
       id: profile-children-want_children
     direction: DOWN
     timeout: 20000
+- waitForAnimationToEnd
 - tapOn:
     id: profile-children-want_children
 - scrollUntilVisible:
@@ -64,6 +84,7 @@ name: Bước 2 — Hoàn thiện hồ sơ cơ bản
       id: profile-submit
     direction: DOWN
     timeout: 20000
+- waitForAnimationToEnd
 - tapOn:
     id: profile-submit
 - extendedWaitUntil:

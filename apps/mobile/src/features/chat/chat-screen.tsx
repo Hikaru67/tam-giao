@@ -5,15 +5,7 @@ import type { ConversationMessageDto } from '@tamgiao/contracts/messaging';
 import { Button, EmptyState, ErrorState, Text } from '@tamgiao/ui-mobile';
 import { colors } from '@tamgiao/ui-tokens';
 import { useRouter } from 'expo-router';
-import {
-  ActivityIndicator,
-  FlatList,
-  KeyboardAvoidingView,
-  Platform,
-  Pressable,
-  ScrollView,
-  View,
-} from 'react-native';
+import { ActivityIndicator, FlatList, KeyboardAvoidingView, Pressable, ScrollView, View } from 'react-native';
 import { useQueryClient } from '@tanstack/react-query';
 import { CONVERSATIONS_QUERY_KEY, CURRENT_MATCH_QUERY_KEY, useCurrentMatch } from '../match/index.js';
 import { useIsPeerReported } from '../safety/reported-peers.js';
@@ -189,10 +181,7 @@ export function ChatScreen({ conversationId }: ChatScreenProps) {
   }
 
   return (
-    <KeyboardAvoidingView
-      className="flex-1 bg-surface"
-      {...(Platform.OS === 'ios' ? { behavior: 'padding' as const } : {})}
-    >
+    <KeyboardAvoidingView className="flex-1 bg-surface" behavior="padding">
       {/* Header */}
       <View className="pt-safe bg-surface border-b border-surface-container-high/60 z-30">
         <View className="h-16 px-margin flex-row items-center gap-space-sm">

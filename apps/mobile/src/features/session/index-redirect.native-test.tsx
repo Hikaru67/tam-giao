@@ -6,15 +6,24 @@ import {
   createProblemBody,
   renderWithProviders,
 } from '../../test-utils/render-with-providers.js';
+import { QueryClient } from '@tanstack/react-query';
 import { EntryScreen } from './entry-screen.js';
+
+/** Mọi href mà EntryScreen từng redirect tới (kể cả redirect thoáng qua). */
+const mockRedirectHrefs: string[] = [];
 
 jest.mock('expo-router', () => ({
   Redirect: ({ href }: { href: string }) => {
     // Factory của jest.mock không được dùng biến ngoài → require trong factory.
     const { Text: MockText } = jest.requireActual('react-native') as { Text: typeof RNText };
+    mockRedirectHrefs.push(href);
     return <MockText>{`redirect:${href}`}</MockText>;
   },
 }));
+
+beforeEach(() => {
+  mockRedirectHrefs.length = 0;
+});
 
 describe('EntryScreen / index-redirect (FE-S2-02)', () => {
   it('không có access token trong tokenStore -> redirect:/(auth)/phone', async () => {
@@ -72,6 +81,48 @@ describe('EntryScreen / index-redirect (FE-S2-02)', () => {
     await waitFor(() => {
       expect(screen.getByText('redirect:/(onboarding)/preferences')).toBeTruthy();
     });
+  });
+
+  it('cache /me cũ (PROFILE, vừa invalidate sau khi lưu hồ sơ) -> chờ /me mới (CRITERIA), không redirect về PROFILE', async () => {
+    const mockTokenStore = {
+      getAccessToken: jest.fn(async () => 'mock-jwt-token'),
+      getRefreshToken: jest.fn(async () => 'mock-refresh-token'),
+      setTokens: jest.fn(async () => {}),
+      clear: jest.fn(async () => {}),
+    };
+    const meBody = (onboardingStep: 'PROFILE' | 'CRITERIA') => ({
+      userId: '01952e46-953b-789a-b283-a9d701897d26',
+      onboardingStep,
+      profile: null,
+      badges: [],
+      verificationPaid: false,
+    });
+
+    const fakeFetch = createFakeFetch((url) =>
+      url === 'http://api.test/me' ? { status: 200, body: meBody('CRITERIA') } : { status: 404 },
+    );
+    const client = createApiClient({
+      baseUrl: 'http://api.test',
+      tokenStore: mockTokenStore,
+      fetch: fakeFetch,
+    });
+
+    // gcTime Infinity: giữ dữ liệu seed tới khi EntryScreen mount (client test mặc định gcTime 0).
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: Infinity } } });
+    queryClient.setQueryData(['me'], meBody('PROFILE'));
+    await queryClient.invalidateQueries({ queryKey: ['me'] });
+
+    const screen = await renderWithProviders(<EntryScreen />, {
+      client,
+      tokenStore: mockTokenStore,
+      queryClient,
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText('redirect:/(onboarding)/preferences')).toBeTruthy();
+    });
+    expect(mockRedirectHrefs).not.toContain('/(onboarding)/profile');
+    queryClient.clear();
   });
 
   it('/me lỗi 503 -> hiện ErrorState, bấm thử lại gọi lại /me thành công -> redirect', async () => {

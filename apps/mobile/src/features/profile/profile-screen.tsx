@@ -416,10 +416,7 @@ export function ProfileScreen() {
   }
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      className="flex-1 bg-surface"
-    >
+    <KeyboardAvoidingView behavior="padding" className="flex-1 bg-surface">
       {/* Header */}
       <View className="bg-surface/90 pt-safe border-b border-outline-variant/30 px-gutter pb-space-xs z-10">
         <View className="h-14 flex-row items-center justify-between">

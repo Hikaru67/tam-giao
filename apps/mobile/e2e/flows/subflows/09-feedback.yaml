@@ -11,6 +11,7 @@ name: Bước 9 — Đánh giá sau buổi gặp
       id: date-feedback
     direction: DOWN
     timeout: 60000
+- waitForAnimationToEnd
 - tapOn:
     id: date-feedback
 # Chọn đầy đủ các mục đánh giá theo hướng cam kết gắn kết.
@@ -19,6 +20,7 @@ name: Bước 9 — Đánh giá sau buổi gặp
       id: feedback-star-5
     direction: DOWN
     timeout: 20000
+- waitForAnimationToEnd
 - tapOn:
     id: feedback-star-5
 - scrollUntilVisible:
@@ -26,6 +28,7 @@ name: Bước 9 — Đánh giá sau buổi gặp
       id: feedback-profileMatch-FULL_MATCH
     direction: DOWN
     timeout: 20000
+- waitForAnimationToEnd
 - tapOn:
     id: feedback-profileMatch-FULL_MATCH
 - scrollUntilVisible:
@@ -33,6 +36,7 @@ name: Bước 9 — Đánh giá sau buổi gặp
       id: feedback-feeling-DEEP_INTEREST
     direction: DOWN
     timeout: 20000
+- waitForAnimationToEnd
 - tapOn:
     id: feedback-feeling-DEEP_INTEREST
 - scrollUntilVisible:
@@ -40,6 +44,7 @@ name: Bước 9 — Đánh giá sau buổi gặp
       id: feedback-decision-A_COMMIT
     direction: DOWN
     timeout: 20000
+- waitForAnimationToEnd
 - tapOn:
     id: feedback-decision-A_COMMIT
 - scrollUntilVisible:
@@ -47,6 +52,7 @@ name: Bước 9 — Đánh giá sau buổi gặp
       id: feedback-submit
     direction: DOWN
     timeout: 20000
+- waitForAnimationToEnd
 - tapOn:
     id: feedback-submit
 - extendedWaitUntil:
