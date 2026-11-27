@@ -1,0 +1,87 @@
+# Build ứng dụng mobile qua EAS (FE-S6-05).
+#
+# Lưu ý biến môi trường: URL API (`EXPO_PUBLIC_API_URL`), WebSocket (`EXPO_PUBLIC_WS_URL`),
+# `EXPO_PUBLIC_SENTRY_DSN`, `EAS_PROJECT_ID`, `EXPO_OWNER` và `GOOGLE_SERVICES_JSON` được khai báo trong
+# EAS Environment variables (environment `preview` / `production`), KHÔNG khai báo trên GitHub.
+#
+# Cấu hình (Settings → Environments → mobile-release):
+#   secrets: EXPO_TOKEN (robot token từ tài khoản Expo)
+name: Build mobile (EAS)
+
+on:
+  workflow_dispatch:
+    inputs:
+      profile:
+        description: 'EAS build profile'
+        type: choice
+        required: true
+        default: preview
+        options:
+          - preview
+          - production
+      platform:
+        description: 'Nền tảng build'
+        type: choice
+        required: true
+        default: android
+        options:
+          - android
+          - ios
+          - all
+      submit:
+        description: 'Nộp lên TestFlight / Google Play Internal (chỉ áp dụng với profile production)'
+        type: boolean
+        required: false
+        default: false
+
+permissions:
+  contents: read
+
+env:
+  EAS_CLI_VERSION: '16.13.1'
+
+jobs:
+  build:
+    name: eas build (${{ inputs.profile }} · ${{ inputs.platform }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: mobile-release
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Check EXPO_TOKEN
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+        run: |
+          if [ -z "$EXPO_TOKEN" ]; then
+            echo "::error::Thiếu secret EXPO_TOKEN trong GitHub Environment mobile-release. Xem docs/runbooks/fe-release.md."
+            exit 1
+          fi
+
+      - uses: expo/expo-github-action@v8
+        with:
+          eas-version: ${{ env.EAS_CLI_VERSION }}
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - name: Trigger EAS build
+        working-directory: apps/mobile
+        env:
+          PROFILE: ${{ inputs.profile }}
+          PLATFORM: ${{ inputs.platform }}
+          SUBMIT: ${{ inputs.submit }}
+        run: |
+          if [ "$SUBMIT" = "true" ] && [ "$PROFILE" = "production" ]; then
+            eas build --profile "$PROFILE" --platform "$PLATFORM" --non-interactive --no-wait --auto-submit
+          else
+            eas build --profile "$PROFILE" --platform "$PLATFORM" --non-interactive --no-wait
+          fi

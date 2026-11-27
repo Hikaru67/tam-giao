@@ -118,7 +118,9 @@ local nếu D5 chưa xong).
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| mobile, admin, partner, repo | devops | P0 | 1.5d | FE-S6-01…04 | — | TODO |
+| mobile, admin, partner, repo | devops | P0 | 1.5d | FE-S6-01…04 | — | BLOCKED |
+
+**Lý do BLOCKED:** cấu hình build/deploy đã xong; AC1 (cài bản preview + đăng nhập staging) chờ PO cấp tài khoản Apple Developer, Google Play Console, Expo (EAS) và hạ tầng staging (D5).
 
 **Mục tiêu:** QA và PO dùng được app trên máy thật.
 
