@@ -699,6 +699,7 @@ export function PreferencesScreen() {
 
         {/* Main CTA Button */}
         <Button
+          testID="preferences-submit"
           variant="primary"
           size="lg"
           fullWidth

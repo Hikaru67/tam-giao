@@ -89,6 +89,7 @@ export function PhoneScreen() {
           {/* Phone Form Card */}
           <View className="bg-surface-container-lowest p-space-md rounded-xl gap-space-md border border-outline-variant/30">
             <PhoneInput
+              testID="auth-phone-input"
               label={AUTH_COPY.phoneScreen.phoneLabel}
               placeholder={AUTH_COPY.phoneScreen.phonePlaceholder}
               value={rawPhone}
@@ -113,6 +114,7 @@ export function PhoneScreen() {
             ) : null}
 
             <Button
+              testID="auth-phone-submit"
               variant="primary"
               size="lg"
               fullWidth

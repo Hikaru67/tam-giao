@@ -6,8 +6,8 @@
     "dev": "expo start",
     "ios": "expo start --ios",
     "android": "expo start --android",
-    "typecheck": "tsc -p tsconfig.json",
-    "test:native": "jest"
+    "typecheck": "tsc -p tsconfig.json && tsc -p e2e/tsconfig.json",
+    "test:native": "jest && vitest run --config e2e/vitest.config.ts"
   },
   "dependencies": {
     "@expo-google-fonts/be-vietnam-pro": "0.4.1",
@@ -59,7 +59,8 @@
     "jest": "30.5.2",
     "jest-expo": "58.0.15",
     "tailwindcss": "3.4.19",
-    "typescript": "5.9.3"
+    "typescript": "5.9.3",
+    "yaml": "2.9.1"
   },
   "jest": {
     "preset": "jest-expo",

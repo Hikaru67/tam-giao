@@ -1,0 +1,28 @@
+appId: vn.tamgiao.app
+name: Bước 7 — Trò chuyện qua WebSocket
+---
+# A gửi tin nhắn ASCII để ổn định với inputText trên Android, rồi chờ tin phản hồi của B qua WebSocket.
+- tapOn:
+    id: chat-input
+- inputText: 'Xin chao, rat vui duoc lam quen'
+- tapOn:
+    id: chat-send
+- extendedWaitUntil:
+    visible:
+      text: 'Xin chao, rat vui duoc lam quen'
+    timeout: 15000
+- runScript:
+    file: ../../scripts/helper-step.js
+    env:
+      STEP: counterpart-message
+- extendedWaitUntil:
+    visible:
+      text: '${output.replyText}'
+    timeout: 30000
+- hideKeyboard
+- tapOn:
+    id: chat-back
+- extendedWaitUntil:
+    visible:
+      id: match-inbox
+    timeout: 20000

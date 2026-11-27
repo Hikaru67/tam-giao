@@ -197,6 +197,7 @@ export function ChatScreen({ conversationId }: ChatScreenProps) {
       <View className="pt-safe bg-surface border-b border-surface-container-high/60 z-30">
         <View className="h-16 px-margin flex-row items-center gap-space-sm">
           <Pressable
+            testID="chat-back"
             accessibilityRole="button"
             accessibilityLabel={CHAT_COPY.header.back}
             onPress={() => {

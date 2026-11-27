@@ -1,0 +1,10 @@
+appId: vn.tamgiao.app
+name: Kéo để làm mới (RefreshControl)
+---
+# Kéo xuống từ vùng giữa màn hình để kích hoạt RefreshControl.
+- swipe:
+    start: 50%, 30%
+    end: 50%, 85%
+    duration: 500
+- waitForAnimationToEnd:
+    timeout: 3000

@@ -1,0 +1,72 @@
+appId: vn.tamgiao.app
+name: Bước 2 — Hoàn thiện hồ sơ cơ bản
+---
+# Ảnh hồ sơ được helper điền sẵn vì picker ảnh hệ thống Android không tự động hoá ổn định; mọi trường còn lại nhập qua UI.
+- tapOn:
+    id: profile-full-name
+- inputText: '${output.fullName}'
+- tapOn:
+    id: profile-birth-date
+- inputText: '1994-03-15'
+- hideKeyboard
+- tapOn:
+    id: profile-gender-male
+- scrollUntilVisible:
+    element:
+      id: profile-hometown
+    direction: DOWN
+    timeout: 20000
+- tapOn:
+    id: profile-hometown
+- inputText: 'Ha Noi'
+- hideKeyboard
+- scrollUntilVisible:
+    element:
+      id: profile-current-city
+    direction: DOWN
+    timeout: 20000
+- tapOn:
+    id: profile-current-city
+- inputText: 'Ha Noi'
+- hideKeyboard
+- scrollUntilVisible:
+    element:
+      id: profile-education-bachelor
+    direction: DOWN
+    timeout: 20000
+- tapOn:
+    id: profile-education-bachelor
+- scrollUntilVisible:
+    element:
+      id: profile-occupation
+    direction: DOWN
+    timeout: 20000
+- tapOn:
+    id: profile-occupation
+- inputText: 'Ky su phan mem'
+- hideKeyboard
+- scrollUntilVisible:
+    element:
+      id: profile-religion-none
+    direction: DOWN
+    timeout: 20000
+- tapOn:
+    id: profile-religion-none
+- scrollUntilVisible:
+    element:
+      id: profile-children-want_children
+    direction: DOWN
+    timeout: 20000
+- tapOn:
+    id: profile-children-want_children
+- scrollUntilVisible:
+    element:
+      id: profile-submit
+    direction: DOWN
+    timeout: 20000
+- tapOn:
+    id: profile-submit
+- extendedWaitUntil:
+    visible:
+      id: preferences-submit
+    timeout: 30000

@@ -1,0 +1,80 @@
+appId: vn.tamgiao.app
+name: Bước 9 — Đánh giá sau buổi gặp
+---
+# Chờ tới giờ bắt đầu buổi hẹn + 2s để nút đánh giá mở khoá khi màn lịch tự cập nhật đồng hồ.
+- runScript:
+    file: ../../scripts/helper-step.js
+    env:
+      STEP: wait-date-start
+- scrollUntilVisible:
+    element:
+      id: date-feedback
+    direction: DOWN
+    timeout: 60000
+- tapOn:
+    id: date-feedback
+# Chọn đầy đủ các mục đánh giá theo hướng cam kết gắn kết.
+- scrollUntilVisible:
+    element:
+      id: feedback-star-5
+    direction: DOWN
+    timeout: 20000
+- tapOn:
+    id: feedback-star-5
+- scrollUntilVisible:
+    element:
+      id: feedback-profileMatch-FULL_MATCH
+    direction: DOWN
+    timeout: 20000
+- tapOn:
+    id: feedback-profileMatch-FULL_MATCH
+- scrollUntilVisible:
+    element:
+      id: feedback-feeling-DEEP_INTEREST
+    direction: DOWN
+    timeout: 20000
+- tapOn:
+    id: feedback-feeling-DEEP_INTEREST
+- scrollUntilVisible:
+    element:
+      id: feedback-decision-A_COMMIT
+    direction: DOWN
+    timeout: 20000
+- tapOn:
+    id: feedback-decision-A_COMMIT
+- scrollUntilVisible:
+    element:
+      id: feedback-submit
+    direction: DOWN
+    timeout: 20000
+- tapOn:
+    id: feedback-submit
+- extendedWaitUntil:
+    visible:
+      id: feedback-submit-ok
+    timeout: 10000
+- tapOn:
+    id: feedback-submit-ok
+- extendedWaitUntil:
+    visible:
+      id: 'feedback-result-waiting|feedback-result-closed'
+    timeout: 20000
+# Helper cho B đánh giá A_COMMIT và chờ match chuyển sang CLOSED_SUCCESS.
+- runScript:
+    file: ../../scripts/helper-step.js
+    env:
+      STEP: counterpart-feedback
+# Kéo làm mới màn đánh giá tới khi trạng thái kết nối đã khép lại hiển thị.
+- repeat:
+    times: 10
+    while:
+      notVisible:
+        id: feedback-result-closed
+    commands:
+      - runFlow: ../common/pull-to-refresh.yaml
+- extendedWaitUntil:
+    visible:
+      id: feedback-result-closed
+    timeout: 15000
+- assertVisible:
+    id: feedback-result-closed

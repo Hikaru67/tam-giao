@@ -513,7 +513,10 @@ export function ProfileScreen() {
               {/* Ảnh đại diện chính (Ảnh thứ nhất) */}
               <View className="flex-col sm:flex-row items-center gap-space-md">
                 {mainPhoto ? (
-                  <View className="relative w-28 h-28 rounded-2xl overflow-hidden bg-surface-container shadow-sm">
+                  <View
+                    testID="profile-main-photo"
+                    className="relative w-28 h-28 rounded-2xl overflow-hidden bg-surface-container shadow-sm"
+                  >
                     <Image source={{ uri: mainPhoto.uri }} className="w-full h-full object-cover" />
                     {mainPhoto.status === 'uploading' ? (
                       <View className="absolute inset-0 bg-on-surface/40 items-center justify-center">
@@ -712,6 +715,7 @@ export function ProfileScreen() {
             <View className="bg-surface-container-lowest p-space-md rounded-xl gap-space-md border border-outline-variant/30 shadow-sm">
               {/* Họ và tên */}
               <TextField
+                testID="profile-full-name"
                 label={PROFILE_COPY.personalInfo.fullNameLabel}
                 placeholder={PROFILE_COPY.personalInfo.fullNamePlaceholder}
                 value={formData.fullName}
@@ -736,6 +740,7 @@ export function ProfileScreen() {
                 <View className="flex-row items-center gap-space-sm">
                   <View className="flex-1">
                     <TextInput
+                      testID="profile-birth-date"
                       value={formData.birthDate}
                       onChangeText={(val) => updateField('birthDate', val)}
                       placeholder={PROFILE_COPY.personalInfo.birthDatePlaceholder}
@@ -794,6 +799,7 @@ export function ProfileScreen() {
                     return (
                       <Pressable
                         key={g}
+                        testID={`profile-gender-${g}`}
                         accessibilityRole="button"
                         accessibilityLabel={label}
                         onPress={() => updateField('gender', g)}
@@ -822,6 +828,7 @@ export function ProfileScreen() {
 
               {/* Quê quán */}
               <TextField
+                testID="profile-hometown"
                 label={PROFILE_COPY.personalInfo.hometownLabel}
                 placeholder={PROFILE_COPY.personalInfo.hometownPlaceholder}
                 value={formData.hometown}
@@ -832,6 +839,7 @@ export function ProfileScreen() {
 
               {/* Nơi sống hiện tại */}
               <TextField
+                testID="profile-current-city"
                 label={PROFILE_COPY.personalInfo.currentCityLabel}
                 placeholder={PROFILE_COPY.personalInfo.currentCityPlaceholder}
                 value={formData.currentCity}
@@ -852,6 +860,7 @@ export function ProfileScreen() {
                     return (
                       <Pressable
                         key={level}
+                        testID={`profile-education-${level}`}
                         accessibilityRole="button"
                         accessibilityLabel={label}
                         onPress={() => updateField('education', level)}
@@ -880,6 +889,7 @@ export function ProfileScreen() {
 
               {/* Nghề nghiệp / Chức vụ */}
               <TextField
+                testID="profile-occupation"
                 label={PROFILE_COPY.personalInfo.occupationLabel}
                 placeholder={PROFILE_COPY.personalInfo.occupationPlaceholder}
                 value={formData.occupation}
@@ -900,6 +910,7 @@ export function ProfileScreen() {
                     return (
                       <Pressable
                         key={r}
+                        testID={`profile-religion-${r}`}
                         accessibilityRole="button"
                         accessibilityLabel={label}
                         onPress={() => updateField('religion', r)}
@@ -938,6 +949,7 @@ export function ProfileScreen() {
                     return (
                       <Pressable
                         key={cp}
+                        testID={`profile-children-${cp}`}
                         accessibilityRole="button"
                         accessibilityLabel={label}
                         onPress={() => updateField('childrenPlan', cp)}
@@ -1245,6 +1257,7 @@ export function ProfileScreen() {
           {/* Action Footer */}
           <View className="gap-space-sm pt-space-xs">
             <Button
+              testID="profile-submit"
               variant="primary"
               size="lg"
               fullWidth

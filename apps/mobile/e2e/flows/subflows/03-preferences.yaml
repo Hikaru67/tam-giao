@@ -1,0 +1,11 @@
+appId: vn.tamgiao.app
+name: Bước 3 — Thiết lập tiêu chí bạn đời
+---
+# Giữ tiêu chí mặc định — hợp lệ theo schema; bộ lọc cứng ghép đôi chỉ xét tôn giáo và kế hoạch con cái, B thoả.
+- tapOn:
+    id: preferences-submit
+# Điểm vào xác thực tự chuyển sang màn thanh toán vì người dùng chưa trả phí.
+- extendedWaitUntil:
+    visible:
+      id: payment-cta
+    timeout: 30000

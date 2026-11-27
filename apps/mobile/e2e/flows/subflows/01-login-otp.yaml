@@ -1,0 +1,33 @@
+appId: vn.tamgiao.app
+name: Bước 1 — Đăng nhập OTP
+---
+# Chờ hết khoảng thời gian chặn gửi lại OTP vì helper vừa đăng ký trước A ở bước start.
+- runScript:
+    file: ../../scripts/helper-step.js
+    env:
+      STEP: otp-window
+- extendedWaitUntil:
+    visible:
+      id: auth-phone-input
+    timeout: 30000
+- tapOn:
+    id: auth-phone-input
+- inputText: '${output.phone}'
+- hideKeyboard
+- tapOn:
+    id: auth-phone-submit
+- extendedWaitUntil:
+    visible:
+      id: auth-otp-submit
+    timeout: 20000
+# Đọc OTP mới của A từ log SMS giả; ô OTP tự focus nên nhập đủ 6 số sẽ tự xác thực.
+- runScript:
+    file: ../../scripts/helper-step.js
+    env:
+      STEP: otp
+- inputText: '${output.otp}'
+# Sau khi xác thực thành công, app mở màn hồ sơ với ảnh nháp helper đã lưu sẵn.
+- extendedWaitUntil:
+    visible:
+      id: profile-main-photo
+    timeout: 30000
