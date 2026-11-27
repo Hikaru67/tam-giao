@@ -155,3 +155,73 @@ Trong các tab terminal riêng biệt:
 
 `pnpm dev:fe` chạy API với `RATE_LIMIT_ENABLED=false` và `TRUST_PROXY=true` (chỉ dev). `seed:fe` gán IP giả
 (`x-forwarded-for`) cho từng user ảo để không vướng hạn mức OTP theo IP của identity. Không dùng cấu hình này ngoài máy dev.
+
+---
+
+## 9. E2E mobile (Maestro) — FE-S6-01
+
+Kiểm thử tự động luồng chính của app mobile (`apps/mobile`, Android package `vn.tamgiao.app`) bằng **Maestro** trên Android emulator kết nối với Backend local (`tests/e2e/run-local.sh`).
+
+### Yêu cầu
+- Android SDK + Android Emulator (hoặc thiết bị Android kết nối qua `adb`)
+- Maestro CLI (`curl -fsSL https://get.maestro.mobile.dev | bash`, CI đang ghim phiên bản `1.41.0`)
+- Java 17
+- Docker (để chạy Postgres, Redis, SeaweedFS cho BE local)
+
+### Kiến trúc & danh sách flow
+- **Người dùng A** (nam) thao tác trực tiếp qua UI của app trên emulator.
+- **Người dùng B** (nữ, đối phương), chuyên viên và quán đối tác do **helper** (`apps/mobile/e2e/helper/server.ts`, cổng mặc định `3199`) thực hiện qua API, tái dùng thư viện `tests/e2e/src/lib` (cùng cơ chế seed như `pnpm seed:fe verified`).
+- Maestro gọi helper thông qua `runScript` (`apps/mobile/e2e/scripts/helper-step.js`), nhận về các biến `output.*` theo contract trong `apps/mobile/e2e/helper/steps.ts`.
+
+| Đường dẫn | Vai trò |
+|---|---|
+| `apps/mobile/e2e/flows/full-journey.yaml` | Flow tổng, chạy toàn bộ hành trình người dùng A |
+| `apps/mobile/e2e/flows/subflows/01-login-otp` … `09-feedback` | Các flow con theo từng chặng (đăng nhập OTP → hồ sơ → tiêu chí → thanh toán → eKYC → gợi ý & đồng ý → chat → đặt lịch → đánh giá) |
+
+### Các bước chạy ngoài UI và lý do
+- **Ảnh hồ sơ**: helper upload và điền sẵn nháp qua API trước khi A mở app, vì picker ảnh hệ thống của Android không tự động hoá ổn định.
+- **Thanh toán**: app tạo đơn khi bấm nút thanh toán, sau đó helper gửi webhook có chữ ký (đóng vai cổng thanh toán) vì bản build release không có panel `__DEV__`.
+- **Thẩm định & ghép đôi**: chuyên viên duyệt eKYC và đề xuất ghép đôi A–B qua API.
+- **Tương tác phía B**: B đồng ý ghép đôi, gửi tin nhắn qua WebSocket và đánh giá `A_COMMIT` qua API.
+- **Đặt lịch hẹn**: B từ chối lịch A vừa đặt và đề xuất lại lịch mới tại quán đối tác bắt đầu sau `E2E_DATE_LEAD_SECONDS` (mặc định `90` giây) để A xác nhận trên UI và mở được bước đánh giá ngay sau giờ bắt đầu.
+- **Chụp ảnh eKYC**: app chụp ảnh bằng camera giả của emulator (`-camera-back emulated -camera-front emulated`).
+
+### Chạy trên máy local
+
+```bash
+export PATH="/Applications/Docker.app/Contents/Resources/bin:$PATH"
+tests/e2e/run-local.sh up                                   # BE cổng 3100 + worker + chuyên viên seed
+export EXPO_PUBLIC_API_URL=http://10.0.2.2:3100 EXPO_PUBLIC_WS_URL=ws://10.0.2.2:3100/ws
+pnpm --filter @tamgiao/mobile exec expo prebuild --platform android --no-install --clean
+# + bật cleartext trong apps/mobile/android/app/src/main/AndroidManifest.xml như step "Allow cleartext" của workflow
+(cd apps/mobile/android && ./gradlew assembleRelease -PreactNativeArchitectures=x86_64)
+apps/mobile/e2e/run.sh ci apps/mobile/android/app/build/outputs/apk/release/app-release.apk   # hoặc: helper-start → test N → helper-stop
+tests/e2e/run-local.sh down
+```
+
+Script `apps/mobile/e2e/run.sh` hỗ trợ các lệnh `helper-start`, `helper-stop`, `test [N]` và `ci <apk>` (`ci` tự động khởi động helper, cài APK, `adb reverse tcp:58333 tcp:58333`, chạy `flows/full-journey.yaml` 3 lần liên tiếp và dừng ở lần fail đầu tiên, sau đó tắt helper). Log và báo cáo JUnit/debug được ghi trong `apps/mobile/e2e/.run/` (`helper.log`, `report-<i>.xml`, `debug-<i>/`).
+
+### Chạy trên CI
+- Workflow `.github/workflows/e2e-mobile.yml` chạy tự động mỗi đêm lúc 02:00 giờ Việt Nam (`0 19 * * *` UTC) và hỗ trợ chạy tay:
+  ```bash
+  gh workflow run e2e-mobile.yml --ref <nhánh>
+  gh run watch
+  ```
+- Khi run thất bại, tải artifact `e2e-mobile-logs` để xem log helper/API/worker, báo cáo JUnit và ảnh chụp/debug của Maestro.
+
+### Test meta (không cần emulator)
+Chạy trong `pnpm test` để kiểm tra nhanh trên CI/local:
+- Mọi file YAML trong `apps/mobile/e2e/flows/**` parse hợp lệ.
+- Mọi selector `id:` trong flow đều khớp với `testID` có thật trong mã nguồn app.
+- Các flow con được `flows/full-journey.yaml` gọi đầy đủ và đúng thứ tự.
+- Tên bước helper và biến `${output.*}` khớp với registry `apps/mobile/e2e/helper/steps.ts`.
+
+### Biến môi trường helper
+
+| Biến | Mặc định | Ý nghĩa |
+|---|---|---|
+| `E2E_HELPER_PORT` | `3199` | Cổng HTTP của server helper trên máy host |
+| `E2E_DATE_LEAD_SECONDS` | `90` | Số giây sau hiện tại mà B đề xuất giờ bắt đầu buổi hẹn |
+| `E2E_EVENT_TIMEOUT_MS` | `60000` | Thời gian chờ tối đa (ms) cho các bước bất đồng bộ qua worker/WebSocket |
+
+Các biến kết nối BE (`E2E_BASE_URL`, `E2E_ADMIN_*`, `E2E_OTP_LOG_FILE`, `E2E_WEBHOOK_SECRET`, …) dùng giống [tests/e2e/README.md](../../tests/e2e/README.md).

@@ -1,7 +1,8 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
-import { QueryClient } from '@tanstack/react-query';
+import { MutationCache, QueryCache, QueryClient } from '@tanstack/react-query';
 import { createApiClient, isApiError } from '@tamgiao/api-client';
+import { reportError } from './observability';
 import { AdminApp } from './app';
 import { ADMIN_ENV } from './env';
 import { createAdminTokenStore, browserSessionStorage } from './features/auth/session-token-store';
@@ -16,6 +17,8 @@ const apiClient = createApiClient({
   onSignedOut: () => sessionEvents.emitSignedOut(),
 });
 const queryClient = new QueryClient({
+  queryCache: new QueryCache({ onError: reportError }),
+  mutationCache: new MutationCache({ onError: reportError }),
   defaultOptions: {
     queries: {
       retry: (failureCount, error) =>

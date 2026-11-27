@@ -3,10 +3,10 @@ import { isApiError, messageFor, type ApiError } from '@tamgiao/api-client';
 import { formatLocalDate } from '../kyc/status-model.js';
 import { useMyVouchers, usePartners, VOUCHERS_QUERY_KEY } from '../kyc/use-verification-status.js';
 import { formatVnd } from '../payment/format.js';
+import { useScreenCaptureProtection } from '../security/use-screen-capture-protection.js';
 import { Badge, Button, Card, EmptyState, ErrorState, Text } from '@tamgiao/ui-mobile';
 import { colors } from '@tamgiao/ui-tokens';
 import { useRouter } from 'expo-router';
-import { usePreventScreenCapture } from 'expo-screen-capture';
 import { ActivityIndicator, Pressable, RefreshControl, ScrollView, View } from 'react-native';
 import { useQueryClient } from '@tanstack/react-query';
 import { VOUCHERS_COPY, VOUCHER_STATUS_LABELS, VOUCHER_STATUS_TONES } from './copy.js';
@@ -33,7 +33,7 @@ interface ActiveVoucherQrSectionProps {
 }
 
 function ActiveVoucherQrSection({ voucherId }: ActiveVoucherQrSectionProps) {
-  usePreventScreenCapture('voucher');
+  useScreenCaptureProtection('voucher');
   useMaxBrightness(true);
 
   const queryClient = useQueryClient();

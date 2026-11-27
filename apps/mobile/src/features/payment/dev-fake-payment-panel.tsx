@@ -1,12 +1,56 @@
+/**
+ * Module CHỈ dành cho môi trường dev (FE-S6-03).
+ * Chỉ được nạp qua `require` có điều kiện `__DEV__` trong `payment-screen.tsx`; không export từ `index.ts`.
+ * Scanner `tools/security/scan-bundle.ts` sẽ fail nếu module này (hoặc route `/dev/`) lọt vào bundle production.
+ */
 import { useState } from 'react';
 import { View } from 'react-native';
 import { isApiError, messageFor } from '@tamgiao/api-client';
-import type { DevFakePaymentBody } from '@tamgiao/contracts/billing';
+import { useApiClient } from '@tamgiao/api-client/react';
+import {
+  webhookAckResponseSchema,
+  type DevFakePaymentBody,
+  type WebhookAckResponse,
+} from '@tamgiao/contracts/billing';
 import { Button, Card, Text } from '@tamgiao/ui-mobile';
+import { useMutation, useQueryClient, type UseMutationResult } from '@tanstack/react-query';
 import { PAYMENT_COPY } from './copy.js';
-import { useDevFakePayment } from './use-verification-payment.js';
+import { DEV_FAKE_PAYMENT_COPY } from './dev-fake-payment-copy.js';
+import { PAYMENTS_QUERY_KEY } from './use-verification-payment.js';
 
-export function DevFakePaymentPanel({ orderId, onDone }: { orderId: string; onDone: () => void }) {
+export interface DevFakePaymentPanelProps {
+  orderId: string;
+  onDone: () => void;
+}
+
+/**
+ * Hook giả lập kết quả thanh toán cho môi trường dev qua `POST /dev/payments/fake/:orderId`.
+ */
+export function useDevFakePayment(): UseMutationResult<
+  WebhookAckResponse,
+  Error,
+  { orderId: string; outcome: DevFakePaymentBody['outcome'] }
+> {
+  const client = useApiClient();
+  const queryClient = useQueryClient();
+
+  return useMutation<WebhookAckResponse, Error, { orderId: string; outcome: DevFakePaymentBody['outcome'] }>({
+    mutationFn: async ({ orderId, outcome }) => {
+      return client.post<typeof webhookAckResponseSchema>(
+        `/dev/payments/fake/${encodeURIComponent(orderId)}`,
+        {
+          body: { outcome },
+          schema: webhookAckResponseSchema,
+        },
+      );
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: PAYMENTS_QUERY_KEY });
+    },
+  });
+}
+
+export function DevFakePaymentPanel({ orderId, onDone }: DevFakePaymentPanelProps) {
   const devFakePayment = useDevFakePayment();
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -27,7 +71,7 @@ export function DevFakePaymentPanel({ orderId, onDone }: { orderId: string; onDo
   return (
     <Card className="border border-dashed border-outline-variant bg-surface-container-low p-space-md gap-space-sm">
       <Text variant="title-md" className="font-semibold text-on-surface">
-        {PAYMENT_COPY.dev.title}
+        {DEV_FAKE_PAYMENT_COPY.title}
       </Text>
       <View className="flex-row gap-space-sm">
         <Button
@@ -39,7 +83,7 @@ export function DevFakePaymentPanel({ orderId, onDone }: { orderId: string; onDo
           onPress={() => void handleOutcome('SUCCEEDED')}
           className="flex-1"
         >
-          {PAYMENT_COPY.dev.succeed}
+          {DEV_FAKE_PAYMENT_COPY.succeed}
         </Button>
         <Button
           testID="dev-fake-pay-failed"
@@ -50,7 +94,7 @@ export function DevFakePaymentPanel({ orderId, onDone }: { orderId: string; onDo
           onPress={() => void handleOutcome('FAILED')}
           className="flex-1"
         >
-          {PAYMENT_COPY.dev.fail}
+          {DEV_FAKE_PAYMENT_COPY.fail}
         </Button>
       </View>
       {errorMessage ? (

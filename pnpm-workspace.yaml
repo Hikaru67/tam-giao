@@ -9,6 +9,8 @@ allowBuilds:
   esbuild: true
   '@parcel/watcher': false
   msw: false
+  # FE-S6-04: CLI upload sourcemap của Sentry — chưa dùng (không upload sourcemap), không tải binary lúc cài.
+  '@sentry/cli': false
   protobufjs: false
   ssh2: false
 overrides:

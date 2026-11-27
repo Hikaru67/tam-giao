@@ -1,0 +1,152 @@
+# Deploy FE web tĩnh lên staging (FE-S6-05): CI xanh trên `main` → build admin & partner →
+# scan bundle (`scan:bundle`) → rsync release lên máy staging + đổi symlink nguyên tử (giữ 5 bản) → smoke test.
+#
+# Hạ tầng chưa chốt (D5), dùng chung máy staging + SSH từ deploy-staging.yml (reverse proxy TLS phục vụ
+# `${STAGING_WEB_DIR}/{admin,partner}/current`). Chi tiết cấu hình proxy & vận hành: docs/runbooks/fe-release.md.
+#
+# Cấu hình (Settings → Environments → staging):
+#   vars:    STAGING_API_URL (vd https://api.staging.example.vn),
+#            STAGING_ADMIN_URL (vd https://admin.staging.example.vn),
+#            STAGING_PARTNER_URL (vd https://partner.staging.example.vn),
+#            STAGING_WEB_DIR (vd /srv/tamgiao-web),
+#            STAGING_WEB_SENTRY_DSN (tuỳ chọn)
+#   secrets: STAGING_SSH_HOST, STAGING_SSH_USER, STAGING_SSH_KEY, STAGING_SSH_KNOWN_HOSTS
+name: Deploy FE web (staging)
+
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-fe-web
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+env:
+  DEPLOY_SHA: ${{ github.event.workflow_run.head_sha || github.sha }}
+
+jobs:
+  build:
+    name: build & scan web bundles
+    if: github.event_name == 'workflow_dispatch' || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push')
+    runs-on: ubuntu-latest
+    environment: staging
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.DEPLOY_SHA }}
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Build web apps (admin, partner)
+        env:
+          VITE_API_URL: ${{ vars.STAGING_API_URL }}
+          VITE_SENTRY_DSN: ${{ vars.STAGING_WEB_SENTRY_DSN }}
+        run: pnpm --filter @tamgiao/admin --filter @tamgiao/partner build
+
+      - name: Scan production bundles
+        run: pnpm --filter @tamgiao/tools scan:bundle --env-example ../.env.example ../apps/admin/dist ../apps/partner/dist
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: fe-web-${{ env.DEPLOY_SHA }}
+          path: |
+            apps/admin/dist
+            apps/partner/dist
+          retention-days: 7
+
+  deploy:
+    name: rsync & switch symlink
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: staging
+      url: ${{ vars.STAGING_ADMIN_URL }}
+    timeout-minutes: 15
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: fe-web-${{ env.DEPLOY_SHA }}
+          path: dist-bundle
+
+      - name: SSH key
+        env:
+          SSH_KEY: ${{ secrets.STAGING_SSH_KEY }}
+          SSH_KNOWN_HOSTS: ${{ secrets.STAGING_SSH_KNOWN_HOSTS }}
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$SSH_KEY" > ~/.ssh/id_deploy
+          printf '%s\n' "$SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/id_deploy ~/.ssh/known_hosts
+
+      - name: Rsync releases & atomic symlink switch
+        env:
+          SSH_TARGET: ${{ secrets.STAGING_SSH_USER }}@${{ secrets.STAGING_SSH_HOST }}
+          WEB_DIR: ${{ vars.STAGING_WEB_DIR }}
+        run: |
+          if [ -z "$WEB_DIR" ]; then
+            echo "::error::STAGING_WEB_DIR chưa cấu hình"
+            exit 1
+          fi
+          remote() { ssh -i ~/.ssh/id_deploy -o BatchMode=yes "$SSH_TARGET" "$@"; }
+          remote "mkdir -p '$WEB_DIR/admin/releases/$DEPLOY_SHA' '$WEB_DIR/partner/releases/$DEPLOY_SHA'"
+          for app in admin partner; do
+            rsync -az --delete \
+              -e "ssh -i ~/.ssh/id_deploy -o BatchMode=yes" \
+              "dist-bundle/$app/dist/" \
+              "$SSH_TARGET:$WEB_DIR/$app/releases/$DEPLOY_SHA/"
+          done
+          remote "WEB_DIR='$WEB_DIR' RELEASE='$DEPLOY_SHA' sh -s" <<'REMOTE'
+          set -eu
+          for app in admin partner; do
+            app_dir="$WEB_DIR/$app"
+            ln -sfn "releases/$RELEASE" "$app_dir/current.tmp"
+            mv -Tf "$app_dir/current.tmp" "$app_dir/current"
+            cd "$app_dir/releases"
+            ls -1t | tail -n +6 | while IFS= read -r old; do
+              [ -n "$old" ] && [ "$old" != "$RELEASE" ] && rm -rf -- "$old"
+            done
+          done
+          REMOTE
+
+  smoke:
+    name: smoke test web
+    needs: deploy
+    runs-on: ubuntu-latest
+    environment: staging
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.DEPLOY_SHA }}
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - name: Install (tools only)
+        run: pnpm install --frozen-lockfile --filter "@tamgiao/tools..."
+
+      - name: Smoke test (admin, partner)
+        env:
+          SMOKE_ADMIN_URL: ${{ vars.STAGING_ADMIN_URL }}
+          SMOKE_PARTNER_URL: ${{ vars.STAGING_PARTNER_URL }}
+          SMOKE_API_URL: ${{ vars.STAGING_API_URL }}
+        run: pnpm --filter @tamgiao/tools smoke:web

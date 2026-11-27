@@ -3,7 +3,6 @@ export { PAYMENT_COPY } from './copy.js';
 export {
   usePaymentStatus,
   useCreateVerificationCheckout,
-  useDevFakePayment,
   PAYMENTS_QUERY_KEY,
   PAID_STATUSES,
   type PaymentPhase,

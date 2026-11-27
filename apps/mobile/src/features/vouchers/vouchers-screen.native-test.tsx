@@ -28,14 +28,14 @@ jest.mock('expo-router', () => ({
   }),
 }));
 
-const mockPreventScreenCapture = jest.fn();
+const mockScreenCaptureProtection = jest.fn();
 // Trong jest không có view native của SVG: dựng view thường giữ nguyên props để kiểm tra.
 jest.mock('react-native-svg', () => {
   const { View } = jest.requireActual('react-native');
   return { __esModule: true, default: View, Path: View };
 });
-jest.mock('expo-screen-capture', () => ({
-  usePreventScreenCapture: (...args: unknown[]) => mockPreventScreenCapture(...args),
+jest.mock('../security/use-screen-capture-protection', () => ({
+  useScreenCaptureProtection: (...args: unknown[]) => mockScreenCaptureProtection(...args),
 }));
 
 const mockGetBrightnessAsync = jest.fn(async () => 0.5);
@@ -231,8 +231,8 @@ describe('VouchersScreen', () => {
     expect(qrElement).toBeTruthy();
     expect(screen.getByText(VOUCHERS_COPY.qrInstructions)).toBeTruthy();
 
-    // usePreventScreenCapture được gọi với 'voucher'
-    expect(mockPreventScreenCapture).toHaveBeenCalledWith('voucher');
+    // useScreenCaptureProtection được gọi với 'voucher'
+    expect(mockScreenCaptureProtection).toHaveBeenCalledWith('voucher');
 
     // Token không xuất hiện trong text
     expect(screen.queryByText(SECRET_TOKEN)).toBeNull();

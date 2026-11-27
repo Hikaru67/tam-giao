@@ -200,6 +200,7 @@ export function OtpScreen() {
 
           {/* Submit Action Button */}
           <Button
+            testID="auth-otp-submit"
             variant="primary"
             size="lg"
             fullWidth

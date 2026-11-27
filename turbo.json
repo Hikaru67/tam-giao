@@ -3,7 +3,7 @@
   "tasks": {
     "typecheck": {
       "dependsOn": ["^typecheck"],
-      "inputs": ["src/**", "app/**", "test/**", "tsconfig.json", "package.json", "*.config.*"],
+      "inputs": ["src/**", "app/**", "test/**", "e2e/**", "tsconfig.json", "package.json", "*.config.*"],
       "outputs": []
     },
     "test:native": {

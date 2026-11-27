@@ -398,4 +398,8 @@ describe('PaymentScreen (FE-S3-01)', () => {
 
     await screen.unmount();
   });
+
+  it('7. PAYMENT_COPY không còn khoá dev (đã tách sang module chỉ dùng ở dev)', () => {
+    expect('dev' in PAYMENT_COPY).toBe(false);
+  });
 });

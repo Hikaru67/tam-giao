@@ -14,6 +14,7 @@ import { colors } from '@tamgiao/ui-tokens';
 import { useRouter } from 'expo-router';
 import { ActivityIndicator, Image, Pressable, ScrollView, Switch, TextInput, View } from 'react-native';
 import { useCurrentMatch } from '../match/use-match.js';
+import { useScreenCaptureProtection } from '../security/use-screen-capture-protection.js';
 import { REPORT_CATEGORIES_COPY, REPORT_COPY } from './copy.js';
 import {
   deletePickedCopy,
@@ -37,6 +38,8 @@ interface EvidencePhotoItem {
 }
 
 export function ReportScreen({ reportedUserId }: ReportScreenProps) {
+  useScreenCaptureProtection('safety-report');
+
   const router = useRouter();
   const client = useApiClient();
   const { showToast } = useToast();

@@ -1,0 +1,117 @@
+appId: vn.tamgiao.app
+name: Bước 5 — Xác thực eKYC
+---
+# Chụp 4 ảnh giấy tờ và chân dung bằng camera giả của emulator (-camera-back emulated -camera-front emulated); quyền camera cấp ở launchApp.
+- scrollUntilVisible:
+    element:
+      id: kyc-capture-CCCD_FRONT
+    direction: DOWN
+    timeout: 20000
+- tapOn:
+    id: kyc-capture-CCCD_FRONT
+- extendedWaitUntil:
+    visible:
+      id: kyc-camera-shutter
+    timeout: 15000
+- tapOn:
+    id: kyc-camera-shutter
+- extendedWaitUntil:
+    visible:
+      id: kyc-preview-use
+    timeout: 20000
+- tapOn:
+    id: kyc-preview-use
+- extendedWaitUntil:
+    notVisible:
+      id: kyc-preview-use
+    timeout: 10000
+
+- scrollUntilVisible:
+    element:
+      id: kyc-capture-CCCD_BACK
+    direction: DOWN
+    timeout: 20000
+- tapOn:
+    id: kyc-capture-CCCD_BACK
+- extendedWaitUntil:
+    visible:
+      id: kyc-camera-shutter
+    timeout: 15000
+- tapOn:
+    id: kyc-camera-shutter
+- extendedWaitUntil:
+    visible:
+      id: kyc-preview-use
+    timeout: 20000
+- tapOn:
+    id: kyc-preview-use
+- extendedWaitUntil:
+    notVisible:
+      id: kyc-preview-use
+    timeout: 10000
+
+- scrollUntilVisible:
+    element:
+      id: kyc-capture-SELFIE
+    direction: DOWN
+    timeout: 20000
+- tapOn:
+    id: kyc-capture-SELFIE
+- extendedWaitUntil:
+    visible:
+      id: kyc-camera-shutter
+    timeout: 15000
+- tapOn:
+    id: kyc-camera-shutter
+- extendedWaitUntil:
+    visible:
+      id: kyc-preview-use
+    timeout: 20000
+- tapOn:
+    id: kyc-preview-use
+- extendedWaitUntil:
+    notVisible:
+      id: kyc-preview-use
+    timeout: 10000
+
+- scrollUntilVisible:
+    element:
+      id: kyc-capture-MARITAL_STATUS_CERTIFICATE
+    direction: DOWN
+    timeout: 20000
+- tapOn:
+    id: kyc-capture-MARITAL_STATUS_CERTIFICATE
+- extendedWaitUntil:
+    visible:
+      id: kyc-camera-shutter
+    timeout: 15000
+- tapOn:
+    id: kyc-camera-shutter
+- extendedWaitUntil:
+    visible:
+      id: kyc-preview-use
+    timeout: 20000
+- tapOn:
+    id: kyc-preview-use
+- extendedWaitUntil:
+    notVisible:
+      id: kyc-preview-use
+    timeout: 10000
+
+# Chờ nút nộp bật sau khi đủ 4 ảnh rồi tải lên qua presigned URL và chuyển sang màn trạng thái.
+- scrollUntilVisible:
+    element:
+      id: kyc-submit
+    direction: DOWN
+    timeout: 20000
+- extendedWaitUntil:
+    visible:
+      id: kyc-submit
+      enabled: true
+    timeout: 30000
+- tapOn:
+    id: kyc-submit
+- extendedWaitUntil:
+    visible:
+      id: status-card
+    timeout: 90000

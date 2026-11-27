@@ -26,6 +26,11 @@ jest.mock('expo-router', () => ({
   useLocalSearchParams: () => ({}),
 }));
 
+const mockScreenCaptureProtection = jest.fn();
+jest.mock('../../security/use-screen-capture-protection', () => ({
+  useScreenCaptureProtection: (...args: unknown[]) => mockScreenCaptureProtection(...args),
+}));
+
 function buildCurrentMatch(overrides: Partial<CurrentMatchDto> = {}): CurrentMatchDto {
   return {
     matchId: '01890a5d-ac96-774b-bcce-b302099a8050',
@@ -139,6 +144,8 @@ describe('MatchProfileScreen (FE-S4-03)', () => {
       expect(screen.getByText(MATCH_PROFILE_COPY.private.badge)).toBeTruthy();
       expect(screen.getByText(MATCH_PROFILE_COPY.private.body)).toBeTruthy();
     });
+
+    expect(mockScreenCaptureProtection).toHaveBeenCalledWith('match-profile');
 
     await screen.unmount();
   });

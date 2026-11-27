@@ -14,7 +14,7 @@ local nếu D5 chưa xong).
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| mobile, tests | devops | P0 | 2d | FE-S5 | FE-S6-02, FE-S6-03, FE-S6-04 | TODO |
+| mobile, tests | devops | P0 | 2d | FE-S5 | FE-S6-02, FE-S6-03, FE-S6-04 | IN_REVIEW |
 
 **Mục tiêu:** Luồng chính mobile được kiểm tra tự động trên BE local với provider giả.
 
@@ -40,7 +40,7 @@ local nếu D5 chưa xong).
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| admin, partner, tests | devops | P0 | 1.5d | FE-S5 | FE-S6-01, FE-S6-03, FE-S6-04 | TODO |
+| admin, partner, tests | devops | P0 | 1.5d | FE-S5 | FE-S6-01, FE-S6-03, FE-S6-04 | DONE |
 
 **Mục tiêu:** Luồng chuyên viên và quán được kiểm tra tự động.
 
@@ -66,7 +66,7 @@ local nếu D5 chưa xong).
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| mobile, admin, partner | presentation, devops | P0 | 1.5d | FE-S5 | FE-S6-01, FE-S6-02, FE-S6-04 | TODO |
+| mobile, admin, partner | presentation, devops | P0 | 1.5d | FE-S5 | FE-S6-01, FE-S6-02, FE-S6-04 | DONE |
 
 **Mục tiêu:** Rà soát luật F4/F5 trước khi phát hành.
 
@@ -92,7 +92,7 @@ local nếu D5 chưa xong).
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| mobile, admin, partner | infrastructure | P1 | 1d | FE-S5 | FE-S6-01, FE-S6-02, FE-S6-03 | TODO |
+| mobile, admin, partner | infrastructure | P1 | 1d | FE-S5 | FE-S6-01, FE-S6-02, FE-S6-03 | DONE |
 
 **Mục tiêu:** Biết app lỗi ở đâu mà không thu PII.
 
@@ -118,7 +118,9 @@ local nếu D5 chưa xong).
 
 | Module | Lớp | Ưu tiên | Ước lượng | Phụ thuộc | Song song với | Trạng thái |
 |---|---|---|---|---|---|---|
-| mobile, admin, partner, repo | devops | P0 | 1.5d | FE-S6-01…04 | — | TODO |
+| mobile, admin, partner, repo | devops | P0 | 1.5d | FE-S6-01…04 | — | BLOCKED |
+
+**Lý do BLOCKED:** cấu hình build/deploy đã xong; AC1 (cài bản preview + đăng nhập staging) chờ PO cấp tài khoản Apple Developer, Google Play Console, Expo (EAS) và hạ tầng staging (D5).
 
 **Mục tiêu:** QA và PO dùng được app trên máy thật.
 

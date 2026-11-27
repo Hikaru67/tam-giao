@@ -1,0 +1,61 @@
+appId: vn.tamgiao.app
+name: Bước 6 — Chuyên viên duyệt hồ sơ và ghép đôi
+---
+# Chuyên viên duyệt eKYC của A qua API, chờ A ACTIVE và đề xuất ghép đôi A–B.
+- runScript:
+    file: ../../scripts/helper-step.js
+    env:
+      STEP: approve
+# Kéo làm mới màn trạng thái xác thực tới khi nút tiếp tục sau duyệt hiện ra.
+- repeat:
+    times: 10
+    while:
+      notVisible:
+        id: status-approved-cta
+    commands:
+      - runFlow: ../common/pull-to-refresh.yaml
+- extendedWaitUntil:
+    visible:
+      id: status-approved-cta
+    timeout: 15000
+- tapOn:
+    id: status-approved-cta
+# Đồng ý gợi ý ghép đôi trên UI của A.
+- scrollUntilVisible:
+    element:
+      id: match-accept
+    direction: DOWN
+    timeout: 30000
+- tapOn:
+    id: match-accept
+- extendedWaitUntil:
+    visible:
+      id: match-accept-confirm
+    timeout: 10000
+- tapOn:
+    id: match-accept-confirm
+- extendedWaitUntil:
+    visible:
+      id: match-waiting
+    timeout: 20000
+# Helper cho B đồng ý ghép để chuyển match sang trạng thái DATING và mở hội thoại.
+- runScript:
+    file: ../../scripts/helper-step.js
+    env:
+      STEP: counterpart-accept
+# Màn chủ poll trạng thái chờ (15s) rồi tự mở chat hoặc hiện nút mở chat trong pha DATING.
+- extendedWaitUntil:
+    visible:
+      id: 'match-phase-DATING|chat-input'
+    timeout: 90000
+- runFlow:
+    when:
+      visible:
+        id: match-open-chat
+    commands:
+      - tapOn:
+          id: match-open-chat
+- extendedWaitUntil:
+    visible:
+      id: chat-input
+    timeout: 30000

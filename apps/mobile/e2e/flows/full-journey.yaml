@@ -1,0 +1,25 @@
+appId: vn.tamgiao.app
+name: Tâm Giao — hành trình chính (FE-S6-01)
+tags:
+  - e2e
+  - full
+---
+# 0. Helper (apps/mobile/e2e/helper) dựng dữ liệu: đăng ký trước A (để có phiên API), seed B ACTIVE, tạo quán.
+- runScript:
+    file: ../scripts/helper-step.js
+    env:
+      STEP: start
+- launchApp:
+    appId: vn.tamgiao.app
+    clearState: true
+    permissions:
+      all: allow
+- runFlow: subflows/01-login-otp.yaml
+- runFlow: subflows/02-profile.yaml
+- runFlow: subflows/03-preferences.yaml
+- runFlow: subflows/04-payment.yaml
+- runFlow: subflows/05-kyc.yaml
+- runFlow: subflows/06-approval-match.yaml
+- runFlow: subflows/07-chat.yaml
+- runFlow: subflows/08-date.yaml
+- runFlow: subflows/09-feedback.yaml

@@ -5,6 +5,7 @@ import { colors } from '@tamgiao/ui-tokens';
 import { useRouter } from 'expo-router';
 import { ActivityIndicator, Pressable, ScrollView, View } from 'react-native';
 import { PROFILE_COPY } from '../../profile/copy.js';
+import { useScreenCaptureProtection } from '../../security/use-screen-capture-protection.js';
 import { useCurrentMatch, useMatchProfile } from '../use-match.js';
 import { MATCH_PROFILE_COPY } from './copy.js';
 import { PhotoGallery } from './photo-gallery.js';
@@ -183,6 +184,8 @@ function MatchProfileContent({ matchId, onBack }: ContentProps) {
 }
 
 export function MatchProfileScreen() {
+  useScreenCaptureProtection('match-profile');
+
   const router = useRouter();
   const matchQuery = useCurrentMatch();
 

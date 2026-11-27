@@ -5,7 +5,6 @@ import type { ConversationMessageDto } from '@tamgiao/contracts/messaging';
 import { Button, EmptyState, ErrorState, Text } from '@tamgiao/ui-mobile';
 import { colors } from '@tamgiao/ui-tokens';
 import { useRouter } from 'expo-router';
-import { usePreventScreenCapture } from 'expo-screen-capture';
 import {
   ActivityIndicator,
   FlatList,
@@ -18,6 +17,7 @@ import {
 import { useQueryClient } from '@tanstack/react-query';
 import { CONVERSATIONS_QUERY_KEY, CURRENT_MATCH_QUERY_KEY, useCurrentMatch } from '../match/index.js';
 import { useIsPeerReported } from '../safety/reported-peers.js';
+import { useScreenCaptureProtection } from '../security/use-screen-capture-protection.js';
 import { useChatClient, useChatConnectionState } from './chat-client-context.js';
 import { ChatComposer } from './chat-composer.js';
 import { CHAT_COPY } from './copy.js';
@@ -34,7 +34,7 @@ export interface ChatScreenProps {
 }
 
 export function ChatScreen({ conversationId }: ChatScreenProps) {
-  usePreventScreenCapture('chat');
+  useScreenCaptureProtection('chat');
 
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -197,6 +197,7 @@ export function ChatScreen({ conversationId }: ChatScreenProps) {
       <View className="pt-safe bg-surface border-b border-surface-container-high/60 z-30">
         <View className="h-16 px-margin flex-row items-center gap-space-sm">
           <Pressable
+            testID="chat-back"
             accessibilityRole="button"
             accessibilityLabel={CHAT_COPY.header.back}
             onPress={() => {

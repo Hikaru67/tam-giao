@@ -26,6 +26,8 @@ export default defineConfig(
       'apps/*/postcss.config.js',
       'packages/ui-web/postcss.config.js',
       'packages/*/storybook-static/**',
+      // Thư mục chạy cục bộ (log api, kết quả/báo cáo Playwright FE-S6-02) — đã .gitignore.
+      '**/.run/**',
     ],
   },
   js.configs.recommended,

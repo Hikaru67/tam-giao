@@ -5,13 +5,10 @@ import {
   IDEMPOTENCY_KEY_HEADER,
   paymentHistoryResponseSchema,
   verificationCheckoutResponseSchema,
-  webhookAckResponseSchema,
-  type DevFakePaymentBody,
   type PaymentHistoryItem,
   type PaymentHistoryResponse,
   type VerificationCheckoutResponse,
   type VerificationPaymentStatus,
-  type WebhookAckResponse,
 } from '@tamgiao/contracts/billing';
 import {
   useMutation,
@@ -175,33 +172,6 @@ export function useCreateVerificationCheckout(): UseMutationResult<
         idempotencyKeyRef.current = null;
         await queryClient.invalidateQueries({ queryKey: PAYMENTS_QUERY_KEY });
       }
-    },
-  });
-}
-
-/**
- * Hook giả lập kết quả thanh toán cho môi trường dev qua `POST /dev/payments/fake/:orderId`.
- */
-export function useDevFakePayment(): UseMutationResult<
-  WebhookAckResponse,
-  Error,
-  { orderId: string; outcome: DevFakePaymentBody['outcome'] }
-> {
-  const client = useApiClient();
-  const queryClient = useQueryClient();
-
-  return useMutation<WebhookAckResponse, Error, { orderId: string; outcome: DevFakePaymentBody['outcome'] }>({
-    mutationFn: async ({ orderId, outcome }) => {
-      return client.post<typeof webhookAckResponseSchema>(
-        `/dev/payments/fake/${encodeURIComponent(orderId)}`,
-        {
-          body: { outcome },
-          schema: webhookAckResponseSchema,
-        },
-      );
-    },
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: PAYMENTS_QUERY_KEY });
     },
   });
 }

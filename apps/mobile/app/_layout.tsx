@@ -10,17 +10,25 @@ import {
 import { ApiClientProvider } from '@tamgiao/api-client/react';
 import { TokenStoreProvider } from '../src/session/token-store-context';
 import { ToastProvider } from '@tamgiao/ui-mobile';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { MutationCache, QueryCache, QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { apiClient, tokenStore } from '../src/session/api';
 import { SessionGate } from '../src/features/session/session-gate';
 import { PushRegistrar } from '../src/features/notifications/push-registrar.js';
+import { observability, reportError } from '../src/observability/index.js';
+import { FunnelTracker } from '../src/observability/funnel-tracker.js';
 
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
-  const [queryClient] = useState(() => new QueryClient());
+  const [queryClient] = useState(
+    () =>
+      new QueryClient({
+        queryCache: new QueryCache({ onError: reportError }),
+        mutationCache: new MutationCache({ onError: reportError }),
+      }),
+  );
   // RN cần tên font khớp chính xác: đăng ký bản Regular dưới tên `fontFamily.sans` của preset token
   // ('Be Vietnam Pro'); các độ đậm khác giữ tên riêng — component Text (FE-S1-07) chọn theo fontWeight.
   const [fontsLoaded, fontError] = useFonts({
@@ -46,6 +54,7 @@ export default function RootLayout() {
         <TokenStoreProvider store={tokenStore}>
           <ToastProvider>
             <SessionGate>
+              {observability.enabled ? <FunnelTracker track={observability.trackFunnelStep} /> : null}
               <PushRegistrar />
               <Stack screenOptions={{ headerShown: false }}>
                 <Stack.Screen name="index" />

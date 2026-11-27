@@ -53,14 +53,28 @@ jobs:
           pnpm test 2>&1 | tee unit-test.log
 
       # FE-S1-06: build thật app web (admin, partner — partner sinh service worker PWA).
+      # FE-S6-03: build production bắt buộc có URL API (vite.config.ts fail sớm) — CI dùng URL giả không phân giải được.
       - name: Build web apps (admin, partner)
+        env:
+          VITE_API_URL: https://api.ci.tamgiao.invalid
         run: pnpm --filter @tamgiao/admin --filter @tamgiao/partner build
 
       # FE-S1-06: bundle JS mobile (Metro) — bắt lỗi resolve/import mà typecheck không thấy (vd @tamgiao/contracts `.js`).
+      # FE-S6-03: app.config.ts bắt buộc EXPO_PUBLIC_* khi build production; Android xuất JS thường (`--no-bytecode`)
+      # để bước quét bundle đọc được chuỗi (Hermes bytecode không quét được), iOS giữ bytecode để vẫn kiểm tra biên dịch Hermes.
       - name: Bundle mobile app (Expo, iOS + Android)
+        env:
+          EXPO_PUBLIC_API_URL: https://api.ci.tamgiao.invalid
+          EXPO_PUBLIC_WS_URL: wss://api.ci.tamgiao.invalid/ws
         run: |
           pnpm --filter @tamgiao/mobile exec expo export --platform ios --output-dir "$RUNNER_TEMP/expo-ios"
-          pnpm --filter @tamgiao/mobile exec expo export --platform android --output-dir "$RUNNER_TEMP/expo-android"
+          pnpm --filter @tamgiao/mobile exec expo export --platform android --no-bytecode --output-dir "$RUNNER_TEMP/expo-android"
+
+      # FE-S6-03 (AC1): bundle production không được chứa route /dev/, nút thanh toán giả, URL dev, secret mẫu, console.log.
+      - name: Scan production bundles
+        run: >-
+          pnpm --filter @tamgiao/tools scan:bundle --env-example ../.env.example
+          ../apps/admin/dist ../apps/partner/dist "$RUNNER_TEMP/expo-android"
 
       - name: Integration tests (Postgres via Testcontainers)
         shell: bash

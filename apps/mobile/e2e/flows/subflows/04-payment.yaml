@@ -1,0 +1,40 @@
+appId: vn.tamgiao.app
+name: Bước 4 — Thanh toán phí xác thực
+---
+# Bản release không có panel thanh toán giả __DEV__; app tạo đơn qua nút thanh toán rồi mở trang cổng giả trong trình duyệt —
+# trang không tồn tại; đóng trình duyệt bằng Back; helper đóng vai cổng gửi webhook ký cho đơn PENDING; màn tự poll ra thành công.
+- tapOn:
+    id: payment-cta
+# Trình duyệt (Custom Tab) có thể mở chậm: chờ app bị che, không bắt buộc (máy không có trình duyệt thì app vẫn ở trước).
+- extendedWaitUntil:
+    notVisible:
+      id: payment-cta
+    timeout: 10000
+    optional: true
+- repeat:
+    times: 3
+    while:
+      notVisible:
+        id: payment-cta
+    commands:
+      - back
+      - waitForAnimationToEnd:
+          timeout: 3000
+- extendedWaitUntil:
+    visible:
+      id: payment-cta
+    timeout: 15000
+- runScript:
+    file: ../../scripts/helper-step.js
+    env:
+      STEP: pay
+- extendedWaitUntil:
+    visible:
+      id: payment-continue-kyc
+    timeout: 60000
+- tapOn:
+    id: payment-continue-kyc
+- extendedWaitUntil:
+    visible:
+      id: kyc-capture-CCCD_FRONT
+    timeout: 20000

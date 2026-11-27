@@ -1,0 +1,69 @@
+appId: vn.tamgiao.app
+name: Bước 8 — Đặt lịch và xác nhận buổi hẹn
+---
+# Mở hộp thư để đi tới màn đặt lịch hẹn từ hội thoại hiện tại.
+- tapOn:
+    id: match-inbox
+- extendedWaitUntil:
+    visible:
+      id: 'inbox-date-${output.conversationId}'
+    timeout: 20000
+- tapOn:
+    id: 'inbox-date-${output.conversationId}'
+- extendedWaitUntil:
+    visible:
+      id: 'date-day-.*'
+    timeout: 20000
+# Chọn ngày mai (index 1) và khung sáng để luôn còn trong hạn phản hồi.
+- tapOn:
+    id: 'date-day-.*'
+    index: 1
+- tapOn:
+    id: date-slot-morning
+- scrollUntilVisible:
+    element:
+      id: 'date-partner-${output.partnerId}'
+    direction: DOWN
+    timeout: 30000
+- tapOn:
+    id: 'date-partner-${output.partnerId}'
+- scrollUntilVisible:
+    element:
+      id: date-propose
+    direction: DOWN
+    timeout: 20000
+- tapOn:
+    id: date-propose
+- extendedWaitUntil:
+    notVisible:
+      id: date-propose
+    timeout: 20000
+# Đánh giá chỉ mở sau giờ bắt đầu buổi hẹn — lịch A vừa đặt ở tương lai; helper cho B từ chối và đề xuất lịch bắt đầu sau ~90 s.
+- runScript:
+    file: ../../scripts/helper-step.js
+    env:
+      STEP: date-repropose
+# Kéo làm mới màn lịch tới khi nút xác nhận lời mời của B xuất hiện.
+- repeat:
+    times: 10
+    while:
+      notVisible:
+        id: date-confirm
+    commands:
+      - runFlow: ../common/pull-to-refresh.yaml
+- extendedWaitUntil:
+    visible:
+      id: date-confirm
+    timeout: 15000
+- tapOn:
+    id: date-confirm
+- extendedWaitUntil:
+    visible:
+      id: date-confirm-ok
+    timeout: 10000
+- tapOn:
+    id: date-confirm-ok
+- extendedWaitUntil:
+    notVisible:
+      id: date-confirm
+    timeout: 20000
