@@ -8,6 +8,7 @@ export interface ChoiceChipProps {
   disabled?: boolean | undefined;
   accessibilityLabel?: string | undefined;
   className?: string | undefined;
+  testID?: string | undefined;
 }
 
 export function ChoiceChip({
@@ -17,9 +18,11 @@ export function ChoiceChip({
   disabled = false,
   accessibilityLabel,
   className = '',
+  testID,
 }: ChoiceChipProps) {
   return (
     <Pressable
+      testID={testID}
       accessibilityRole="button"
       accessibilityState={{ selected, disabled }}
       accessibilityLabel={accessibilityLabel ?? label}

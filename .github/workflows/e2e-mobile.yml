@@ -110,6 +110,8 @@ jobs:
           name: e2e-mobile-logs
           retention-days: 7
           if-no-files-found: ignore
+          # Debug output (ảnh chụp, hierarchy) nằm trong thư mục ẩn `.run/` — upload-artifact v4 mặc định bỏ qua file ẩn.
+          include-hidden-files: true
           path: |
             apps/mobile/e2e/.run/
             tests/e2e/.run/*.log

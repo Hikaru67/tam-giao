@@ -25,6 +25,7 @@ name: Bước 8 — Đặt lịch và xác nhận buổi hẹn
       id: 'date-partner-${output.partnerId}'
     direction: DOWN
     timeout: 30000
+- waitForAnimationToEnd
 - tapOn:
     id: 'date-partner-${output.partnerId}'
 - scrollUntilVisible:
@@ -32,6 +33,7 @@ name: Bước 8 — Đặt lịch và xác nhận buổi hẹn
       id: date-propose
     direction: DOWN
     timeout: 20000
+- waitForAnimationToEnd
 - tapOn:
     id: date-propose
 - extendedWaitUntil:

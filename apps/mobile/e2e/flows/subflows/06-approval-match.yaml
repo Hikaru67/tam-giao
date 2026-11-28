@@ -26,6 +26,7 @@ name: Bước 6 — Chuyên viên duyệt hồ sơ và ghép đôi
       id: match-accept
     direction: DOWN
     timeout: 30000
+- waitForAnimationToEnd
 - tapOn:
     id: match-accept
 - extendedWaitUntil:

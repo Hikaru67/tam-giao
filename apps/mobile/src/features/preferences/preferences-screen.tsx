@@ -15,7 +15,7 @@ import {
 } from '@tamgiao/contracts/profile';
 import { Button, Card, ErrorState, Stepper, Text, TextField } from '@tamgiao/ui-mobile';
 import { useRouter } from 'expo-router';
-import { ActivityIndicator, KeyboardAvoidingView, Platform, Pressable, ScrollView, View } from 'react-native';
+import { ActivityIndicator, KeyboardAvoidingView, Pressable, ScrollView, View } from 'react-native';
 import { AgeStepper } from './age-stepper.js';
 import { ChoiceChip } from './choice-chip.js';
 import { PREFERENCES_COPY } from './copy.js';
@@ -134,10 +134,7 @@ export function PreferencesScreen() {
   };
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      className="flex-1 bg-surface"
-    >
+    <KeyboardAvoidingView behavior="padding" className="flex-1 bg-surface">
       {/* Fixed Header */}
       <View className="pt-safe bg-surface border-b border-surface-container-high/60 z-30">
         <View className="h-16 px-margin flex-row items-center justify-between">
@@ -350,6 +347,7 @@ export function PreferencesScreen() {
                     disabled={savePreferencesMutation.isPending}
                   />
                   <ChoiceChip
+                    testID="preferences-city-hanoi"
                     label={PREFERENCES_COPY.dealBreakers.area.cities.hanoi}
                     selected={form.area.city === 'Hà Nội'}
                     onPress={() =>

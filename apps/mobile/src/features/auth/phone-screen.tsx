@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { normalizeVnPhone } from '@tamgiao/ui-core';
 import { Badge, Button, PhoneInput, Text } from '@tamgiao/ui-mobile';
 import { useRouter } from 'expo-router';
-import { KeyboardAvoidingView, Platform, ScrollView, View } from 'react-native';
+import { KeyboardAvoidingView, ScrollView, View } from 'react-native';
 import { AUTH_COPY } from './copy.js';
 import { otpErrorView, useRequestOtp } from './use-otp-flow.js';
 
@@ -36,10 +36,7 @@ export function PhoneScreen() {
   };
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      className="flex-1 bg-surface"
-    >
+    <KeyboardAvoidingView behavior="padding" className="flex-1 bg-surface">
       <ScrollView
         contentContainerStyle={{ flexGrow: 1 }}
         keyboardShouldPersistTaps="handled"

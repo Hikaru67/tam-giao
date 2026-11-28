@@ -138,6 +138,28 @@ export class MobileE2eScenario {
     const [b] = await registerUsers(this.config.flow, [specB]);
     if (b === undefined) throw new Error('không tạo được phiên người dùng B');
     await completeProfile(b);
+    // A nhập nơi sống bằng UI chỉ gõ được ASCII ("Ha Noi"), mà cityKey không bỏ dấu → tiêu chí khu vực "Hà Nội" của B
+    // sẽ loại A (HARD_FILTER_MISMATCH). Cho B không giới hạn khu vực; các tiêu chí khác giữ như completeProfile.
+    await b.http.put(
+      '/me/preferences',
+      {
+        ageMin: 22,
+        ageMax: 45,
+        area: { city: null, radiusKm: null },
+        childrenPlan: 'not_important',
+        religion: 'not_important',
+        lifestyle: {
+          smoking: 'not_important',
+          drinking: 'not_important',
+          dailyRhythm: 'not_important',
+          sports: 'not_important',
+        },
+        minEducation: null,
+        financialIndependence: 'not_important',
+        coreTraits: ['honest', 'kind', 'responsible'],
+      },
+      { token: b.accessToken },
+    );
     await payVerification(this.config.flow, b);
     await submitKyc(b);
     await approveKyc(admin, b);
@@ -235,9 +257,46 @@ export class MobileE2eScenario {
     const state = this.requireState();
     await approveKyc(state.admin, state.a);
     await waitActive(this.config.flow, state.a);
-    const match = await proposeMatch(this.config.flow, state.admin, state.a, state.b);
+    let match: { matchId: string };
+    try {
+      match = await proposeMatch(this.config.flow, state.admin, state.a, state.b);
+    } catch (error) {
+      // Chẩn đoán HARD_FILTER_MISMATCH: kèm các trường bộ lọc cứng xét của hai phía (dữ liệu giả của e2e).
+      const message = error instanceof Error ? error.message : String(error);
+      throw new Error(
+        `${message} | A=${await this.hardFilterView(state.a)} | B=${await this.hardFilterView(state.b)}`,
+      );
+    }
     state.matchId = match.matchId;
     return {};
+  }
+
+  /** Các trường bộ lọc cứng ghép đôi xét (hồ sơ + tiêu chí) của một người dùng, dạng JSON gọn. */
+  private async hardFilterView(user: UserSession): Promise<string> {
+    try {
+      const profile = await user.http.get<Record<string, unknown>>('/me/profile', {
+        token: user.accessToken,
+      });
+      const prefs = await user.http.get<Record<string, unknown>>('/me/preferences', {
+        token: user.accessToken,
+      });
+      return JSON.stringify({
+        gender: profile['gender'],
+        birthDate: profile['birthDate'],
+        currentCity: profile['currentCity'],
+        religion: profile['religion'],
+        childrenPlan: profile['childrenPlan'],
+        criteria: {
+          ageMin: prefs['ageMin'],
+          ageMax: prefs['ageMax'],
+          area: prefs['area'],
+          religion: prefs['religion'],
+          childrenPlan: prefs['childrenPlan'],
+        },
+      });
+    } catch (error) {
+      return `không đọc được (${error instanceof Error ? error.message : String(error)})`;
+    }
   }
 
   private async counterpartAccept(): Promise<HelperStepOutput<'counterpart-accept'>> {

@@ -7,6 +7,7 @@ name: Bước 5 — Xác thực eKYC
       id: kyc-capture-CCCD_FRONT
     direction: DOWN
     timeout: 20000
+- waitForAnimationToEnd
 - tapOn:
     id: kyc-capture-CCCD_FRONT
 - extendedWaitUntil:
@@ -31,6 +32,7 @@ name: Bước 5 — Xác thực eKYC
       id: kyc-capture-CCCD_BACK
     direction: DOWN
     timeout: 20000
+- waitForAnimationToEnd
 - tapOn:
     id: kyc-capture-CCCD_BACK
 - extendedWaitUntil:
@@ -55,6 +57,7 @@ name: Bước 5 — Xác thực eKYC
       id: kyc-capture-SELFIE
     direction: DOWN
     timeout: 20000
+- waitForAnimationToEnd
 - tapOn:
     id: kyc-capture-SELFIE
 - extendedWaitUntil:
@@ -79,6 +82,7 @@ name: Bước 5 — Xác thực eKYC
       id: kyc-capture-MARITAL_STATUS_CERTIFICATE
     direction: DOWN
     timeout: 20000
+- waitForAnimationToEnd
 - tapOn:
     id: kyc-capture-MARITAL_STATUS_CERTIFICATE
 - extendedWaitUntil:
@@ -104,6 +108,7 @@ name: Bước 5 — Xác thực eKYC
       id: kyc-submit
     direction: DOWN
     timeout: 20000
+- waitForAnimationToEnd
 - extendedWaitUntil:
     visible:
       id: kyc-submit

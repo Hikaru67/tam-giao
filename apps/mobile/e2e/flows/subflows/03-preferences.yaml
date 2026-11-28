@@ -1,7 +1,30 @@
 appId: vn.tamgiao.app
 name: Bước 3 — Thiết lập tiêu chí bạn đời
 ---
-# Giữ tiêu chí mặc định — hợp lệ theo schema; bộ lọc cứng ghép đôi chỉ xét tôn giáo và kế hoạch con cái, B thoả.
+# Bộ lọc cứng ghép đôi xét hai chiều: tuổi, khu vực (cityKey — không bỏ dấu), tôn giáo, kế hoạch con cái.
+# Tiêu chí mặc định có khu vực "TP. Hồ Chí Minh" → chọn "Hà Nội" (nơi sống của B). Các tiêu chí còn lại giữ mặc định
+# (tuổi 25–32, muốn có con, tôn giáo không quan trọng) — B 30 tuổi, muốn có con → thoả.
+# Màn có footer cố định (banner + nút lưu) che đáy màn hình: cuộn tới khi chip ra giữa màn, nếu không lần bấm rơi vào footer.
+- scrollUntilVisible:
+    element:
+      id: preferences-city-hanoi
+    direction: DOWN
+    timeout: 20000
+    centerElement: true
+# Chạm khi ScrollView còn trôi quán tính chỉ dừng cuộn, không kích hoạt onPress → chờ animation xong rồi mới bấm,
+# và xác nhận chip đã được chọn (accessibilityState.selected).
+- waitForAnimationToEnd
+- tapOn:
+    id: preferences-city-hanoi
+- assertVisible:
+    id: preferences-city-hanoi
+    selected: true
+- scrollUntilVisible:
+    element:
+      id: preferences-submit
+    direction: DOWN
+    timeout: 20000
+- waitForAnimationToEnd
 - tapOn:
     id: preferences-submit
 # Điểm vào xác thực tự chuyển sang màn thanh toán vì người dùng chưa trả phí.

@@ -35,7 +35,17 @@ export function EntryScreen() {
     };
   }, [tokenStore]);
 
-  const { data: me, isLoading, error, refetch } = useMe({ enabled: tokenChecked && hasToken });
+  const {
+    data: me,
+    isLoading,
+    isFetching,
+    isStale,
+    error,
+    refetch,
+  } = useMe({ enabled: tokenChecked && hasToken });
+  // Dữ liệu `['me']` cũ trong cache (vd vừa lưu hồ sơ/tiêu chí: mutation chỉ invalidate, không có observer nào refetch)
+  // không được dùng để điều hướng — nếu không sẽ redirect ngược về bước cũ. Chờ bản mới rồi mới chọn route.
+  const awaitingFreshMe = isFetching && isStale;
 
   if (!tokenChecked) {
     return (
@@ -52,7 +62,7 @@ export function EntryScreen() {
     return <Redirect href="/(auth)/phone" />;
   }
 
-  if (isLoading || (!me && !error)) {
+  if (isLoading || awaitingFreshMe || (!me && !error)) {
     return (
       <View className="flex-1 items-center justify-center bg-surface p-space-md gap-space-sm">
         <ActivityIndicator size="large" />

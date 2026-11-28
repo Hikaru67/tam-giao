@@ -77,6 +77,11 @@ cmd_test() {
       echo "=== Maestro lượt $i/$count: PASS ==="
     else
       echo "=== Maestro lượt $i/$count: FAIL ===" >&2
+      # Màn eKYC/chat bật FLAG_SECURE → ảnh chụp của Maestro đen; dump cây giao diện (uiautomator) để debug.
+      adb shell uiautomator dump /sdcard/e2e-window.xml >/dev/null 2>&1 &&
+        adb pull /sdcard/e2e-window.xml "$RUN_DIR/window-dump-$i.xml" >/dev/null 2>&1 || true
+      adb shell dumpsys activity activities 2>/dev/null | grep -E "mResumedActivity|topResumedActivity" \
+        >"$RUN_DIR/activity-$i.txt" || true
       exit 1
     fi
   done
@@ -91,6 +96,11 @@ cmd_ci() {
   cmd_helper_start
   trap cmd_helper_stop EXIT
   adb install -r "$apk"
+  # Emulator CI chậm hay hiện hộp thoại ANR hệ thống ("Pixel Launcher isn't responding") đè lên app → flow fail ngẫu
+  # nhiên. Ẩn hộp thoại lỗi hệ thống và tắt launcher (Maestro mở app thẳng bằng package, không cần launcher).
+  adb shell settings put global hide_error_dialogs 1 || true
+  adb shell pm disable-user --user 0 com.google.android.apps.nexuslauncher >/dev/null 2>&1 || true
+  adb shell pm disable-user --user 0 com.android.launcher3 >/dev/null 2>&1 || true
   cmd_test 3
 }
 

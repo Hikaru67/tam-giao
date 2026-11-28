@@ -19,7 +19,8 @@ name: Bước 7 — Trò chuyện qua WebSocket
     visible:
       text: '${output.replyText}'
     timeout: 30000
-- hideKeyboard
+# Không dùng hideKeyboard ở đây: gửi tin xong bàn phím đã đóng, Maestro trên Android khi đó bấm Back → thoát màn chat.
+# Nút quay lại nằm ở header (đỉnh màn) nên không bị bàn phím che.
 - tapOn:
     id: chat-back
 - extendedWaitUntil:

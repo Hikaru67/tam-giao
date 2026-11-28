@@ -4,7 +4,7 @@ import { formatVnPhoneDisplay } from '@tamgiao/ui-core';
 import { Button, OtpInput, Text } from '@tamgiao/ui-mobile';
 import { useQueryClient } from '@tanstack/react-query';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { KeyboardAvoidingView, Platform, Pressable, ScrollView, View } from 'react-native';
+import { KeyboardAvoidingView, Pressable, ScrollView, View } from 'react-native';
 import { AUTH_COPY } from './copy.js';
 import { useResendTimer } from './resend-timer.js';
 import { otpErrorView, useRequestOtp, useVerifyOtp } from './use-otp-flow.js';
@@ -76,10 +76,7 @@ export function OtpScreen() {
   const isInputLocked = Boolean(errorView?.lockInput);
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      className="flex-1 bg-surface"
-    >
+    <KeyboardAvoidingView behavior="padding" className="flex-1 bg-surface">
       <ScrollView
         contentContainerStyle={{ flexGrow: 1 }}
         keyboardShouldPersistTaps="handled"
